@@ -10,7 +10,7 @@ export default function Home() {
     setIsClient(true);
   }, []);
 
-  const processText = (text) => {
+  const processText = (text: string) => {
     const inlineRegex = /\\\(\s*(.*?)\s*\\\)/gs;
     const displayRegex = /\\\[\s*(.*?)\s*\\\]/gs;
 
