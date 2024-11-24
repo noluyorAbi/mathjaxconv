@@ -5,6 +5,8 @@ export default function Home() {
   const [inputText, setInputText] = useState("");
   const [modifiedText, setModifiedText] = useState("");
   const [isClient, setIsClient] = useState(false);
+  const [notification, setNotification] = useState("");
+  const [showNotification, setShowNotification] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -29,17 +31,48 @@ export default function Home() {
     if (isClient) {
       try {
         await navigator.clipboard.writeText(modifiedText);
-        alert("Text copied to clipboard!");
+        setNotification("Text copied to clipboard!");
+        setShowNotification(true);
+        setTimeout(() => {
+          setShowNotification(false);
+        }, 5000);
       } catch (err) {
-        alert("Failed to copy text: " + err);
+        setNotification("Failed to copy text: " + err);
+        setShowNotification(true);
+        setTimeout(() => {
+          setShowNotification(false);
+        }, 5000);
       }
     } else {
-      alert("Clipboard functionality is not available on the server.");
+      setNotification(
+        "Clipboard functionality is not available on the server."
+      );
+      setShowNotification(true);
+      setTimeout(() => {
+        setShowNotification(false);
+      }, 5000);
     }
+  };
+
+  const handleCloseNotification = () => {
+    setShowNotification(false);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 dark:from-gray-800 dark:to-black flex flex-col items-center py-10 text-black dark:text-white">
+      <div
+        className={`fixed top-0 left-0 w-full bg-green-500 text-white px-4 py-2 shadow-md flex items-center justify-between transition-opacity duration-500 ${
+          showNotification ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+      >
+        <span>{notification}</span>
+        <button
+          className="text-white font-bold px-2"
+          onClick={handleCloseNotification}
+        >
+          ×
+        </button>
+      </div>
       <div className="w-full max-w-3xl bg-white dark:bg-gray-900 rounded-lg shadow-md p-8">
         <h1 className="text-3xl font-extrabold text-center text-blue-600 dark:text-blue-400 mb-8">
           LaTeX Environment Replacer
