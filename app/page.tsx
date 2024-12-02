@@ -126,7 +126,7 @@ const markdownComponents: Components = {
 const getCookie = (name: string): string | null => {
   const nameEQ = name + "=";
   const ca = document.cookie.split(";").map((c) => c.trim());
-  for (let c of ca) {
+  for (const c of ca) {
     if (c.indexOf(nameEQ) === 0)
       return decodeURIComponent(c.substring(nameEQ.length));
   }
