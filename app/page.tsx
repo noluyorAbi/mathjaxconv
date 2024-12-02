@@ -17,37 +17,64 @@ interface CustomCodeProps extends React.HTMLAttributes<HTMLElement> {
 // Define the type for Markdown components
 const markdownComponents: Components = {
   h1: ({ ...props }) => (
-    <h1 className="text-3xl font-bold text-primary dark:text-primary-dark my-4" {...props} />
+    <h1
+      className="text-3xl font-bold text-primary dark:text-primary-dark my-4"
+      {...props}
+    />
   ),
   h2: ({ ...props }) => (
-    <h2 className="text-2xl font-bold text-primary dark:text-primary-dark my-4" {...props} />
+    <h2
+      className="text-2xl font-bold text-primary dark:text-primary-dark my-4"
+      {...props}
+    />
   ),
   h3: ({ ...props }) => (
-    <h3 className="text-xl font-bold text-primary dark:text-primary-dark my-4" {...props} />
+    <h3
+      className="text-xl font-bold text-primary dark:text-primary-dark my-4"
+      {...props}
+    />
   ),
   h4: ({ ...props }) => (
-    <h4 className="text-lg font-bold text-primary dark:text-primary-dark my-4" {...props} />
+    <h4
+      className="text-lg font-bold text-primary dark:text-primary-dark my-4"
+      {...props}
+    />
   ),
   h5: ({ ...props }) => (
-    <h5 className="text-base font-bold text-primary dark:text-primary-dark my-4" {...props} />
+    <h5
+      className="text-base font-bold text-primary dark:text-primary-dark my-4"
+      {...props}
+    />
   ),
   h6: ({ ...props }) => (
-    <h6 className="text-sm font-bold text-primary dark:text-primary-dark my-4" {...props} />
+    <h6
+      className="text-sm font-bold text-primary dark:text-primary-dark my-4"
+      {...props}
+    />
   ),
   p: ({ ...props }) => (
     <p className="text-text-light dark:text-text-dark my-2" {...props} />
   ),
   strong: ({ ...props }) => (
-    <strong className="font-bold text-primary dark:text-primary-dark" {...props} />
+    <strong
+      className="font-bold text-primary dark:text-primary-dark"
+      {...props}
+    />
   ),
   em: ({ ...props }) => (
     <em className="italic text-text-light dark:text-text-dark" {...props} />
   ),
   ul: ({ ...props }) => (
-    <ul className="list-disc list-inside my-2 text-text-light dark:text-text-dark" {...props} />
+    <ul
+      className="list-disc list-inside my-2 text-text-light dark:text-text-dark"
+      {...props}
+    />
   ),
   ol: ({ ...props }) => (
-    <ol className="list-decimal list-inside my-2 text-text-light dark:text-text-dark" {...props} />
+    <ol
+      className="list-decimal list-inside my-2 text-text-light dark:text-text-dark"
+      {...props}
+    />
   ),
   li: ({ ...props }) => <li className="my-1" {...props} />,
   blockquote: ({ ...props }) => (
@@ -56,18 +83,30 @@ const markdownComponents: Components = {
       {...props}
     />
   ),
+  // Separate handling for <pre>
+  pre: ({ ...props }) => (
+    <pre
+      className="bg-gray-200 dark:bg-gray-800 p-4 rounded-md my-4 overflow-auto"
+      {...props}
+    />
+  ),
+
+  // Separate handling for <code>
   code: ({ inline, className, children, ...props }: CustomCodeProps) => {
-    return !inline ? (
-      <pre className={`bg-gray-200 dark:bg-gray-800 p-4 rounded-md my-4 overflow-auto ${className || ""}`}>
-        <code className="text-primary dark:text-primary-dark" {...props}>
+    if (inline) {
+      return (
+        <code
+          className={`bg-gray-200 dark:bg-gray-800 p-1 rounded text-primary dark:text-primary-dark ${
+            className || ""
+          }`}
+          {...props}
+        >
           {children}
         </code>
-      </pre>
-    ) : (
-      <code
-        className={`bg-gray-200 dark:bg-gray-800 p-1 rounded text-primary dark:text-primary-dark ${className || ""}`}
-        {...props}
-      >
+      );
+    }
+    return (
+      <code className="text-primary dark:text-primary-dark" {...props}>
         {children}
       </code>
     );
@@ -76,7 +115,10 @@ const markdownComponents: Components = {
     <hr className="my-4 border-gray-300 dark:border-gray-700" {...props} />
   ),
   a: ({ ...props }) => (
-    <a className="text-primary dark:text-primary-dark hover:underline" {...props} />
+    <a
+      className="text-primary dark:text-primary-dark hover:underline"
+      {...props}
+    />
   ),
 };
 
@@ -87,6 +129,7 @@ const Home: React.FC = () => {
   const [isClient, setIsClient] = useState<boolean>(false);
   const [notification, setNotification] = useState<string>("");
   const [showNotification, setShowNotification] = useState<boolean>(false);
+  const [isMac, setIsMac] = useState<boolean>(false); // New state to track if user is on Mac
 
   // Refs with precise types
   const inputTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -94,39 +137,52 @@ const Home: React.FC = () => {
   const modifiedTextareaRef = useRef<HTMLTextAreaElement>(null);
   const modifiedPreviewRef = useRef<HTMLDivElement>(null);
 
-  // Set isClient to true after the first render
+  // Set isClient and detect if user is on Mac after the first render
   useEffect(() => {
     setIsClient(true);
+    const platform = navigator.platform.toLowerCase();
+    setIsMac(platform.includes("mac"));
   }, []);
+
+  // Set focus and select text on the input textarea after client is set
+  useEffect(() => {
+    if (isClient && inputTextareaRef.current) {
+      inputTextareaRef.current.focus();
+      inputTextareaRef.current.select();
+    }
+  }, [isClient]);
 
   // Function to process text
   const processText = (text: string): string => {
     const inlineRegex = /\\\(\s*(.*?)\s*\\\)/gs;
     const displayRegex = /\\\[\s*(.*?)\s*\\\]/gs;
 
-    let result = text.replace(inlineRegex, (_: string, p1: string) => `$${p1}$`);
-    result = result.replace(displayRegex, (_: string, p1: string) => `$$${p1}$$`);
+    let result = text.replace(
+      inlineRegex,
+      (_: string, p1: string) => `$${p1}$`
+    );
+    result = result.replace(
+      displayRegex,
+      (_: string, p1: string) => `$$${p1}$$`
+    );
 
     return result;
   };
 
-  // Handler to process text
-  const handleProcess = useCallback((): void => {
+  // Handler to process text and copy to clipboard
+  const handleProcessAndCopy = useCallback(async (): Promise<void> => {
     const result = processText(inputText);
     setModifiedText(result);
-  }, [inputText]);
 
-  // Handler to copy text to clipboard
-  const handleCopy = useCallback(async (): Promise<void> => {
     if (isClient) {
       try {
-        await navigator.clipboard.writeText(modifiedText);
-        setNotification("Text copied to clipboard!");
+        await navigator.clipboard.writeText(result);
+        setNotification("Text verarbeitet und in die Zwischenablage kopiert!");
       } catch (err: unknown) {
         if (err instanceof Error) {
-          setNotification(`Error copying text: ${err.message}`);
+          setNotification(`Fehler beim Kopieren: ${err.message}`);
         } else {
-          setNotification("Unknown error occurred while copying.");
+          setNotification("Unbekannter Fehler beim Kopieren.");
         }
       }
       setShowNotification(true);
@@ -134,13 +190,15 @@ const Home: React.FC = () => {
         setShowNotification(false);
       }, 5000);
     } else {
-      setNotification("Clipboard functionality is not available on the server.");
+      setNotification(
+        "Zwischenablagefunktion ist auf dem Server nicht verfügbar."
+      );
       setShowNotification(true);
       setTimeout(() => {
         setShowNotification(false);
       }, 5000);
     }
-  }, [isClient, modifiedText]);
+  }, [inputText, isClient]);
 
   // Handler to close the notification
   const handleCloseNotification = useCallback((): void => {
@@ -165,9 +223,12 @@ const Home: React.FC = () => {
       if (!textarea || !preview) return;
       isSyncingFromTextarea = true;
 
-      const textareaScrollHeight = textarea.scrollHeight - textarea.clientHeight;
+      const textareaScrollHeight =
+        textarea.scrollHeight - textarea.clientHeight;
       const scrollPercentage =
-        textareaScrollHeight > 0 ? textarea.scrollTop / textareaScrollHeight : 0;
+        textareaScrollHeight > 0
+          ? textarea.scrollTop / textareaScrollHeight
+          : 0;
 
       const previewScrollHeight = preview.scrollHeight - preview.clientHeight;
       preview.scrollTop = scrollPercentage * previewScrollHeight;
@@ -185,7 +246,8 @@ const Home: React.FC = () => {
       const scrollPercentage =
         previewScrollHeight > 0 ? preview.scrollTop / previewScrollHeight : 0;
 
-      const textareaScrollHeight = textarea.scrollHeight - textarea.clientHeight;
+      const textareaScrollHeight =
+        textarea.scrollHeight - textarea.clientHeight;
       textarea.scrollTop = scrollPercentage * textareaScrollHeight;
     };
 
@@ -218,9 +280,12 @@ const Home: React.FC = () => {
       if (!textarea || !preview) return;
       isSyncingFromTextarea = true;
 
-      const textareaScrollHeight = textarea.scrollHeight - textarea.clientHeight;
+      const textareaScrollHeight =
+        textarea.scrollHeight - textarea.clientHeight;
       const scrollPercentage =
-        textareaScrollHeight > 0 ? textarea.scrollTop / textareaScrollHeight : 0;
+        textareaScrollHeight > 0
+          ? textarea.scrollTop / textareaScrollHeight
+          : 0;
 
       const previewScrollHeight = preview.scrollHeight - preview.clientHeight;
       preview.scrollTop = scrollPercentage * previewScrollHeight;
@@ -238,7 +303,8 @@ const Home: React.FC = () => {
       const scrollPercentage =
         previewScrollHeight > 0 ? preview.scrollTop / previewScrollHeight : 0;
 
-      const textareaScrollHeight = textarea.scrollHeight - textarea.clientHeight;
+      const textareaScrollHeight =
+        textarea.scrollHeight - textarea.clientHeight;
       textarea.scrollTop = scrollPercentage * textareaScrollHeight;
     };
 
@@ -254,18 +320,15 @@ const Home: React.FC = () => {
   // Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Shortcut for "Process Text" (Ctrl + Enter)
-      if (e.ctrlKey && e.key === "Enter") {
+      // Shortcut for "Process and Copy Text"
+      // For Mac: Meta (⌘) + Enter
+      // For Others: Ctrl + Enter
+      if (
+        (isMac && e.metaKey && e.key === "Enter") ||
+        (!isMac && e.ctrlKey && e.key === "Enter")
+      ) {
         e.preventDefault();
-        handleProcess();
-      }
-
-      // Shortcut for "Copy to Clipboard" (Ctrl + Shift + C)
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "c") {
-        e.preventDefault();
-        if (modifiedText) {
-          handleCopy();
-        }
+        handleProcessAndCopy();
       }
     };
 
@@ -274,7 +337,7 @@ const Home: React.FC = () => {
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [handleProcess, handleCopy, modifiedText]);
+  }, [handleProcessAndCopy, isMac]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 dark:from-gray-800 dark:to-black flex flex-col justify-center items-center overflow-y-hidden text-black dark:text-white transition-colors duration-300 relative p-4">
@@ -285,7 +348,10 @@ const Home: React.FC = () => {
         }`}
       >
         <span>{notification}</span>
-        <button className="text-white font-bold px-2" onClick={handleCloseNotification}>
+        <button
+          className="text-white font-bold px-2"
+          onClick={handleCloseNotification}
+        >
           ×
         </button>
       </div>
@@ -305,7 +371,9 @@ const Home: React.FC = () => {
             className="w-full md:w-1/2 p-4 border border-blue-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-black dark:text-white resize-y overflow-auto max-h-96 min-h-40"
             placeholder="Enter your text here..."
             value={inputText}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInputText(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+              setInputText(e.target.value)
+            }
             rows={10}
           ></textarea>
 
@@ -324,13 +392,13 @@ const Home: React.FC = () => {
           </div>
         </div>
 
-        {/* Process Text Button */}
+        {/* Process Text and Copy Button */}
         <div className="flex justify-center mt-6">
           <button
             className="bg-blue-600 dark:bg-blue-500 text-white font-semibold px-6 py-3 rounded-full hover:bg-blue-700 dark:hover:bg-blue-600 transition duration-300"
-            onClick={handleProcess}
+            onClick={handleProcessAndCopy}
           >
-            Process Text
+            Process Text & Copy
           </button>
         </div>
 
@@ -365,33 +433,39 @@ const Home: React.FC = () => {
                 </ReactMarkdown>
               </div>
             </div>
-
-            {/* Copy to Clipboard Button */}
-            <div className="flex justify-center mt-6">
-              <button
-                className="bg-green-600 dark:bg-green-500 text-white font-semibold px-6 py-3 rounded-full hover:bg-green-700 dark:hover:bg-green-600 transition duration-300"
-                onClick={handleCopy}
-              >
-                Copy to Clipboard
-              </button>
-            </div>
           </div>
         )}
       </div>
 
       {/* Shortcuts Display */}
       <div className="mt-6 w-full max-w-5xl bg-white dark:bg-gray-900 rounded-lg shadow-md p-4">
-        <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-2">Shortcuts</h3>
+        <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-2">
+          Shortcuts
+        </h3>
         <ul className="list-disc list-inside text-text-light dark:text-text-dark">
-          <li>
-            <kbd className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded">Ctrl</kbd> +{" "}
-            <kbd className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded">Enter</kbd>: Process Text
-          </li>
-          <li>
-            <kbd className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded">Ctrl</kbd> +{" "}
-            <kbd className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded">Shift</kbd> +{" "}
-            <kbd className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded">C</kbd>: Copy to Clipboard
-          </li>
+          {isMac ? (
+            <li>
+              <kbd className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded">
+                ⌘
+              </kbd>{" "}
+              +{" "}
+              <kbd className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded">
+                Enter
+              </kbd>
+              : Process and Copy Text
+            </li>
+          ) : (
+            <li>
+              <kbd className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded">
+                Ctrl
+              </kbd>{" "}
+              +{" "}
+              <kbd className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded">
+                Enter
+              </kbd>
+              : Process and Copy Text
+            </li>
+          )}
         </ul>
       </div>
     </div>
