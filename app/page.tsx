@@ -517,31 +517,6 @@ const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* Checkbox and Description */}
-      <div className="mt-6 w-full max-w-5xl bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 flex flex-col space-y-4">
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            id="buttonMode"
-            checked={useTwoButtons}
-            onChange={handleCheckboxChange}
-            className="mr-3 h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition duration-200 ease-in-out"
-          />
-          <label
-            htmlFor="buttonMode"
-            className="text-lg text-gray-800 dark:text-gray-200 font-medium cursor-pointer"
-          >
-            Show Two Buttons
-          </label>
-        </div>
-        <p className="text-md text-gray-600 dark:text-gray-400">
-          Enable this option to have separate buttons for processing text and
-          copying it to the clipboard. When disabled, a single button will
-          perform both actions simultaneously. This setting is saved in your
-          browser.
-        </p>
-      </div>
-
       {/* Modified Text Section */}
       {modifiedText && (
         <div className="mt-10 w-full max-w-5xl bg-white dark:bg-gray-900 rounded-lg shadow-md p-8 flex flex-col">
@@ -575,6 +550,31 @@ const Home: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Checkbox and Description */}
+      <div className="mt-6 w-full max-w-5xl bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 flex flex-col space-y-4">
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="buttonMode"
+            checked={useTwoButtons}
+            onChange={handleCheckboxChange}
+            className="mr-3 h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition duration-200 ease-in-out"
+          />
+          <label
+            htmlFor="buttonMode"
+            className="text-lg text-gray-800 dark:text-gray-200 font-medium cursor-pointer"
+          >
+            Show Two Buttons
+          </label>
+        </div>
+        <p className="text-md text-gray-600 dark:text-gray-400">
+          Enable this option to have separate buttons for processing text and
+          copying it to the clipboard. When disabled, a single button will
+          perform both actions simultaneously. This setting is saved in your
+          browser.
+        </p>
+      </div>
 
       {/* Shortcuts Display */}
       <div className="mt-6 w-full max-w-5xl bg-white dark:bg-gray-900 rounded-lg shadow-md p-6">
