@@ -15,7 +15,7 @@ import {
   QuestionMarkCircleIcon,
   XCircleIcon,
   ShieldExclamationIcon,
-  BugAntIcon,
+  BanIcon,
   ClipboardIcon,
   BookmarkIcon,
   ChatAlt2Icon,
@@ -68,7 +68,7 @@ const calloutTypes = [
   { type: "question", title: "Question", icon: QuestionMarkCircleIcon },
   { type: "failure", title: "Failure", icon: XCircleIcon },
   { type: "danger", title: "Danger", icon: ShieldExclamationIcon },
-  { type: "bug", title: "Bug", icon: BugAntIcon },
+  { type: "bug", title: "Bug", icon: BanIcon },
   { type: "example", title: "Example", icon: BookmarkIcon },
   { type: "quote", title: "Quote", icon: ChatAlt2Icon },
   { type: "none", title: "None", icon: null }, // Option to select no callout

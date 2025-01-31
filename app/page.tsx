@@ -10,7 +10,6 @@ import {
 } from "../components/ui/card";
 import {
   ArrowRight,
-  ActivityIcon as Function,
   Quote,
   RemoveFormatting,
 } from "lucide-react";
