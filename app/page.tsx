@@ -8,7 +8,12 @@ import {
   CardDescription,
   CardContent,
 } from "../components/ui/card";
-import { ArrowRight, ActivityIcon as Function, Quote } from "lucide-react";
+import {
+  ArrowRight,
+  ActivityIcon as Function,
+  Quote,
+  RemoveFormatting,
+} from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Page() {
@@ -42,7 +47,7 @@ export default function Page() {
             href="/mathjaxconv"
             title="MathJax Converter"
             description="Convert $$ $$ markdown inline LaTeX to $$ format"
-            icon={<Function className="h-6 w-6" />}
+            icon={<RemoveFormatting className="h-6 w-6" />}
             gradient="from-blue-500 to-cyan-500"
           >
             Transform your LaTeX equations seamlessly for better compatibility
@@ -73,7 +78,14 @@ interface ToolCardProps {
   children: React.ReactNode;
 }
 
-function ToolCard({ href, title, description, icon, gradient, children }: ToolCardProps) {
+function ToolCard({
+  href,
+  title,
+  description,
+  icon,
+  gradient,
+  children,
+}: ToolCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
