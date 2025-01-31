@@ -42,6 +42,23 @@ const setCookie = (name: string, value: string, days: number): void => {
     name + "=" + encodeURIComponent(value) + expires + "; path=/";
 };
 
+// Define available callout types
+const calloutTypes = [
+  { type: "info", title: "Info" },
+  { type: "warning", title: "Warning" },
+  { type: "note", title: "Note" },
+  { type: "abstract", title: "Abstract" },
+  { type: "todo", title: "Todo" },
+  { type: "tip", title: "Tip" },
+  { type: "success", title: "Success" },
+  { type: "question", title: "Question" },
+  { type: "failure", title: "Failure" },
+  { type: "danger", title: "Danger" },
+  { type: "bug", title: "Bug" },
+  { type: "example", title: "Example" },
+  { type: "quote", title: "Quote" },
+];
+
 const QuotePrependPage: React.FC = () => {
   // State hooks with explicit types
   const [inputText, setInputText] = useState<string>("");
@@ -50,6 +67,7 @@ const QuotePrependPage: React.FC = () => {
   const [showNotification, setShowNotification] = useState<boolean>(false);
   const [isMac, setIsMac] = useState<boolean>(false); // State to detect if the user is on a Mac
   const [useTwoButtons, setUseTwoButtons] = useState<boolean>(false); // State for checkbox
+  const [selectedCallout, setSelectedCallout] = useState<string>("info"); // State for selected callout
 
   // Refs with precise types
   const inputTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -66,6 +84,12 @@ const QuotePrependPage: React.FC = () => {
     if (useTwoButtonsCookie) {
       setUseTwoButtons(useTwoButtonsCookie === "true");
     }
+
+    // Initialize selectedCallout from cookies (default: 'info')
+    const selectedCalloutCookie = getCookie("selectedCallout");
+    if (selectedCalloutCookie) {
+      setSelectedCallout(selectedCalloutCookie);
+    }
   }, []);
 
   // Set focus and select text in the input textarea after setting the client
@@ -76,12 +100,13 @@ const QuotePrependPage: React.FC = () => {
     }
   }, [isClient]);
 
-  // Function to process the text: prepend each line with ">"
+  // Function to process the text: prepend callout syntax
   const processText = (text: string): string => {
-    return text
+    const callout = calloutTypes.find((c) => c.type === selectedCallout);
+    const calloutTitle = callout ? callout.title : "Info";
+    return `> [!${selectedCallout}] ${calloutTitle}\n> \n> ${text
       .split("\n")
-      .map((line) => `> ${line}`)
-      .join("\n");
+      .join("\n> ")}`;
   };
 
   // Handler to process the text
@@ -107,7 +132,7 @@ const QuotePrependPage: React.FC = () => {
           setShowNotification(false);
         }, 5000);
       });
-  }, [inputText]);
+  }, [inputText, selectedCallout]);
 
   // Handler to copy the processed text to the clipboard
   const handleCopy = useCallback(async (): Promise<void> => {
@@ -136,7 +161,7 @@ const QuotePrependPage: React.FC = () => {
         setShowNotification(false);
       }, 5000);
     }
-  }, [isClient, inputText]);
+  }, [isClient, inputText, selectedCallout]);
 
   // Handler to close the notification
   const handleCloseNotification = useCallback((): void => {
@@ -149,6 +174,16 @@ const QuotePrependPage: React.FC = () => {
       const checked = e.target.checked;
       setUseTwoButtons(checked);
       setCookie("useTwoButtons", checked.toString(), 365); // Save for 1 year
+    },
+    []
+  );
+
+  // Handler for callout type change
+  const handleCalloutChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>): void => {
+      const selected = e.target.value;
+      setSelectedCallout(selected);
+      setCookie("selectedCallout", selected, 365); // Save for 1 year
     },
     []
   );
@@ -268,8 +303,30 @@ const QuotePrependPage: React.FC = () => {
       <div className="w-full max-w-5xl bg-white dark:bg-gray-900 rounded-lg shadow-md p-8 flex flex-col">
         {/* Header */}
         <h1 className="text-3xl font-extrabold text-center text-blue-600 dark:text-blue-400 mb-8">
-          Add Lines with "&gt;" Prefix
+          Add Callout Prefix and Lines
         </h1>
+
+        {/* Callout Selection */}
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold mb-4">Select Callout Type</h2>
+          <div className="flex flex-wrap gap-4">
+            {calloutTypes.map((callout) => (
+              <label key={callout.type} className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  name="calloutType"
+                  value={callout.type}
+                  checked={selectedCallout === callout.type}
+                  onChange={handleCalloutChange}
+                  className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="text-md font-medium capitalize">
+                  {callout.title}
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
 
         {/* Input and Preview */}
         <div className="flex flex-col md:flex-row gap-8 flex-grow">
