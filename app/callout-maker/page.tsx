@@ -6,6 +6,20 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css"; // For mathematical formatting
+import {
+  InformationCircleIcon,
+  ExclamationIcon,
+  PencilAltIcon,
+  LightBulbIcon,
+  CheckCircleIcon,
+  QuestionMarkCircleIcon,
+  XCircleIcon,
+  ShieldExclamationIcon,
+  BugAntIcon,
+  ClipboardIcon,
+  BookmarkIcon,
+  ChatAlt2Icon,
+} from "@heroicons/react/solid";
 
 // Define the type for Markdown components
 const markdownComponents: Components = {
@@ -42,21 +56,22 @@ const setCookie = (name: string, value: string, days: number): void => {
     name + "=" + encodeURIComponent(value) + expires + "; path=/";
 };
 
-// Define available callout types
+// Define available callout types with associated icons
 const calloutTypes = [
-  { type: "info", title: "Info" },
-  { type: "warning", title: "Warning" },
-  { type: "note", title: "Note" },
-  { type: "abstract", title: "Abstract" },
-  { type: "todo", title: "Todo" },
-  { type: "tip", title: "Tip" },
-  { type: "success", title: "Success" },
-  { type: "question", title: "Question" },
-  { type: "failure", title: "Failure" },
-  { type: "danger", title: "Danger" },
-  { type: "bug", title: "Bug" },
-  { type: "example", title: "Example" },
-  { type: "quote", title: "Quote" },
+  { type: "info", title: "Info", icon: InformationCircleIcon },
+  { type: "warning", title: "Warning", icon: ExclamationIcon },
+  { type: "note", title: "Note", icon: PencilAltIcon },
+  { type: "abstract", title: "Abstract", icon: LightBulbIcon },
+  { type: "todo", title: "Todo", icon: ClipboardIcon },
+  { type: "tip", title: "Tip", icon: LightBulbIcon },
+  { type: "success", title: "Success", icon: CheckCircleIcon },
+  { type: "question", title: "Question", icon: QuestionMarkCircleIcon },
+  { type: "failure", title: "Failure", icon: XCircleIcon },
+  { type: "danger", title: "Danger", icon: ShieldExclamationIcon },
+  { type: "bug", title: "Bug", icon: BugAntIcon },
+  { type: "example", title: "Example", icon: BookmarkIcon },
+  { type: "quote", title: "Quote", icon: ChatAlt2Icon },
+  { type: "none", title: "None", icon: null }, // Option to select no callout
 ];
 
 const QuotePrependPage: React.FC = () => {
@@ -67,13 +82,13 @@ const QuotePrependPage: React.FC = () => {
   const [showNotification, setShowNotification] = useState<boolean>(false);
   const [isMac, setIsMac] = useState<boolean>(false); // State to detect if the user is on a Mac
   const [useTwoButtons, setUseTwoButtons] = useState<boolean>(false); // State for checkbox
-  const [selectedCallout, setSelectedCallout] = useState<string>("info"); // State for selected callout
+  const [selectedCallout, setSelectedCallout] = useState<string>("none"); // State for selected callout
 
   // Refs with precise types
   const inputTextareaRef = useRef<HTMLTextAreaElement>(null);
   const inputPreviewRef = useRef<HTMLDivElement>(null);
 
-  // Initialize client state, OS detection, and load checkbox state from cookies
+  // Initialize client state, OS detection, and load checkbox & callout state from cookies
   useEffect(() => {
     setIsClient(true);
     const platform = navigator.platform.toLowerCase();
@@ -85,7 +100,7 @@ const QuotePrependPage: React.FC = () => {
       setUseTwoButtons(useTwoButtonsCookie === "true");
     }
 
-    // Initialize selectedCallout from cookies (default: 'info')
+    // Initialize selectedCallout from cookies (default: 'none')
     const selectedCalloutCookie = getCookie("selectedCallout");
     if (selectedCalloutCookie) {
       setSelectedCallout(selectedCalloutCookie);
@@ -102,6 +117,13 @@ const QuotePrependPage: React.FC = () => {
 
   // Function to process the text: prepend callout syntax
   const processText = (text: string): string => {
+    if (selectedCallout === "none") {
+      return text
+        .split("\n")
+        .map((line) => `> ${line}`)
+        .join("\n");
+    }
+
     const callout = calloutTypes.find((c) => c.type === selectedCallout);
     const calloutTitle = callout ? callout.title : "Info";
     return `> [!${selectedCallout}] ${calloutTitle}\n> \n> ${text
@@ -309,22 +331,37 @@ const QuotePrependPage: React.FC = () => {
         {/* Callout Selection */}
         <div className="mb-6">
           <h2 className="text-xl font-semibold mb-4">Select Callout Type</h2>
-          <div className="flex flex-wrap gap-4">
-            {calloutTypes.map((callout) => (
-              <label key={callout.type} className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  name="calloutType"
-                  value={callout.type}
-                  checked={selectedCallout === callout.type}
-                  onChange={handleCalloutChange}
-                  className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <span className="text-md font-medium capitalize">
-                  {callout.title}
-                </span>
-              </label>
-            ))}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {calloutTypes.map((callout) => {
+              const Icon = callout.icon;
+              return (
+                <label
+                  key={callout.type}
+                  className={`flex items-center p-2 border rounded-lg cursor-pointer ${
+                    selectedCallout === callout.type
+                      ? "border-blue-500 bg-blue-50 dark:bg-gray-800"
+                      : "border-gray-300 dark:border-gray-700"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="calloutType"
+                    value={callout.type}
+                    checked={selectedCallout === callout.type}
+                    onChange={handleCalloutChange}
+                    className="hidden"
+                  />
+                  {Icon ? (
+                    <Icon className="h-6 w-6 text-blue-600 dark:text-blue-400 mr-2" />
+                  ) : (
+                    <div className="h-6 w-6 mr-2"></div>
+                  )}
+                  <span className="text-md font-medium capitalize">
+                    {callout.title}
+                  </span>
+                </label>
+              );
+            })}
           </div>
         </div>
 
@@ -352,7 +389,7 @@ const QuotePrependPage: React.FC = () => {
               rehypePlugins={[rehypeKatex]}
               components={markdownComponents}
             >
-              {inputText}
+              {selectedCallout !== "none" ? processText(inputText) : inputText}
             </ReactMarkdown>
           </div>
         </div>
