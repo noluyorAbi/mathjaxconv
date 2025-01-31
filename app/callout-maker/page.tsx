@@ -5,22 +5,22 @@ import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
-import "katex/dist/katex.min.css"; // Für mathematische Formatierungen
+import "katex/dist/katex.min.css"; // For mathematical formatting
 
-// Definiere den Typ für Markdown-Komponenten
+// Define the type for Markdown components
 const markdownComponents: Components = {
-  // Hier kannst du die gewünschten Markdown-Komponenten anpassen
-  // Zum Beispiel:
+  // You can customize the desired Markdown components here
+  // For example:
   h1: ({ ...props }) => (
     <h1
       className="text-3xl font-bold text-primary dark:text-primary-dark my-4"
       {...props}
     />
   ),
-  // Weitere Anpassungen hier...
+  // More customizations here...
 };
 
-// Hilfsfunktionen zum Lesen und Schreiben von Cookies
+// Helper functions for reading and writing cookies
 const getCookie = (name: string): string | null => {
   const nameEQ = name + "=";
   const ca = document.cookie.split(";").map((c) => c.trim());
@@ -43,32 +43,32 @@ const setCookie = (name: string, value: string, days: number): void => {
 };
 
 const QuotePrependPage: React.FC = () => {
-  // State-Hooks mit expliziten Typen
+  // State hooks with explicit types
   const [inputText, setInputText] = useState<string>("");
   const [isClient, setIsClient] = useState<boolean>(false);
   const [notification, setNotification] = useState<string>("");
   const [showNotification, setShowNotification] = useState<boolean>(false);
-  const [isMac, setIsMac] = useState<boolean>(false); // Zustand zur Erkennung, ob der Benutzer ein Mac verwendet
-  const [useTwoButtons, setUseTwoButtons] = useState<boolean>(false); // Zustand für Checkbox
+  const [isMac, setIsMac] = useState<boolean>(false); // State to detect if the user is on a Mac
+  const [useTwoButtons, setUseTwoButtons] = useState<boolean>(false); // State for checkbox
 
-  // Refs mit präzisen Typen
+  // Refs with precise types
   const inputTextareaRef = useRef<HTMLTextAreaElement>(null);
   const inputPreviewRef = useRef<HTMLDivElement>(null);
 
-  // Initialisiere Client-Zustand, OS-Erkennung und lade Checkbox-Zustand aus Cookies
+  // Initialize client state, OS detection, and load checkbox state from cookies
   useEffect(() => {
     setIsClient(true);
     const platform = navigator.platform.toLowerCase();
     setIsMac(platform.includes("mac"));
 
-    // Initialisiere useTwoButtons aus Cookies (Standard: false)
+    // Initialize useTwoButtons from cookies (default: false)
     const useTwoButtonsCookie = getCookie("useTwoButtons");
     if (useTwoButtonsCookie) {
       setUseTwoButtons(useTwoButtonsCookie === "true");
     }
   }, []);
 
-  // Setze Fokus und wähle Text im Eingabe-Textarea nach dem Setzen des Clients
+  // Set focus and select text in the input textarea after setting the client
   useEffect(() => {
     if (isClient && inputTextareaRef.current) {
       inputTextareaRef.current.focus();
@@ -76,7 +76,7 @@ const QuotePrependPage: React.FC = () => {
     }
   }, [isClient]);
 
-  // Funktion zum Verarbeiten des Textes: Vor jede Zeile ein ">"
+  // Function to process the text: prepend each line with ">"
   const processText = (text: string): string => {
     return text
       .split("\n")
@@ -84,15 +84,13 @@ const QuotePrependPage: React.FC = () => {
       .join("\n");
   };
 
-  // Handler zum Verarbeiten des Textes
+  // Handler to process the text
   const handleProcess = useCallback((): void => {
     const result = processText(inputText);
     navigator.clipboard
       .writeText(result)
       .then(() => {
-        setNotification(
-          "Text erfolgreich verarbeitet und in die Zwischenablage kopiert!"
-        );
+        setNotification("Text successfully processed and copied to clipboard!");
         setShowNotification(true);
         setTimeout(() => {
           setShowNotification(false);
@@ -100,9 +98,9 @@ const QuotePrependPage: React.FC = () => {
       })
       .catch((err: unknown) => {
         if (err instanceof Error) {
-          setNotification(`Kopieren fehlgeschlagen: ${err.message}`);
+          setNotification(`Copy failed: ${err.message}`);
         } else {
-          setNotification("Unbekannter Fehler beim Kopieren.");
+          setNotification("Unknown error occurred while copying.");
         }
         setShowNotification(true);
         setTimeout(() => {
@@ -111,18 +109,18 @@ const QuotePrependPage: React.FC = () => {
       });
   }, [inputText]);
 
-  // Handler zum Kopieren des verarbeiteten Textes in die Zwischenablage
+  // Handler to copy the processed text to the clipboard
   const handleCopy = useCallback(async (): Promise<void> => {
     const result = processText(inputText);
     if (isClient) {
       try {
         await navigator.clipboard.writeText(result);
-        setNotification("Text in die Zwischenablage kopiert!");
+        setNotification("Text copied to clipboard!");
       } catch (err: unknown) {
         if (err instanceof Error) {
-          setNotification(`Kopieren fehlgeschlagen: ${err.message}`);
+          setNotification(`Copy failed: ${err.message}`);
         } else {
-          setNotification("Unbekannter Fehler beim Kopieren.");
+          setNotification("Unknown error occurred while copying.");
         }
       }
       setShowNotification(true);
@@ -131,7 +129,7 @@ const QuotePrependPage: React.FC = () => {
       }, 5000);
     } else {
       setNotification(
-        "Zwischenablagefunktion ist auf dem Server nicht verfügbar."
+        "Clipboard functionality is not available on the server."
       );
       setShowNotification(true);
       setTimeout(() => {
@@ -140,22 +138,22 @@ const QuotePrependPage: React.FC = () => {
     }
   }, [isClient, inputText]);
 
-  // Handler zum Schließen der Benachrichtigung
+  // Handler to close the notification
   const handleCloseNotification = useCallback((): void => {
     setShowNotification(false);
   }, []);
 
-  // Handler für Checkbox-Änderung
+  // Handler for checkbox change
   const handleCheckboxChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>): void => {
       const checked = e.target.checked;
       setUseTwoButtons(checked);
-      setCookie("useTwoButtons", checked.toString(), 365); // Speichern für 1 Jahr
+      setCookie("useTwoButtons", checked.toString(), 365); // Save for 1 year
     },
     []
   );
 
-  // Synchronisiertes Scrollen für Eingabe und Vorschau
+  // Synchronized scrolling for input and preview
   useEffect(() => {
     const textarea = inputTextareaRef.current;
     const preview = inputPreviewRef.current;
@@ -213,9 +211,9 @@ const QuotePrependPage: React.FC = () => {
   // Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Shortcut für "Verarbeiten und Kopieren"
-      // Für Mac: Meta (⌘) + Enter
-      // Für andere: Ctrl + Enter
+      // Shortcut for "Process and Copy"
+      // For Mac: Meta (⌘) + Enter
+      // For others: Ctrl + Enter
       if (
         (isMac && e.metaKey && e.key === "Enter") ||
         (!isMac && e.ctrlKey && e.key === "Enter")
@@ -224,14 +222,14 @@ const QuotePrependPage: React.FC = () => {
         if (useTwoButtons) {
           handleProcess();
         } else {
-          handleProcess(); // Im Ein-Knopf-Modus dasselbe wie handleProcess
+          handleProcess(); // In single-button mode same as handleProcess
         }
       }
 
-      // Zusätzlicher Shortcut für "Kopieren" bei zwei Buttons
+      // Additional shortcut for "Copy" when using two buttons
       if (useTwoButtons) {
-        // Für Mac: Command (⌘) + C
-        // Für andere: Ctrl + C
+        // For Mac: Command (⌘) + C
+        // For others: Ctrl + C
         if (
           (isMac && e.metaKey && e.key.toLowerCase() === "c") ||
           (!isMac && e.ctrlKey && e.key.toLowerCase() === "c")
@@ -270,16 +268,16 @@ const QuotePrependPage: React.FC = () => {
       <div className="w-full max-w-5xl bg-white dark:bg-gray-900 rounded-lg shadow-md p-8 flex flex-col">
         {/* Header */}
         <h1 className="text-3xl font-extrabold text-center text-blue-600 dark:text-blue-400 mb-8">
-          Zeilen mit &quot;&gt;&quot; Präfix hinzufügen
+          Add Lines with "&gt;" Prefix
         </h1>
 
-        {/* Input und Vorschau */}
+        {/* Input and Preview */}
         <div className="flex flex-col md:flex-row gap-8 flex-grow">
-          {/* Eingabe-Textarea */}
+          {/* Input Textarea */}
           <textarea
             ref={inputTextareaRef}
             className="w-full md:w-1/2 p-4 border border-blue-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-black dark:text-white resize-y overflow-auto max-h-96 min-h-40"
-            placeholder="Gib deinen Text hier ein..."
+            placeholder="Enter your text here..."
             value={inputText}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
               setInputText(e.target.value)
@@ -287,7 +285,7 @@ const QuotePrependPage: React.FC = () => {
             rows={10}
           ></textarea>
 
-          {/* Markdown Vorschau */}
+          {/* Markdown Preview */}
           <div
             ref={inputPreviewRef}
             className="w-full md:w-1/2 p-4 border border-blue-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-black dark:text-white overflow-auto max-h-96"
@@ -302,7 +300,7 @@ const QuotePrependPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Buttons Bereich */}
+        {/* Buttons Area */}
         <div className="mt-6 w-full flex flex-col items-center">
           {/* Buttons */}
           <div className="flex justify-center space-x-4 mb-2">
@@ -312,13 +310,13 @@ const QuotePrependPage: React.FC = () => {
                   className="bg-blue-600 dark:bg-blue-500 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors duration-300 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   onClick={handleProcess}
                 >
-                  Text Verarbeiten
+                  Process Text
                 </button>
                 <button
                   className="bg-green-600 dark:bg-green-500 text-white font-semibold px-6 py-3 rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors duration-300 shadow-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   onClick={handleCopy}
                 >
-                  In Zwischenablage Kopieren
+                  Copy to Clipboard
                 </button>
               </>
             ) : (
@@ -326,14 +324,14 @@ const QuotePrependPage: React.FC = () => {
                 className="bg-purple-600 dark:bg-purple-500 text-white font-semibold px-6 py-3 rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors duration-300 shadow-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                 onClick={handleProcess}
               >
-                Verarbeiten & Kopieren
+                Process & Copy
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Checkbox und Beschreibung */}
+      {/* Checkbox and Description */}
       <div className="mt-6 w-full max-w-5xl bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 flex flex-col space-y-4">
         <div className="flex items-center">
           <input
@@ -347,18 +345,17 @@ const QuotePrependPage: React.FC = () => {
             htmlFor="buttonMode"
             className="text-lg text-gray-800 dark:text-gray-200 font-medium cursor-pointer"
           >
-            Zwei Buttons anzeigen
+            Show Two Buttons
           </label>
         </div>
         <p className="text-md text-gray-600 dark:text-gray-400">
-          Aktiviere diese Option, um separate Buttons für das Verarbeiten und
-          Kopieren des Textes zu haben. Wenn deaktiviert, führt ein einzelner
-          Button beide Aktionen gleichzeitig aus. Diese Einstellung wird in
-          deinem Browser gespeichert.
+          Enable this option to have separate buttons for processing and copying
+          the text. When disabled, a single button performs both actions
+          simultaneously. This setting is saved in your browser.
         </p>
       </div>
 
-      {/* Shortcuts Anzeige */}
+      {/* Shortcuts Display */}
       <div className="mt-6 w-full max-w-5xl bg-white dark:bg-gray-900 rounded-lg shadow-md p-6">
         <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-4">
           Shortcuts
@@ -376,7 +373,7 @@ const QuotePrependPage: React.FC = () => {
                     <kbd className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
                       Enter
                     </kbd>
-                    : Text Verarbeiten
+                    : Process Text
                   </>
                 ) : (
                   <>
@@ -387,7 +384,7 @@ const QuotePrependPage: React.FC = () => {
                     <kbd className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
                       Enter
                     </kbd>
-                    : Text Verarbeiten
+                    : Process Text
                   </>
                 )}
               </li>
@@ -401,7 +398,7 @@ const QuotePrependPage: React.FC = () => {
                     <kbd className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
                       C
                     </kbd>
-                    : In Zwischenablage Kopieren
+                    : Copy to Clipboard
                   </>
                 ) : (
                   <>
@@ -412,7 +409,7 @@ const QuotePrependPage: React.FC = () => {
                     <kbd className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
                       C
                     </kbd>
-                    : In Zwischenablage Kopieren
+                    : Copy to Clipboard
                   </>
                 )}
               </li>
@@ -428,7 +425,7 @@ const QuotePrependPage: React.FC = () => {
                   <kbd className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
                     Enter
                   </kbd>
-                  : Text Verarbeiten & Kopieren
+                  : Process & Copy Text
                 </>
               ) : (
                 <>
@@ -439,7 +436,7 @@ const QuotePrependPage: React.FC = () => {
                   <kbd className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
                     Enter
                   </kbd>
-                  : Text Verarbeiten & Kopieren
+                  : Process & Copy Text
                 </>
               )}
             </li>
