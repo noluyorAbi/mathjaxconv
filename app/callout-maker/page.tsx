@@ -7,19 +7,15 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css"; // Für mathematische Formatierungen
 
-// Definiere ein benutzerdefiniertes Interface für die Code-Komponente
-interface CustomCodeProps extends React.HTMLAttributes<HTMLElement> {
-  inline?: boolean;
-  children?: React.ReactNode; // Mach Kinder optional, um mit erwarteten Typen übereinzustimmen
-  className?: string;
-}
-
 // Definiere den Typ für Markdown-Komponenten
 const markdownComponents: Components = {
   // Hier kannst du die gewünschten Markdown-Komponenten anpassen
   // Zum Beispiel:
   h1: ({ ...props }) => (
-    <h1 className="text-3xl font-bold text-primary dark:text-primary-dark my-4" {...props} />
+    <h1
+      className="text-3xl font-bold text-primary dark:text-primary-dark my-4"
+      {...props}
+    />
   ),
   // Weitere Anpassungen hier...
 };
@@ -29,7 +25,8 @@ const getCookie = (name: string): string | null => {
   const nameEQ = name + "=";
   const ca = document.cookie.split(";").map((c) => c.trim());
   for (const c of ca) {
-    if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length));
+    if (c.indexOf(nameEQ) === 0)
+      return decodeURIComponent(c.substring(nameEQ.length));
   }
   return null;
 };
@@ -41,7 +38,8 @@ const setCookie = (name: string, value: string, days: number): void => {
     date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
     expires = "; expires=" + date.toUTCString();
   }
-  document.cookie = name + "=" + encodeURIComponent(value) + expires + "; path=/";
+  document.cookie =
+    name + "=" + encodeURIComponent(value) + expires + "; path=/";
 };
 
 const QuotePrependPage: React.FC = () => {
@@ -92,7 +90,9 @@ const QuotePrependPage: React.FC = () => {
     navigator.clipboard
       .writeText(result)
       .then(() => {
-        setNotification("Text erfolgreich verarbeitet und in die Zwischenablage kopiert!");
+        setNotification(
+          "Text erfolgreich verarbeitet und in die Zwischenablage kopiert!"
+        );
         setShowNotification(true);
         setTimeout(() => {
           setShowNotification(false);
@@ -130,7 +130,9 @@ const QuotePrependPage: React.FC = () => {
         setShowNotification(false);
       }, 5000);
     } else {
-      setNotification("Zwischenablagefunktion ist auf dem Server nicht verfügbar.");
+      setNotification(
+        "Zwischenablagefunktion ist auf dem Server nicht verfügbar."
+      );
       setShowNotification(true);
       setTimeout(() => {
         setShowNotification(false);
@@ -171,9 +173,12 @@ const QuotePrependPage: React.FC = () => {
       if (!textarea || !preview) return;
       isSyncingFromTextarea = true;
 
-      const textareaScrollHeight = textarea.scrollHeight - textarea.clientHeight;
+      const textareaScrollHeight =
+        textarea.scrollHeight - textarea.clientHeight;
       const scrollPercentage =
-        textareaScrollHeight > 0 ? textarea.scrollTop / textareaScrollHeight : 0;
+        textareaScrollHeight > 0
+          ? textarea.scrollTop / textareaScrollHeight
+          : 0;
 
       const previewScrollHeight = preview.scrollHeight - preview.clientHeight;
       preview.scrollTop = scrollPercentage * previewScrollHeight;
@@ -191,7 +196,8 @@ const QuotePrependPage: React.FC = () => {
       const scrollPercentage =
         previewScrollHeight > 0 ? preview.scrollTop / previewScrollHeight : 0;
 
-      const textareaScrollHeight = textarea.scrollHeight - textarea.clientHeight;
+      const textareaScrollHeight =
+        textarea.scrollHeight - textarea.clientHeight;
       textarea.scrollTop = scrollPercentage * textareaScrollHeight;
     };
 
@@ -264,7 +270,7 @@ const QuotePrependPage: React.FC = () => {
       <div className="w-full max-w-5xl bg-white dark:bg-gray-900 rounded-lg shadow-md p-8 flex flex-col">
         {/* Header */}
         <h1 className="text-3xl font-extrabold text-center text-blue-600 dark:text-blue-400 mb-8">
-          Zeilen mit "{">"}" Präfix hinzufügen
+          Zeilen mit &quot;&gt;&quot; Präfix hinzufügen
         </h1>
 
         {/* Input und Vorschau */}
@@ -345,9 +351,10 @@ const QuotePrependPage: React.FC = () => {
           </label>
         </div>
         <p className="text-md text-gray-600 dark:text-gray-400">
-          Aktiviere diese Option, um separate Buttons für das Verarbeiten und Kopieren des
-          Textes zu haben. Wenn deaktiviert, führt ein einzelner Button beide Aktionen
-          gleichzeitig aus. Diese Einstellung wird in deinem Browser gespeichert.
+          Aktiviere diese Option, um separate Buttons für das Verarbeiten und
+          Kopieren des Textes zu haben. Wenn deaktiviert, führt ein einzelner
+          Button beide Aktionen gleichzeitig aus. Diese Einstellung wird in
+          deinem Browser gespeichert.
         </p>
       </div>
 
