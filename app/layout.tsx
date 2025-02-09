@@ -16,8 +16,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "LaTeX Environment Replacer",
-  description: "A tool for replacing LaTeX environments in your text.",
+  title: "Workflow Tools",
+  description: "Tools tailored for my workflow",
 };
 
 export default function RootLayout({

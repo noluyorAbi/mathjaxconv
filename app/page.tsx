@@ -143,7 +143,7 @@ export default function Page() {
             <ToolCard
               href="/callout-maker"
               title="Callout Maker"
-              description="Add > prefix to create markdown callouts"
+              description="Add > prefix to create markdown callouts with titles"
               icon={<Quote className="h-6 w-6" />}
               gradient="from-purple-500 to-pink-500"
             >
@@ -158,8 +158,8 @@ export default function Page() {
               icon={<Clock className="h-6 w-6" />}
               gradient="from-green-500 to-blue-500"
             >
-              Keep track of your sessions with preset timers and countdown
-              modes.
+              Keep track of your session time with a simple, intuitive
+              interface.
             </ToolCard>
 
             <ToolCard
@@ -169,8 +169,8 @@ export default function Page() {
               icon={<Timer className="h-6 w-6" />}
               gradient="from-red-500 to-orange-500"
             >
-              Enhance your concentration with auditory cues and customizable
-              sessions.
+              Enhance your concentration with the pomodoro technique and custom
+              sound cues.
             </ToolCard>
           </div>
         </main>

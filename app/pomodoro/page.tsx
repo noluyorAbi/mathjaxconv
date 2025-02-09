@@ -61,13 +61,13 @@ function UnsupportedModal({ onClose }: UnsupportedModalProps) {
       <div className="fixed inset-0 bg-black opacity-50"></div>
       {/* Modal content */}
       <div className="bg-white rounded-lg shadow-lg p-6 z-10 max-w-md w-full">
-        <h2 className="text-xl  text-black font-semibold mb-4">
+        <h2 className="text-xl text-black font-semibold mb-4">
           Picture-in-Picture Unavailable
         </h2>
         <p className="text-gray-700 mb-6">
           Your browser (Firefox) does not support Picture-in-Picture for canvas
-          capture streams. Please use a supported browser such as Edge,
-          or Safari.
+          capture streams. Please use a supported browser such as Edge or
+          Safari.
         </p>
         <div className="flex justify-end">
           <Button
@@ -360,6 +360,9 @@ export default function PomodoroPage() {
   const totalDuration =
     phase === "work" ? WORK_DURATION : selectedBreakPreset.duration;
 
+  // -------------------------------------------------------
+  // Draw the PiP canvas with updated background color (#151E2C)
+  // -------------------------------------------------------
   useEffect(() => {
     if (!canvasRef.current) return;
     const ctx = canvasRef.current.getContext("2d");
@@ -369,8 +372,8 @@ export default function PomodoroPage() {
     canvasRef.current.width = width;
     canvasRef.current.height = height;
 
-    // Clear canvas.
-    ctx.fillStyle = "#000";
+    // Clear canvas with the specified background color.
+    ctx.fillStyle = "#2E3440";
     ctx.fillRect(0, 0, width, height);
 
     // Draw timer text.
@@ -403,7 +406,6 @@ export default function PomodoroPage() {
     // Detect Firefox.
     const isFirefox = navigator.userAgent.toLowerCase().includes("firefox");
     if (isFirefox) {
-      // Instead of an alert, show a custom modal.
       setShowUnsupportedModal(true);
       return;
     }

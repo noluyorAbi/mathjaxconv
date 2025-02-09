@@ -171,8 +171,8 @@ export default function StopwatchPage() {
     canvasRef.current.width = width;
     canvasRef.current.height = height;
 
-    // Clear the canvas
-    ctx.fillStyle = "#000";
+    // Clear the canvas with the specified background color
+    ctx.fillStyle = "#2E3440";
     ctx.fillRect(0, 0, width, height);
 
     // Draw the current time (centered)
