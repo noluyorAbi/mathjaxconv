@@ -26,7 +26,6 @@ const BREAK_PRESETS: BreakPreset[] = [
 // Utility Function
 // -------------------------------------------------------
 
-// Formats seconds into "hh:mm:ss"
 function formatTime(seconds: number): string {
   const hours = Math.floor(seconds / 3600)
     .toString()
@@ -49,7 +48,7 @@ type TimerDisplayProps = {
 };
 
 function TimerDisplay({ phase, time, totalDuration }: TimerDisplayProps) {
-  // Calculate progress as a percentage (0 = just started, 100 = completed)
+  // Calculate progress (0% when just started, 100% when complete)
   const progress = 100 - Math.floor((time / totalDuration) * 100);
 
   return (
@@ -61,7 +60,6 @@ function TimerDisplay({ phase, time, totalDuration }: TimerDisplayProps) {
         {phase === "work" ? "Deep Work Session" : "Break Session"}
       </div>
       <div className="mt-6 w-full max-w-md mx-auto">
-        {/* Styled progress bar with a dark background */}
         <Progress value={progress} className="h-4 rounded-full bg-gray-700" />
       </div>
     </div>
@@ -140,16 +138,13 @@ function BreakPresetSelector({
 }
 
 // -------------------------------------------------------
-// Main Pomodoro Page Component
+// Main Pomodoro Page Component with Picture-in-Picture Option
 // -------------------------------------------------------
 
 export default function PomodoroPage() {
-  // Phase state: "work" or "break"
   const [phase, setPhase] = useState<Phase>("work");
-  // Timer (in seconds) for the current phase
   const [time, setTime] = useState<number>(WORK_DURATION);
   const [isRunning, setIsRunning] = useState<boolean>(false);
-  // Selected break preset (work duration is fixed)
   const [selectedBreakPreset, setSelectedBreakPreset] = useState<BreakPreset>(
     BREAK_PRESETS[0]
   );
@@ -159,13 +154,25 @@ export default function PomodoroPage() {
   const focusSoundRef = useRef<HTMLAudioElement | null>(null);
   const breakSoundRef = useRef<HTMLAudioElement | null>(null);
 
+  // Refs for Picture-in-Picture elements.
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
   // Initialize audio objects.
   useEffect(() => {
     focusSoundRef.current = new Audio("/sounds/focus-start.mp3");
     breakSoundRef.current = new Audio("/sounds/break-start.mp3");
   }, []);
 
-  // Whenever the phase or selected break preset changes, reset the timer.
+  // Set video srcObject once from the canvas.
+  useEffect(() => {
+    if (canvasRef.current && videoRef.current && !videoRef.current.srcObject) {
+      const stream = canvasRef.current.captureStream();
+      videoRef.current.srcObject = stream;
+    }
+  }, []);
+
+  // Reset timer when phase or break preset changes.
   useEffect(() => {
     if (phase === "work") {
       setTime(WORK_DURATION);
@@ -183,7 +190,6 @@ export default function PomodoroPage() {
         if (prevTime <= 1) {
           clearInterval(intervalRef.current!);
           setIsRunning(false);
-          // Automatically transition between phases with sound cues.
           if (phase === "work") {
             breakSoundRef.current?.play();
             setPhase("break");
@@ -201,6 +207,66 @@ export default function PomodoroPage() {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [isRunning, phase]);
+
+  // Total duration for the current phase.
+  const totalDuration =
+    phase === "work" ? WORK_DURATION : selectedBreakPreset.duration;
+
+  // Update hidden canvas with current time and progress bar for PiP.
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext("2d");
+    if (!ctx) return;
+    const width = 300;
+    const height = 150;
+    canvasRef.current.width = width;
+    canvasRef.current.height = height;
+
+    // Clear canvas.
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, width, height);
+
+    // Draw timer text.
+    ctx.font = "48px sans-serif";
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(formatTime(time), width / 2, height / 2 - 20);
+
+    // Calculate progress percentage.
+    const progressPercentage = 100 - Math.floor((time / totalDuration) * 100);
+
+    // Draw progress bar background.
+    const barWidth = width - 40;
+    const barHeight = 20;
+    const barX = 20;
+    const barY = height - 40;
+    ctx.fillStyle = "#444";
+    ctx.fillRect(barX, barY, barWidth, barHeight);
+
+    // Draw progress bar fill.
+    const fillWidth = (progressPercentage / 100) * barWidth;
+    ctx.fillStyle = "#0f0"; // green fill; adjust as needed
+    ctx.fillRect(barX, barY, fillWidth, barHeight);
+
+    // Optionally, draw a border around the progress bar.
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(barX, barY, barWidth, barHeight);
+  }, [time, totalDuration]);
+
+  // Picture-in-Picture handler.
+  const handlePictureInPicture = async () => {
+    if (!videoRef.current) return;
+    try {
+      await videoRef.current.play();
+      await videoRef.current.requestPictureInPicture();
+    } catch (error: any) {
+      if (error.name !== "AbortError") {
+        console.error("Error starting Picture-in-Picture:", error);
+      }
+    }
+  };
 
   // -------------------------------------------------------
   // Event Handlers
@@ -239,14 +305,6 @@ export default function PomodoroPage() {
       ? "bg-gradient-to-br from-purple-900 to-black"
       : "bg-gradient-to-br from-red-900 to-black";
 
-  // Total duration for the current phase.
-  const totalDuration =
-    phase === "work" ? WORK_DURATION : selectedBreakPreset.duration;
-
-  // -------------------------------------------------------
-  // Render
-  // -------------------------------------------------------
-
   return (
     <div
       className={`min-h-screen ${backgroundClass} flex flex-col items-center justify-center p-4`}
@@ -265,6 +323,19 @@ export default function PomodoroPage() {
           onSelect={handleBreakPresetSelect}
         />
       )}
+      <div className="flex justify-center mt-4">
+        <Button
+          onClick={handlePictureInPicture}
+          className="bg-indigo-600 hover:bg-indigo-700"
+        >
+          Picture-in-Picture
+        </Button>
+      </div>
+      {/* Hidden elements for Picture-in-Picture */}
+      <div style={{ display: "none" }}>
+        <canvas ref={canvasRef} />
+        <video ref={videoRef} style={{ display: "none" }} />
+      </div>
     </div>
   );
 }
