@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-// (We are no longer using the imported Progress component for the webapp display)
+import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 
 // -------------------------------------------------------
 // TEST MODE FLAG
@@ -76,7 +76,6 @@ function TimerDisplay({ phase, time, totalDuration }: TimerDisplayProps) {
             style={{ width: `${progress}%` }}
           />
         </div>
-        {/* (Optional debug display) */}
         <div className="mt-1 text-white text-sm">{progress.toFixed(0)}%</div>
       </div>
     </div>
@@ -154,6 +153,109 @@ function BreakPresetSelector({
   );
 }
 
+type SoundSelectorProps = {
+  selectedSound: string;
+  onSelect: (sound: string) => void;
+};
+
+/**
+ * Custom sound selector that displays the current selection as a button.
+ * When clicked, it opens a dropdown list of sound options.
+ * Each option displays the sound name and a play button to preview the sound.
+ */
+function SoundSelector({ selectedSound, onSelect }: SoundSelectorProps) {
+  const SOUND_OPTIONS = [
+    { label: "Bell Dinging", value: "/bell-dinging-jam-fx-2-2-00-05.mp3" },
+    { label: "Sonar Pings", value: "/sonar-pings-tomas-herudek-1-00-40.mp3" },
+  ];
+
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleDropdown = () => setIsOpen((prev) => !prev);
+
+  // When a sound option is clicked, select it and close the dropdown.
+  const handleOptionClick = (option: { label: string; value: string }) => {
+    onSelect(option.value);
+    setIsOpen(false);
+  };
+
+  // Play the preview for a given option.
+  // Stop propagation so clicking the play button does not close the dropdown.
+  const handlePlayPreview = (
+    option: { label: string; value: string },
+    e: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    e.stopPropagation();
+    const audio = new Audio(option.value);
+    audio.play();
+
+    // If the option is Sonar Pings, cap the preview at 9 seconds.
+    if (option.value === "/sonar-pings-tomas-herudek-1-00-40.mp3") {
+      let playDuration = 9000; // Play for 9 seconds
+      let fadeDuration = 3000; // Fade out over 3 seconds
+      let fadeSteps = 20; // Number of steps for fading
+      let stepTime = fadeDuration / fadeSteps;
+
+      setTimeout(() => {
+        let fadeOut = setInterval(() => {
+          if (audio.volume > 0.05) {
+            audio.volume -= 0.05; // Gradually decrease volume
+          } else {
+            clearInterval(fadeOut);
+            audio.pause();
+            audio.currentTime = 0;
+            audio.volume = 1; // Reset volume for next play
+          }
+        }, stepTime);
+      }, playDuration);
+    }
+  };
+
+  const currentOption =
+    SOUND_OPTIONS.find((opt) => opt.value === selectedSound) ||
+    SOUND_OPTIONS[0];
+
+  return (
+    <div className="relative inline-block text-left mt-4">
+      <div>
+        <button
+          type="button"
+          onClick={toggleDropdown}
+          className="inline-flex justify-between w-56 rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-gray-800 text-sm font-medium text-white hover:bg-gray-700 focus:outline-none"
+        >
+          {currentOption.label}
+          {isOpen ? (
+            <FiChevronUp className="ml-2 text-white" />
+          ) : (
+            <FiChevronDown className="ml-2 text-white" />
+          )}
+        </button>
+      </div>
+      {isOpen && (
+        <div className="origin-top-right absolute mt-2 w-56 rounded-md shadow-lg bg-gray-800 ring-1 ring-black ring-opacity-5 z-10">
+          <div className="py-1">
+            {SOUND_OPTIONS.map((option) => (
+              <div
+                key={option.value}
+                onClick={() => handleOptionClick(option)}
+                className="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-gray-700"
+              >
+                <span className="text-white">{option.label}</span>
+                <button
+                  onClick={(e) => handlePlayPreview(option, e)}
+                  className="text-blue-400 hover:text-blue-500 focus:outline-none"
+                >
+                  Test Audio
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // -------------------------------------------------------
 // Main Pomodoro Page Component with Picture-in-Picture Option
 // -------------------------------------------------------
@@ -165,6 +267,9 @@ export default function PomodoroPage() {
   const [selectedBreakPreset, setSelectedBreakPreset] = useState<BreakPreset>(
     BREAK_PRESETS[0]
   );
+  const [selectedSound, setSelectedSound] = useState<string>(
+    "/bell-dinging-jam-fx-2-2-00-05.mp3"
+  );
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Audio refs for sound cues.
@@ -175,12 +280,11 @@ export default function PomodoroPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Initialize audio objects.
+  // Initialize or update audio objects whenever the selected sound changes.
   useEffect(() => {
-    // Use root-relative paths for files in the public folder.
-    focusSoundRef.current = new Audio("/sonar-pings-tomas-herudek-1-00-40.mp3");
-    breakSoundRef.current = new Audio("/sonar-pings-tomas-herudek-1-00-40.mp3");
-  }, []);
+    focusSoundRef.current = new Audio(selectedSound);
+    breakSoundRef.current = new Audio(selectedSound);
+  }, [selectedSound]);
 
   // Set video srcObject once from the canvas.
   useEffect(() => {
@@ -341,6 +445,10 @@ export default function PomodoroPage() {
           onSelect={handleBreakPresetSelect}
         />
       )}
+      <SoundSelector
+        selectedSound={selectedSound}
+        onSelect={setSelectedSound}
+      />
       <div className="flex justify-center mt-4">
         <Button
           onClick={handlePictureInPicture}

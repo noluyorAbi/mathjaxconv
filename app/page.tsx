@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Particles from "react-tsparticles";
-import type { Engine } from "tsparticles-engine";
+import type { Engine, RecursivePartial, IOptions } from "tsparticles-engine";
 import { loadSlim } from "tsparticles-slim";
 import {
   Card,
@@ -20,7 +20,6 @@ import {
   Clock,
   Timer,
 } from "lucide-react";
-import { on } from "events";
 
 export default function Page() {
   // Initialize particles engine using the slim build
@@ -75,7 +74,7 @@ export default function Page() {
       size: { value: { min: 1, max: 8 } },
     },
     detectRetina: true,
-  };
+  } as unknown as RecursivePartial<IOptions>;
 
   return (
     <>
