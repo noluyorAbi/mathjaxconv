@@ -8,7 +8,7 @@ import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 // TEST MODE FLAG
 // -------------------------------------------------------
 
-// Set this to true for testing (work = 10 sec, break = 5 sec)
+// Test mode is enabled only in non-production environments.
 const TEST_MODE = process.env.NODE_ENV !== "production";
 
 // -------------------------------------------------------
@@ -44,6 +44,42 @@ function formatTime(seconds: number): string {
     .padStart(2, "0");
   const secs = (seconds % 60).toString().padStart(2, "0");
   return `${hours}:${minutes}:${secs}`;
+}
+
+// -------------------------------------------------------
+// Modal Component for Unsupported Browsers
+// -------------------------------------------------------
+
+type UnsupportedModalProps = {
+  onClose: () => void;
+};
+
+function UnsupportedModal({ onClose }: UnsupportedModalProps) {
+  return (
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      {/* Overlay */}
+      <div className="fixed inset-0 bg-black opacity-50"></div>
+      {/* Modal content */}
+      <div className="bg-white rounded-lg shadow-lg p-6 z-10 max-w-md w-full">
+        <h2 className="text-xl  text-black font-semibold mb-4">
+          Picture-in-Picture Unavailable
+        </h2>
+        <p className="text-gray-700 mb-6">
+          Your browser (Firefox) does not support Picture-in-Picture for canvas
+          capture streams. Please use a supported browser such as Edge,
+          or Safari.
+        </p>
+        <div className="flex justify-end">
+          <Button
+            onClick={onClose}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            Close
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // -------------------------------------------------------
@@ -161,7 +197,6 @@ type SoundSelectorProps = {
 /**
  * Custom sound selector that displays the current selection as a button.
  * When clicked, it opens a dropdown list of sound options.
- * Each option displays the sound name and a play button to preview the sound.
  */
 function SoundSelector({ selectedSound, onSelect }: SoundSelectorProps) {
   const SOUND_OPTIONS = [
@@ -180,7 +215,6 @@ function SoundSelector({ selectedSound, onSelect }: SoundSelectorProps) {
   };
 
   // Play the preview for a given option.
-  // Stop propagation so clicking the play button does not close the dropdown.
   const handlePlayPreview = (
     option: { label: string; value: string },
     e: React.MouseEvent<HTMLButtonElement>
@@ -191,20 +225,20 @@ function SoundSelector({ selectedSound, onSelect }: SoundSelectorProps) {
 
     // If the option is Sonar Pings, cap the preview at 9 seconds.
     if (option.value === "/sonar-pings-tomas-herudek-1-00-40.mp3") {
-      const playDuration = 9000; // Play for 9 seconds
-      const fadeDuration = 3000; // Fade out over 3 seconds
-      const fadeSteps = 20; // Number of steps for fading
+      const playDuration = 9000; // 9 seconds
+      const fadeDuration = 3000; // 3 seconds fade-out
+      const fadeSteps = 20;
       const stepTime = fadeDuration / fadeSteps;
 
       setTimeout(() => {
         const fadeOut = setInterval(() => {
           if (audio.volume > 0.05) {
-            audio.volume -= 0.05; // Gradually decrease volume
+            audio.volume -= 0.05;
           } else {
             clearInterval(fadeOut);
             audio.pause();
             audio.currentTime = 0;
-            audio.volume = 1; // Reset volume for next play
+            audio.volume = 1;
           }
         }, stepTime);
       }, playDuration);
@@ -270,6 +304,7 @@ export default function PomodoroPage() {
   const [selectedSound, setSelectedSound] = useState<string>(
     "/bell-dinging-jam-fx-2-2-00-05.mp3"
   );
+  const [showUnsupportedModal, setShowUnsupportedModal] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Audio refs for sound cues.
@@ -280,13 +315,11 @@ export default function PomodoroPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Initialize or update audio objects whenever the selected sound changes.
   useEffect(() => {
     focusSoundRef.current = new Audio(selectedSound);
     breakSoundRef.current = new Audio(selectedSound);
   }, [selectedSound]);
 
-  // Set video srcObject once from the canvas.
   useEffect(() => {
     if (canvasRef.current && videoRef.current && !videoRef.current.srcObject) {
       const stream = canvasRef.current.captureStream();
@@ -294,16 +327,10 @@ export default function PomodoroPage() {
     }
   }, []);
 
-  // Reset timer when phase or break preset changes.
   useEffect(() => {
-    if (phase === "work") {
-      setTime(WORK_DURATION);
-    } else {
-      setTime(selectedBreakPreset.duration);
-    }
+    setTime(phase === "work" ? WORK_DURATION : selectedBreakPreset.duration);
   }, [phase, selectedBreakPreset]);
 
-  // Timer tick and automatic phase transition.
   useEffect(() => {
     if (!isRunning) return;
 
@@ -330,11 +357,9 @@ export default function PomodoroPage() {
     };
   }, [isRunning, phase]);
 
-  // Total duration for the current phase.
   const totalDuration =
     phase === "work" ? WORK_DURATION : selectedBreakPreset.duration;
 
-  // Update hidden canvas with current time and progress bar for PiP.
   useEffect(() => {
     if (!canvasRef.current) return;
     const ctx = canvasRef.current.getContext("2d");
@@ -355,44 +380,55 @@ export default function PomodoroPage() {
     ctx.textBaseline = "middle";
     ctx.fillText(formatTime(time), width / 2, height / 2 - 20);
 
-    // Calculate progress percentage.
+    // Draw progress bar.
     const progressPercentage = ((totalDuration - time) / totalDuration) * 100;
-
-    // Draw progress bar background.
     const barWidth = width - 40;
     const barHeight = 20;
     const barX = 20;
     const barY = height - 40;
     ctx.fillStyle = "#444";
     ctx.fillRect(barX, barY, barWidth, barHeight);
-
-    // Draw progress bar fill.
     const fillWidth = (progressPercentage / 100) * barWidth;
     ctx.fillStyle = "#0f0";
     ctx.fillRect(barX, barY, fillWidth, barHeight);
-
-    // Draw border around the progress bar.
     ctx.strokeStyle = "#fff";
     ctx.lineWidth = 2;
     ctx.strokeRect(barX, barY, barWidth, barHeight);
   }, [time, totalDuration]);
 
   // Picture-in-Picture handler.
-  const handlePictureInPicture = async () => {
+  const handlePictureInPicture = () => {
     if (!videoRef.current) return;
+
+    // Detect Firefox.
+    const isFirefox = navigator.userAgent.toLowerCase().includes("firefox");
+    if (isFirefox) {
+      // Instead of an alert, show a custom modal.
+      setShowUnsupportedModal(true);
+      return;
+    }
+
+    // Ensure the video is playing.
+    videoRef.current
+      .play()
+      .catch((err) => console.error("Video play error:", err));
+
     try {
-      await videoRef.current.play();
-      await videoRef.current.requestPictureInPicture();
-    } catch (error: unknown) {
-      if (error instanceof Error && error.name !== "AbortError") {
-        console.error("Error starting Picture-in-Picture:", error);
+      if (videoRef.current.requestPictureInPicture) {
+        videoRef.current
+          .requestPictureInPicture()
+          .catch((err) => console.error("PiP error:", err));
+      } else if ((videoRef.current as any).webkitSetPresentationMode) {
+        (videoRef.current as any).webkitSetPresentationMode(
+          "picture-in-picture"
+        );
+      } else {
+        console.warn("Picture-in-Picture is not supported by this browser.");
       }
+    } catch (error) {
+      console.error("Error requesting PiP:", error);
     }
   };
-
-  // -------------------------------------------------------
-  // Event Handlers
-  // -------------------------------------------------------
 
   const handleStart = () => {
     if (isRunning) return;
@@ -407,11 +443,7 @@ export default function PomodoroPage() {
   const handleReset = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setIsRunning(false);
-    if (phase === "work") {
-      setTime(WORK_DURATION);
-    } else {
-      setTime(selectedBreakPreset.duration);
-    }
+    setTime(phase === "work" ? WORK_DURATION : selectedBreakPreset.duration);
   };
 
   const handleBreakPresetSelect = (preset: BreakPreset) => {
@@ -421,7 +453,6 @@ export default function PomodoroPage() {
     setSelectedBreakPreset(preset);
   };
 
-  // Use darker, modern background gradients.
   const backgroundClass =
     phase === "work"
       ? "bg-gradient-to-br from-purple-900 to-black"
@@ -457,11 +488,28 @@ export default function PomodoroPage() {
           Picture-in-Picture
         </Button>
       </div>
-      {/* Hidden elements for Picture-in-Picture */}
+      {/* Hidden canvas for PiP content */}
       <div style={{ display: "none" }}>
         <canvas ref={canvasRef} />
-        <video ref={videoRef} style={{ display: "none" }} />
       </div>
+      {/* Video element minimally visible for PiP */}
+      <video
+        ref={videoRef}
+        playsInline
+        style={{
+          width: "1px",
+          height: "1px",
+          opacity: 0.01,
+          position: "fixed",
+          bottom: 0,
+          right: 0,
+          pointerEvents: "none",
+        }}
+      />
+      {/* Render modal if unsupported */}
+      {showUnsupportedModal && (
+        <UnsupportedModal onClose={() => setShowUnsupportedModal(false)} />
+      )}
     </div>
   );
 }
