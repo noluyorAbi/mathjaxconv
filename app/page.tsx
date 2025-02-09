@@ -67,7 +67,7 @@ export default function Page() {
         outModes: { default: "out" },
       },
       number: {
-        density: { enable: true, area: 00 },
+        density: { enable: true, area: 800 },
         value: 250,
       },
       opacity: { value: 0.1 },
