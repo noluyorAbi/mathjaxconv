@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+// (We are no longer using the imported Progress component for the webapp display)
 
 // -------------------------------------------------------
 // TEST MODE FLAG
@@ -69,11 +69,15 @@ function TimerDisplay({ phase, time, totalDuration }: TimerDisplayProps) {
         {phase === "work" ? "Deep Work Session" : "Break Session"}
       </div>
       <div className="mt-6 w-full max-w-md mx-auto">
-        {/* Ensure the progress bar container fills the width */}
-        <Progress
-          value={progress}
-          className="h-4 w-full rounded-full bg-gray-700"
-        />
+        {/* Custom progress bar */}
+        <div className="relative h-4 w-full bg-gray-700 rounded-full">
+          <div
+            className="absolute left-0 top-0 h-full bg-green-500 rounded-full transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        {/* (Optional debug display) */}
+        <div className="mt-1 text-white text-sm">{progress.toFixed(0)}%</div>
       </div>
     </div>
   );
@@ -173,7 +177,7 @@ export default function PomodoroPage() {
 
   // Initialize audio objects.
   useEffect(() => {
-    // Note: Use a root-relative path for files in your public folder.
+    // Use root-relative paths for files in the public folder.
     focusSoundRef.current = new Audio("/sonar-pings-tomas-herudek-1-00-40.mp3");
     breakSoundRef.current = new Audio("/sonar-pings-tomas-herudek-1-00-40.mp3");
   }, []);
