@@ -246,10 +246,10 @@ export default function PomodoroPage() {
 
     // Draw progress bar fill.
     const fillWidth = (progressPercentage / 100) * barWidth;
-    ctx.fillStyle = "#0f0"; // green fill; adjust as needed
+    ctx.fillStyle = "#0f0";
     ctx.fillRect(barX, barY, fillWidth, barHeight);
 
-    // Optionally, draw a border around the progress bar.
+    // Draw border around the progress bar.
     ctx.strokeStyle = "#fff";
     ctx.lineWidth = 2;
     ctx.strokeRect(barX, barY, barWidth, barHeight);
@@ -261,8 +261,8 @@ export default function PomodoroPage() {
     try {
       await videoRef.current.play();
       await videoRef.current.requestPictureInPicture();
-    } catch (error: any) {
-      if (error.name !== "AbortError") {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name !== "AbortError") {
         console.error("Error starting Picture-in-Picture:", error);
       }
     }
