@@ -191,13 +191,13 @@ function SoundSelector({ selectedSound, onSelect }: SoundSelectorProps) {
 
     // If the option is Sonar Pings, cap the preview at 9 seconds.
     if (option.value === "/sonar-pings-tomas-herudek-1-00-40.mp3") {
-      let playDuration = 9000; // Play for 9 seconds
-      let fadeDuration = 3000; // Fade out over 3 seconds
-      let fadeSteps = 20; // Number of steps for fading
-      let stepTime = fadeDuration / fadeSteps;
+      const playDuration = 9000; // Play for 9 seconds
+      const fadeDuration = 3000; // Fade out over 3 seconds
+      const fadeSteps = 20; // Number of steps for fading
+      const stepTime = fadeDuration / fadeSteps;
 
       setTimeout(() => {
-        let fadeOut = setInterval(() => {
+        const fadeOut = setInterval(() => {
           if (audio.volume > 0.05) {
             audio.volume -= 0.05; // Gradually decrease volume
           } else {
