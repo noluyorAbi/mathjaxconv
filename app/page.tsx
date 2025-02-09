@@ -12,13 +12,15 @@ import {
   ArrowRight,
   Quote,
   RemoveFormatting,
+  Clock,
+  Timer,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Page() {
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Animated background */}
+      {/* Animated Background */}
       <div className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 to-black"></div>
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIgLz48L3N2Zz4=')] opacity-10"></div>
@@ -36,7 +38,7 @@ export default function Page() {
             Developer Tools
           </h1>
           <p className="text-xl md:text-2xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
-            Streamline your workflow with our modern development tools
+            Streamline your workflow with modern development tools
           </p>
         </motion.div>
 
@@ -45,12 +47,12 @@ export default function Page() {
           <ToolCard
             href="/mathjaxconv"
             title="MathJax Converter"
-            description="Convert $$ $$ markdown inline LaTeX to $$ format"
+            description="Convert \( &nbsp; \) markdown inline LaTeX to $$ format"
             icon={<RemoveFormatting className="h-6 w-6" />}
             gradient="from-blue-500 to-cyan-500"
           >
             Transform your LaTeX equations seamlessly for better compatibility
-            across platforms
+            across platforms.
           </ToolCard>
 
           <ToolCard
@@ -60,7 +62,28 @@ export default function Page() {
             icon={<Quote className="h-6 w-6" />}
             gradient="from-purple-500 to-pink-500"
           >
-            Create beautiful markdown callouts with automatic prefix generation
+            Create beautiful markdown callouts with automatic prefix generation.
+          </ToolCard>
+
+          <ToolCard
+            href="/stopwatch"
+            title="Stopwatch Tool"
+            description="Monitor your learning sessions with a customizable stopwatch."
+            icon={<Clock className="h-6 w-6" />}
+            gradient="from-green-500 to-blue-500"
+          >
+            Keep track of your sessions with preset timers and countdown modes.
+          </ToolCard>
+
+          <ToolCard
+            href="/pomodoro"
+            title="Pomodoro Timer"
+            description="Optimized for long, focused study sessions with sound cues."
+            icon={<Timer className="h-6 w-6" />}
+            gradient="from-red-500 to-orange-500"
+          >
+            Enhance your concentration with auditory cues and customizable
+            sessions.
           </ToolCard>
         </div>
       </main>
