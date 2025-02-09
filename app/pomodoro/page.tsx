@@ -9,7 +9,7 @@ import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 // -------------------------------------------------------
 
 // Set this to true for testing (work = 10 sec, break = 5 sec)
-const TEST_MODE = true;
+const TEST_MODE = process.env.NODE_ENV !== "production";
 
 // -------------------------------------------------------
 // Types & Constants
