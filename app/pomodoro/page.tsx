@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
 // -------------------------------------------------------
+// TEST MODE FLAG
+// -------------------------------------------------------
+
+// Set this to true for testing (work = 10 sec, break = 5 sec)
+const TEST_MODE = true;
+
+// -------------------------------------------------------
 // Types & Constants
 // -------------------------------------------------------
 
@@ -15,12 +22,14 @@ interface BreakPreset {
   duration: number; // in seconds
 }
 
-const WORK_DURATION = 90 * 60; // 1.5 hrs deep work
+const WORK_DURATION = TEST_MODE ? 10 : 90 * 60; // 10 sec in test mode, otherwise 1.5 hrs
 
-const BREAK_PRESETS: BreakPreset[] = [
-  { label: "Quick Break (10 min)", duration: 10 * 60 },
-  { label: "Extended Break (30 min)", duration: 30 * 60 },
-];
+const BREAK_PRESETS: BreakPreset[] = TEST_MODE
+  ? [{ label: "Test Break (5 sec)", duration: 5 }]
+  : [
+      { label: "Quick Break (10 min)", duration: 10 * 60 },
+      { label: "Extended Break (30 min)", duration: 30 * 60 },
+    ];
 
 // -------------------------------------------------------
 // Utility Function
@@ -48,8 +57,8 @@ type TimerDisplayProps = {
 };
 
 function TimerDisplay({ phase, time, totalDuration }: TimerDisplayProps) {
-  // Calculate progress (0% when just started, 100% when complete)
-  const progress = 100 - Math.floor((time / totalDuration) * 100);
+  // Calculate progress as the percentage of elapsed time.
+  const progress = ((totalDuration - time) / totalDuration) * 100;
 
   return (
     <div className="w-full max-w-md mx-auto mb-12 text-center">
@@ -60,7 +69,11 @@ function TimerDisplay({ phase, time, totalDuration }: TimerDisplayProps) {
         {phase === "work" ? "Deep Work Session" : "Break Session"}
       </div>
       <div className="mt-6 w-full max-w-md mx-auto">
-        <Progress value={progress} className="h-4 rounded-full bg-gray-700" />
+        {/* Ensure the progress bar container fills the width */}
+        <Progress
+          value={progress}
+          className="h-4 w-full rounded-full bg-gray-700"
+        />
       </div>
     </div>
   );
@@ -160,8 +173,9 @@ export default function PomodoroPage() {
 
   // Initialize audio objects.
   useEffect(() => {
-    focusSoundRef.current = new Audio("/sounds/focus-start.mp3");
-    breakSoundRef.current = new Audio("/sounds/break-start.mp3");
+    // Note: Use a root-relative path for files in your public folder.
+    focusSoundRef.current = new Audio("/sonar-pings-tomas-herudek-1-00-40.mp3");
+    breakSoundRef.current = new Audio("/sonar-pings-tomas-herudek-1-00-40.mp3");
   }, []);
 
   // Set video srcObject once from the canvas.
@@ -234,7 +248,7 @@ export default function PomodoroPage() {
     ctx.fillText(formatTime(time), width / 2, height / 2 - 20);
 
     // Calculate progress percentage.
-    const progressPercentage = 100 - Math.floor((time / totalDuration) * 100);
+    const progressPercentage = ((totalDuration - time) / totalDuration) * 100;
 
     // Draw progress bar background.
     const barWidth = width - 40;
