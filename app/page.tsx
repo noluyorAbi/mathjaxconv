@@ -19,6 +19,7 @@ import {
   RemoveFormatting,
   Clock,
   Timer,
+  Monitor, // New icon for the Black-White Screen tool
 } from "lucide-react";
 
 export default function Page() {
@@ -28,10 +29,10 @@ export default function Page() {
   }, []);
 
   const particlesLoaded = useCallback(async () => {
-    // Optional: You can log the container or run code after particles load
+    // Optional: Code to run after particles are loaded
   }, []);
 
-  // Particle configuration with fewer, softer particles for a subtle effect
+  // Particle configuration with a subtle effect
   const particlesOptions = {
     background: {
       color: { value: "transparent" },
@@ -98,10 +99,10 @@ export default function Page() {
       `}</style>
 
       <div className="relative min-h-screen overflow-hidden text-white">
-        {/* Dark, Subtle Animated Gradient Background */}
+        {/* Dark, subtle animated gradient background */}
         <div className="absolute inset-0 z-0 dark-gradient-bg" />
 
-        {/* Particle Overlay */}
+        {/* Particle overlay */}
         <Particles
           id="tsparticles"
           init={particlesInit}
@@ -110,16 +111,16 @@ export default function Page() {
           className="absolute inset-0 z-10"
         />
 
-        {/* Main Content */}
+        {/* Main content */}
         <main className="relative z-20 select-none container mx-auto px-4 py-16">
-          {/* Hero Section with ultra-smooth fade-in */}
+          {/* Hero Section with smooth fade-in */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, ease: "easeOut" }}
             className="text-center mb-20"
           >
-            <h1 className="text-5xl  md:text-7xl font-bold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
               Developer Tools
             </h1>
             <p className="text-xl md:text-2xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
@@ -158,8 +159,7 @@ export default function Page() {
               icon={<Clock className="h-6 w-6" />}
               gradient="from-green-500 to-blue-500"
             >
-              Keep track of your session time with a simple, intuitive
-              interface.
+              Keep track of your session time with a simple, intuitive interface.
             </ToolCard>
 
             <ToolCard
@@ -169,8 +169,19 @@ export default function Page() {
               icon={<Timer className="h-6 w-6" />}
               gradient="from-red-500 to-orange-500"
             >
-              Enhance your concentration with the pomodoro technique and custom
+              Enhance your concentration with the Pomodoro technique and custom
               sound cues.
+            </ToolCard>
+
+            {/* New Card: Black-White Screen */}
+            <ToolCard
+              href="/black-whitescreen"
+              title="Black-White Screen"
+              description="Displays a simple black or white screen."
+              icon={<Monitor className="h-6 w-6" />}
+              gradient="from-gray-700 to-gray-900"
+            >
+              Perfect for a minimal distraction environment.
             </ToolCard>
           </div>
         </main>
@@ -221,9 +232,8 @@ function ToolCard({
           </CardHeader>
           <CardContent className="space-y-4 flex-grow flex flex-col justify-between">
             <p className="text-gray-500">{children}</p>
-            <div
-              className={`flex items-center font-medium text-white group-hover:bg-clip-text group-hover:text-transparent group-hover:bg-gradient-to-r ${gradient}`}
-            >
+            {/* "Try it now" now stays white on hover */}
+            <div className="flex items-center font-medium text-white">
               Try it now
               <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </div>
