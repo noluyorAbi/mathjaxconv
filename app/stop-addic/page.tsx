@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
@@ -10,6 +11,35 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabaseClient";
 
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  PointElement,
+  LineElement,
+  ArcElement,
+} from "chart.js";
+import { Bar, Line, Pie } from "react-chartjs-2";
+
+// Register Chart.js components (required for react-chartjs-2)
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  PointElement,
+  LineElement,
+  ArcElement
+);
+
+type Status = "success" | "fail";
+
 // Helper: Generate all days in a given month
 const getDaysInMonth = (year: number, month: number): Date[] => {
   const date = new Date(year, month, 1);
@@ -20,8 +50,6 @@ const getDaysInMonth = (year: number, month: number): Date[] => {
   }
   return days;
 };
-
-type Status = "success" | "fail";
 
 // Helper: Compute streaks from the logs
 const computeStreaks = (logs: {
@@ -51,6 +79,7 @@ const computeStreaks = (logs: {
     prevDate = date;
   }
 
+  // Calculate current streak by going backward from today
   let current = 0;
   let d = new Date();
   for (let i = 0; i < 365; i++) {
@@ -69,16 +98,26 @@ export default function Page() {
   const [logs, setLogs] = useState<{ [key: string]: Status }>({});
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
+  // State for displayed month/year
+  const [displayYear, setDisplayYear] = useState<number>(
+    new Date().getFullYear()
+  );
+  const [displayMonth, setDisplayMonth] = useState<number>(
+    new Date().getMonth()
+  );
+
   // Fetch logs from Supabase on mount
   useEffect(() => {
     async function fetchLogs() {
       const { data, error } = await supabase
         .from("user_logs")
         .select("date, status");
+
       if (error) {
         console.error("Error fetching logs:", error);
         return;
       }
+
       const logsData: { [key: string]: Status } = {};
       data?.forEach((entry: { date: string; status: string }) => {
         logsData[entry.date] = entry.status as Status;
@@ -88,14 +127,36 @@ export default function Page() {
     fetchLogs();
   }, []);
 
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  const days = getDaysInMonth(year, month);
-  const firstDayWeekday = new Date(year, month, 1).getDay();
+  // Generate days for the currently displayed month/year
+  const displayedDays = getDaysInMonth(displayYear, displayMonth);
+  const firstDayWeekday = new Date(displayYear, displayMonth, 1).getDay();
   const blanks = Array(firstDayWeekday).fill(null);
-  const calendarDays = [...blanks, ...days];
+  const calendarDays = [...blanks, ...displayedDays];
 
+  // Next/prev month navigation
+  const handlePrevMonth = () => {
+    let newMonth = displayMonth - 1;
+    let newYear = displayYear;
+    if (newMonth < 0) {
+      newMonth = 11;
+      newYear = displayYear - 1;
+    }
+    setDisplayMonth(newMonth);
+    setDisplayYear(newYear);
+  };
+
+  const handleNextMonth = () => {
+    let newMonth = displayMonth + 1;
+    let newYear = displayYear;
+    if (newMonth > 11) {
+      newMonth = 0;
+      newYear = displayYear + 1;
+    }
+    setDisplayMonth(newMonth);
+    setDisplayYear(newYear);
+  };
+
+  // Handle logs upsert/delete
   const handleStatusSelect = async (status: Status | null) => {
     if (selectedDate) {
       const dateStr = selectedDate.toISOString().split("T")[0];
@@ -126,7 +187,65 @@ export default function Page() {
     }
   };
 
+  // Compute streaks
   const { currentStreak, longestStreak } = computeStreaks(logs);
+
+  // Prepare chart data for the displayed month
+  const dayLabels = displayedDays.map((day) => day.getDate().toString());
+  const successData = displayedDays.map((day) => {
+    const dateStr = day.toISOString().split("T")[0];
+    return logs[dateStr] === "success" ? 1 : 0;
+  });
+  const failData = displayedDays.map((day) => {
+    const dateStr = day.toISOString().split("T")[0];
+    return logs[dateStr] === "fail" ? 1 : 0;
+  });
+
+  const barChartData = {
+    labels: dayLabels,
+    datasets: [
+      {
+        label: "Success",
+        data: successData,
+        backgroundColor: "rgba(34,197,94,0.6)", // Tailwind green-500
+      },
+      {
+        label: "Fail",
+        data: failData,
+        backgroundColor: "rgba(239,68,68,0.6)", // Tailwind red-500
+      },
+    ],
+  };
+
+  let cumulative = 0;
+  const cumulativeSuccessData = successData.map((val) => {
+    cumulative += val;
+    return cumulative;
+  });
+  const lineChartData = {
+    labels: dayLabels,
+    datasets: [
+      {
+        label: "Cumulative Successes",
+        data: cumulativeSuccessData,
+        borderColor: "rgba(34,197,94,0.8)",
+        backgroundColor: "rgba(34,197,94,0.2)",
+      },
+    ],
+  };
+
+  // Prepare Pie chart data for overall monthly totals
+  const totalSuccess = successData.reduce((sum, val) => sum + val, 0);
+  const totalFail = failData.reduce((sum, val) => sum + val, 0);
+  const pieChartData = {
+    labels: ["Success", "Fail"],
+    datasets: [
+      {
+        data: [totalSuccess, totalFail],
+        backgroundColor: ["rgba(34,197,94,0.6)", "rgba(239,68,68,0.6)"],
+      },
+    ],
+  };
 
   // Framer Motion variants
   const dayVariants = {
@@ -138,8 +257,15 @@ export default function Page() {
     visible: { opacity: 1, y: 0 },
   };
 
+  // Generate a readable month name
+  const monthName = new Date(displayYear, displayMonth).toLocaleString(
+    "default",
+    { month: "long" }
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-700 flex flex-col">
+      {/* HEADER */}
       <header className="bg-gray-800 text-white p-6 text-center">
         <h1 className="text-4xl font-extrabold tracking-tight">
           Addiction Tracker
@@ -149,8 +275,9 @@ export default function Page() {
         </p>
       </header>
 
+      {/* MAIN */}
       <main className="flex-grow container mx-auto px-4 py-8">
-        {/* Streak Counters */}
+        {/* STREAKS */}
         <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white/10 backdrop-blur rounded-lg p-4 text-center">
             <p className="text-sm text-gray-300">Current Streak</p>
@@ -162,17 +289,30 @@ export default function Page() {
           </div>
         </div>
 
-        {/* Calendar Card */}
+        {/* CALENDAR CARD */}
         <motion.div
           className="bg-white/10 backdrop-blur rounded-lg shadow-lg p-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
+          {/* Month/Year + Navigation */}
           <div className="flex justify-between items-center mb-6">
+            <Button
+              onClick={handlePrevMonth}
+              className="bg-gray-600 hover:bg-gray-500 text-white"
+            >
+              &lt; Prev
+            </Button>
             <h2 className="text-3xl font-bold text-white">
-              {today.toLocaleString("default", { month: "long" })} {year}
+              {monthName} {displayYear}
             </h2>
+            <Button
+              onClick={handleNextMonth}
+              className="bg-gray-600 hover:bg-gray-500 text-white"
+            >
+              Next &gt;
+            </Button>
           </div>
 
           {/* Weekday Headers */}
@@ -185,7 +325,9 @@ export default function Page() {
           {/* Calendar Grid */}
           <div className="grid grid-cols-7 gap-4">
             {calendarDays.map((day, index) => {
-              if (day === null) return <div key={index} className="h-16" />;
+              if (day === null) {
+                return <div key={index} className="h-16" />;
+              }
               const dateStr = day.toISOString().split("T")[0];
               let circleColor = "bg-gray-500";
               if (logs[dateStr] === "success") circleColor = "bg-green-500";
@@ -211,14 +353,93 @@ export default function Page() {
             })}
           </div>
         </motion.div>
+
+        {/* CHARTS SECTION */}
+        <div className="mt-10 space-y-8">
+          {/* Bar Chart */}
+          <div className="bg-white/10 rounded-lg p-4">
+            <h3 className="text-xl text-white font-bold mb-4">
+              Daily Success/Fail (Bar)
+            </h3>
+            <div className="w-full md:w-3/4 lg:w-1/2 mx-auto h-64">
+              <Bar
+                data={barChartData}
+                options={{
+                  maintainAspectRatio: false,
+                  responsive: true,
+                  plugins: {
+                    legend: { position: "top" as const },
+                    title: { display: true, text: "Daily Log" },
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      ticks: { stepSize: 1 },
+                    },
+                  },
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Line Chart */}
+          <div className="bg-white/10 rounded-lg p-4">
+            <h3 className="text-xl text-white font-bold mb-4">
+              Cumulative Successes (Line)
+            </h3>
+            <div className="w-full md:w-3/4 lg:w-1/2 mx-auto h-64">
+              <Line
+                data={lineChartData}
+                options={{
+                  maintainAspectRatio: false,
+                  responsive: true,
+                  plugins: {
+                    legend: { position: "top" as const },
+                    title: {
+                      display: true,
+                      text: "Cumulative Success",
+                    },
+                  },
+                  scales: {
+                    y: { beginAtZero: true },
+                  },
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Pie Chart */}
+          <div className="bg-white/10 rounded-lg p-4">
+            <h3 className="text-xl text-white font-bold mb-4">
+              Overall Success Ratio (Pie)
+            </h3>
+            <div className="w-full md:w-3/4 lg:w-1/2 mx-auto h-64">
+              <Pie
+                data={pieChartData}
+                options={{
+                  maintainAspectRatio: false,
+                  responsive: true,
+                  plugins: {
+                    legend: { position: "top" as const },
+                    title: {
+                      display: true,
+                      text: "Overall Success Ratio",
+                    },
+                  },
+                }}
+              />
+            </div>
+          </div>
+        </div>
       </main>
 
+      {/* FOOTER */}
       <footer className="text-center py-4 text-gray-400 text-sm">
         &copy; {new Date().getFullYear()} Addiction Tracker. All rights
         reserved.
       </footer>
 
-      {/* Modal with single close button and colored action buttons */}
+      {/* MODAL DIALOG */}
       <Dialog
         open={!!selectedDate}
         onOpenChange={(open) => {
