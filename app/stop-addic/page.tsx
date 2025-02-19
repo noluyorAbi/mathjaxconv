@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   Dialog,
@@ -40,6 +40,22 @@ ChartJS.register(
 
 type Status = "success" | "fail";
 
+// A fixed array of month names to avoid locale/timezone differences
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
 // Helper: Generate all days in a given month
 const getDaysInMonth = (year: number, month: number): Date[] => {
   const date = new Date(year, month, 1);
@@ -52,9 +68,7 @@ const getDaysInMonth = (year: number, month: number): Date[] => {
 };
 
 // Helper: Compute streaks from the logs
-const computeStreaks = (logs: {
-  [key: string]: Status;
-}): { currentStreak: number; longestStreak: number } => {
+const computeStreaks = (logs: { [key: string]: Status }) => {
   const successDates = Object.keys(logs)
     .filter((dateStr) => logs[dateStr] === "success")
     .map((dateStr) => new Date(dateStr));
@@ -217,11 +231,13 @@ export default function Page() {
     ],
   };
 
+  // Calculate cumulative success data
   let cumulative = 0;
   const cumulativeSuccessData = successData.map((val) => {
     cumulative += val;
     return cumulative;
   });
+
   const lineChartData = {
     labels: dayLabels,
     datasets: [
@@ -235,8 +251,8 @@ export default function Page() {
   };
 
   // Prepare Pie chart data for overall monthly totals
-  const totalSuccess = successData.reduce((sum, val) => sum + val, 0);
-  const totalFail = failData.reduce((sum, val) => sum + val, 0);
+  const totalSuccess = successData.reduce<number>((sum, val) => sum + val, 0);
+  const totalFail = failData.reduce<number>((sum, val) => sum + val, 0);
   const pieChartData = {
     labels: ["Success", "Fail"],
     datasets: [
@@ -257,11 +273,11 @@ export default function Page() {
     visible: { opacity: 1, y: 0 },
   };
 
-  // Generate a readable month name
-  const monthName = new Date(displayYear, displayMonth).toLocaleString(
-    "default",
-    { month: "long" }
-  );
+  // Use a stable array of month names
+  const monthName = MONTH_NAMES[displayMonth];
+
+  // Memoize the current year for the footer
+  const currentYear = useMemo(() => new Date().getFullYear(), []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-700 flex flex-col">
@@ -326,7 +342,7 @@ export default function Page() {
           <div className="grid grid-cols-7 gap-4">
             {calendarDays.map((day, index) => {
               if (day === null) {
-                return <div key={index} className="h-16" />;
+                return <div key={`blank-${index}`} className="h-16" />;
               }
               const dateStr = day.toISOString().split("T")[0];
               let circleColor = "bg-gray-500";
@@ -335,7 +351,7 @@ export default function Page() {
 
               return (
                 <motion.div
-                  key={index}
+                  key={dateStr}
                   className="h-16 flex flex-col items-center justify-center cursor-pointer"
                   variants={dayVariants}
                   initial="hidden"
@@ -435,8 +451,7 @@ export default function Page() {
 
       {/* FOOTER */}
       <footer className="text-center py-4 text-gray-400 text-sm">
-        &copy; {new Date().getFullYear()} Addiction Tracker. All rights
-        reserved.
+        &copy; {currentYear} Addiction Tracker. All rights reserved.
       </footer>
 
       {/* MODAL DIALOG */}
@@ -457,7 +472,8 @@ export default function Page() {
           >
             <DialogHeader>
               <DialogTitle className="text-center text-lg font-semibold mb-1">
-                {selectedDate?.toLocaleDateString()}
+                {/* Use a stable, timezone-independent format */}
+                {selectedDate ? selectedDate.toISOString().split("T")[0] : ""}
               </DialogTitle>
               <p className="text-center text-sm text-gray-500 mb-4">
                 Set your status for the day
