@@ -3,7 +3,7 @@
 </p>
 <p align="center"><h1 align="center">MATHJAXCONV</h1></p>
 <p align="center">
-    <em>Transforming math expressions with style and ease.</em>
+    <em>Transforming math expressions with style and ease...</em>
 </p>
 <p align="center">
     <img src="https://img.shields.io/github/license/noluyorAbi/mathjaxconv?style=default&logo=opensourceinitiative&logoColor=white&color=0080ff" alt="license">
