@@ -19,7 +19,8 @@ import {
   RemoveFormatting,
   Clock,
   Timer,
-  Monitor, // New icon for the Black-White Screen tool
+  Monitor, // For Black-White Screen
+  StopCircle, // New icon for the Stop Addiction tool
 } from "lucide-react";
 
 export default function Page() {
@@ -159,7 +160,8 @@ export default function Page() {
               icon={<Clock className="h-6 w-6" />}
               gradient="from-green-500 to-blue-500"
             >
-              Keep track of your session time with a simple, intuitive interface.
+              Keep track of your session time with a simple, intuitive
+              interface.
             </ToolCard>
 
             <ToolCard
@@ -173,7 +175,6 @@ export default function Page() {
               sound cues.
             </ToolCard>
 
-            {/* New Card: Black-White Screen */}
             <ToolCard
               href="/black-whitescreen"
               title="Black-White Screen"
@@ -182,6 +183,18 @@ export default function Page() {
               gradient="from-gray-700 to-gray-900"
             >
               Perfect for a minimal distraction environment.
+            </ToolCard>
+
+            {/* New Card for Stop Addiction */}
+            <ToolCard
+              href="/stop-addic"
+              title="Stop Addiction"
+              description="Track your progress and build streaks to overcome cravings."
+              icon={<StopCircle className="h-6 w-6" />}
+              gradient="from-indigo-500 to-blue-500"
+            >
+              Stay on track with an interactive calendar, status alerts, and
+              streak counters.
             </ToolCard>
           </div>
         </main>
@@ -232,7 +245,6 @@ function ToolCard({
           </CardHeader>
           <CardContent className="space-y-4 flex-grow flex flex-col justify-between">
             <p className="text-gray-500">{children}</p>
-            {/* "Try it now" now stays white on hover */}
             <div className="flex items-center font-medium text-white">
               Try it now
               <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />

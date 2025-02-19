@@ -218,7 +218,7 @@ export default function Page() {
         reserved.
       </footer>
 
-      {/* Improved Modal Alert */}
+      {/* Modal with single close button and colored action buttons */}
       <Dialog
         open={!!selectedDate}
         onOpenChange={(open) => {
@@ -227,20 +227,13 @@ export default function Page() {
       >
         <DialogContent>
           <motion.div
-            className="bg-white rounded-lg shadow-lg p-6 max-w-xs mx-auto relative"
+            className="rounded-lg shadow-lg p-6 max-w-xs mx-auto"
             variants={modalVariants}
             initial="hidden"
             animate="visible"
             exit="hidden"
             transition={{ duration: 0.3 }}
           >
-            {/* Close button */}
-            <button
-              onClick={() => setSelectedDate(null)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-            >
-              &#x2715;
-            </button>
             <DialogHeader>
               <DialogTitle className="text-center text-lg font-semibold mb-1">
                 {selectedDate?.toLocaleDateString()}
@@ -252,19 +245,19 @@ export default function Page() {
             <div className="flex flex-col gap-3">
               <Button
                 onClick={() => handleStatusSelect("success")}
-                variant="default"
+                className="bg-green-500 hover:bg-green-600 text-white"
               >
                 Didn&apos;t do it
               </Button>
               <Button
                 onClick={() => handleStatusSelect("fail")}
-                variant="destructive"
+                className="bg-red-500 hover:bg-red-600 text-white"
               >
                 Did it
               </Button>
               <Button
                 onClick={() => handleStatusSelect(null)}
-                variant="outline"
+                className="bg-gray-500 hover:bg-gray-600 text-white"
               >
                 Clear
               </Button>
