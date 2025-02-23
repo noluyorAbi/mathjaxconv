@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
   type DragEndEvent,
+  DragOverlay,
   useDraggable,
   useDroppable,
 } from "@dnd-kit/core";
@@ -91,24 +92,29 @@ function DraggableTask({
   task,
   onToggle,
   onDelete,
+  isDraggingOverlay = false,
+  isActive = false, // New prop to indicate if this task is being dragged
 }: {
   task: Task;
   onToggle: (id: number, done: boolean) => void;
   onDelete: (id: number) => void;
+  isDraggingOverlay?: boolean;
+  isActive?: boolean;
 }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-      id: task.id.toString(),
-    });
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: task.id.toString(),
+    disabled: isDraggingOverlay,
+  });
 
-  const motionStyle = transform
-    ? {
-        x: transform.x,
-        y: transform.y,
-        rotate: isDragging ? 2 : 0,
-        scale: isDragging ? 1.05 : 1,
-      }
-    : { x: 0, y: 0, rotate: 0, scale: 1 };
+  const motionStyle =
+    transform && !isDraggingOverlay
+      ? {
+          x: transform.x,
+          y: transform.y,
+          rotate: 2,
+          scale: 1.05,
+        }
+      : { x: 0, y: 0, rotate: 0, scale: 1 };
 
   return (
     <motion.div
@@ -116,8 +122,7 @@ function DraggableTask({
       className="relative group"
       initial={{ opacity: 0, y: 10 }}
       animate={{
-        opacity: 1,
-        y: 0,
+        opacity: isActive ? 0 : 1, // Set opacity to 0 when this task is active (being dragged)
         ...motionStyle,
       }}
       exit={{ opacity: 0, y: -10 }}
@@ -128,14 +133,13 @@ function DraggableTask({
         rotate: { duration: 0.1 },
       }}
       style={{
-        zIndex: isDragging ? 9999 : 2,
-        position: isDragging ? "fixed" : "relative",
-        cursor: "default",
+        zIndex: isDraggingOverlay ? 10000 : 2,
+        position: isDraggingOverlay ? "absolute" : "relative",
       }}
     >
       <Card
         className={`bg-white/90 dark:bg-gray-900/90 shadow-md rounded-lg border border-gray-200 dark:border-gray-800 transition-shadow ${
-          isDragging ? "shadow-xl" : "hover:shadow-xl"
+          isDraggingOverlay ? "shadow-xl" : "hover:shadow-xl"
         }`}
       >
         <CardContent className="p-4 flex items-center justify-between">
@@ -197,6 +201,7 @@ export default function EisenhowerMatrix() {
   const [newTodoDescription, setNewTodoDescription] = useState("");
   const [newTodoQuadrant, setNewTodoQuadrant] = useState(quadrants[0].id);
   const [isDoneOpen, setIsDoneOpen] = useState(false);
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
 
   useEffect(() => {
     async function fetchTasks() {
@@ -242,8 +247,17 @@ export default function EisenhowerMatrix() {
     }
   };
 
+  const handleDragStart = (event: any) => {
+    const taskId = Number.parseInt(event.active.id, 10);
+    const task = tasks.find((t) => t.id === taskId);
+    if (task && !task.done) {
+      setActiveTask(task);
+    }
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
+    setActiveTask(null);
     if (!over) return;
 
     const taskId = Number.parseInt(active.id as string, 10);
@@ -254,31 +268,26 @@ export default function EisenhowerMatrix() {
     let updatedTasks = [...tasks];
 
     if (task.quadrant !== newQuadrant) {
-      // Move task to new quadrant
       updatedTasks = updatedTasks.map((t) =>
         t.id === taskId ? { ...t, quadrant: newQuadrant } : t
       );
 
-      // Re-index old quadrant
       const oldQuadrantTasks = updatedTasks
         .filter((t) => t.quadrant === task.quadrant && !t.done)
         .sort((a, b) => a.position - b.position)
         .map((t, index) => ({ ...t, position: index }));
 
-      // Re-index new quadrant (append dragged task at the end)
       const newQuadrantTasks = updatedTasks
         .filter((t) => t.quadrant === newQuadrant && !t.done)
         .sort((a, b) => a.position - b.position)
         .map((t, index) => ({ ...t, position: index }));
 
-      // Update the full task list
       updatedTasks = updatedTasks.map((t) => {
         const oldMatch = oldQuadrantTasks.find((ot) => ot.id === t.id);
         const newMatch = newQuadrantTasks.find((nt) => nt.id === t.id);
         return oldMatch || newMatch || t;
       });
     } else {
-      // Reorder within the same quadrant
       const quadrantTasks = updatedTasks
         .filter((t) => t.quadrant === newQuadrant && !t.done)
         .sort((a, b) => a.position - b.position);
@@ -291,7 +300,6 @@ export default function EisenhowerMatrix() {
       );
       quadrantTasks.splice(newIndex, 0, task);
 
-      // Update positions
       updatedTasks = updatedTasks.map((t) => {
         const match = quadrantTasks.find((qt) => qt.id === t.id);
         return match ? { ...t, position: quadrantTasks.indexOf(match) } : t;
@@ -300,7 +308,6 @@ export default function EisenhowerMatrix() {
 
     setTasks(updatedTasks);
 
-    // Prepare updates for Supabase
     const updates = updatedTasks
       .filter((t) => t.quadrant === newQuadrant || t.quadrant === task.quadrant)
       .map((t) => ({
@@ -313,19 +320,12 @@ export default function EisenhowerMatrix() {
         completed_at: t.completed_at || null,
       }));
 
-    console.log("Upserting tasks:", updates);
-
     const { error } = await supabase.from("tasks").upsert(updates, {
       onConflict: "id",
     });
 
     if (error) {
-      console.error(
-        "Error updating tasks:",
-        error.message,
-        error.details,
-        error.hint
-      );
+      console.error("Error updating tasks:", error);
     }
   };
 
@@ -373,7 +373,7 @@ export default function EisenhowerMatrix() {
   };
 
   return (
-    <div className="container mx-auto p-8 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 min-h-screen">
+    <div className="container overflow-x-clip mx-auto p-8 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 min-h-screen">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -449,7 +449,7 @@ export default function EisenhowerMatrix() {
           </p>
         )}
 
-        <DndContext onDragEnd={handleDragEnd}>
+        <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {quadrants.map((q) => (
               <DroppableZone key={q.id} id={q.id} title={q.title}>
@@ -463,12 +463,23 @@ export default function EisenhowerMatrix() {
                         task={task}
                         onToggle={toggleDone}
                         onDelete={deleteTask}
+                        isActive={activeTask?.id === task.id} // Check if this task is being dragged
                       />
                     ))}
                 </AnimatePresence>
               </DroppableZone>
             ))}
           </div>
+          <DragOverlay>
+            {activeTask ? (
+              <DraggableTask
+                task={activeTask}
+                onToggle={toggleDone}
+                onDelete={deleteTask}
+                isDraggingOverlay={true}
+              />
+            ) : null}
+          </DragOverlay>
         </DndContext>
 
         <Collapsible
