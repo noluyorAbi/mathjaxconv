@@ -40,21 +40,70 @@ type Task = {
 };
 
 const quadrants = [
-  { id: "urgent-important", title: "Urgent & Important" },
-  { id: "urgent-not-important", title: "Urgent, Not Important" },
-  { id: "not-urgent-important", title: "Not Urgent, Important" },
-  { id: "not-urgent-not-important", title: "Not Urgent, Not Important" },
+  { id: "urgent-important", title: "Dringend & Wichtig" },
+  { id: "urgent-not-important", title: "Dringend, Nicht Wichtig" },
+  { id: "not-urgent-important", title: "Nicht Dringend, Wichtig" },
+  { id: "not-urgent-not-important", title: "Nicht Dringend, Nicht Wichtig" },
 ];
 
 const quadrantStyles: Record<string, string> = {
   "urgent-important":
-    "bg-gradient-to-br from-red-200 to-red-100 dark:from-red-800 dark:to-red-700",
+    "bg-gradient-to-br from-red-300 via-red-200 to-red-100 dark:from-red-900 dark:via-red-800 dark:to-red-700",
   "urgent-not-important":
-    "bg-gradient-to-br from-yellow-200 to-yellow-100 dark:from-yellow-800 dark:to-yellow-700",
+    "bg-gradient-to-br from-yellow-300 via-yellow-200 to-yellow-100 dark:from-yellow-900 dark:via-yellow-800 dark:to-yellow-700",
   "not-urgent-important":
-    "bg-gradient-to-br from-blue-200 to-blue-100 dark:from-blue-800 dark:to-blue-700",
+    "bg-gradient-to-br from-blue-300 via-blue-200 to-blue-100 dark:from-blue-900 dark:via-blue-800 dark:to-blue-700",
   "not-urgent-not-important":
-    "bg-gradient-to-br from-green-200 to-green-100 dark:from-green-800 dark:to-green-700",
+    "bg-gradient-to-br from-green-300 via-green-200 to-green-100 dark:from-green-900 dark:via-green-800 dark:to-green-700",
+};
+
+// Animation Variants für den Initial Load
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2,
+      delayChildren: 0.3,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 50, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 20,
+    },
+  },
+};
+
+// Select Animation Variants
+const selectVariants = {
+  closed: {
+    height: 0,
+    opacity: 0,
+    transition: { duration: 0.3, ease: "easeInOut" },
+  },
+  open: {
+    height: "auto",
+    opacity: 1,
+    transition: {
+      duration: 0.3,
+      ease: "easeInOut",
+      staggerChildren: 0.05,
+    },
+  },
+};
+
+const selectItemVariants = {
+  closed: { opacity: 0, y: -10 },
+  open: { opacity: 1, y: 0 },
 };
 
 function DroppableZone({
@@ -71,16 +120,17 @@ function DroppableZone({
   return (
     <motion.div
       ref={setNodeRef}
-      className={`p-6 rounded-2xl ${
+      variants={itemVariants}
+      className={`p-6 rounded-3xl ${
         quadrantStyles[id]
-      } min-h-[250px] border border-gray-200/50 dark:border-gray-800/50 shadow-lg transition-all ${
-        isOver ? "ring-2 ring-indigo-500 ring-opacity-50" : ""
+      } min-h-[300px] border border-gray-200/70 dark:border-gray-800/70 shadow-xl transition-all duration-300 ${
+        isOver ? "ring-2 ring-indigo-500 ring-opacity-70 scale-102" : ""
       }`}
       whileHover={{ scale: 1.02 }}
       transition={{ type: "spring", stiffness: 400 }}
       style={{ zIndex: 1, position: "relative" }}
     >
-      <h2 className="text-xl font-medium mb-4 text-center text-gray-900 dark:text-gray-100">
+      <h2 className="text-xl font-semibold mb-6 text-center text-gray-900 dark:text-gray-100 tracking-tight">
         {title}
       </h2>
       <div className="space-y-4">{children}</div>
@@ -93,7 +143,7 @@ function DraggableTask({
   onToggle,
   onDelete,
   isDraggingOverlay = false,
-  isActive = false, // New prop to indicate if this task is being dragged
+  isActive = false,
 }: {
   task: Task;
   onToggle: (id: number, done: boolean) => void;
@@ -122,7 +172,7 @@ function DraggableTask({
       className="relative group"
       initial={{ opacity: 0, y: 10 }}
       animate={{
-        opacity: isActive ? 0 : 1, // Set opacity to 0 when this task is active (being dragged)
+        opacity: isActive ? 0 : 1,
         ...motionStyle,
       }}
       exit={{ opacity: 0, y: -10 }}
@@ -138,13 +188,13 @@ function DraggableTask({
       }}
     >
       <Card
-        className={`bg-white/90 dark:bg-gray-900/90 shadow-md rounded-lg border border-gray-200 dark:border-gray-800 transition-shadow ${
-          isDraggingOverlay ? "shadow-xl" : "hover:shadow-xl"
+        className={`bg-white/95 dark:bg-gray-900/95 shadow-lg rounded-xl border border-gray-200/70 dark:border-gray-800/70 transition-all duration-300 ${
+          isDraggingOverlay ? "shadow-2xl" : "hover:shadow-2xl"
         }`}
       >
         <CardContent className="p-4 flex items-center justify-between">
           <div
-            className="flex mr-4 items-center justify-center w-6 h-6 cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700"
+            className="flex mr-4 items-center justify-center w-6 h-6 cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
             {...listeners}
             {...attributes}
           >
@@ -156,13 +206,13 @@ function DraggableTask({
               checked={task.done}
               onCheckedChange={() => onToggle(task.id, task.done)}
               onClick={(e) => e.stopPropagation()}
-              className="border-gray-400"
+              className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
             />
             <Label
               htmlFor={`task-${task.id}`}
               className={`text-sm font-medium ${
                 task.done
-                  ? "line-through text-gray-500"
+                  ? "line-through text-gray-500 dark:text-gray-400"
                   : "text-gray-900 dark:text-gray-100"
               }`}
             >
@@ -173,7 +223,7 @@ function DraggableTask({
             variant="ghost"
             size="sm"
             onClick={() => onDelete(task.id)}
-            className="text-red-500 hover:text-red-700"
+            className="text-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -181,7 +231,7 @@ function DraggableTask({
       </Card>
       {task.description && (
         <motion.div
-          className="absolute z-10 top-full left-0 mt-2 p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg hidden group-hover:block"
+          className="absolute z-10 top-full left-0 mt-2 p-3 bg-gray-800/95 text-white text-xs rounded-lg shadow-xl hidden group-hover:block backdrop-blur-sm"
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 5 }}
@@ -202,6 +252,7 @@ export default function EisenhowerMatrix() {
   const [newTodoQuadrant, setNewTodoQuadrant] = useState(quadrants[0].id);
   const [isDoneOpen, setIsDoneOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     async function fetchTasks() {
@@ -216,6 +267,7 @@ export default function EisenhowerMatrix() {
         setTasks(data as Task[]);
       }
       setLoading(false);
+      setIsLoaded(true);
     }
     fetchTasks();
   }, []);
@@ -373,84 +425,110 @@ export default function EisenhowerMatrix() {
   };
 
   return (
-    <div className="container overflow-x-clip mx-auto p-8 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 min-h-screen">
+    <div className="container mx-auto p-8 bg-gradient-to-br from-gray-100 via-gray-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 min-h-screen overflow-x-hidden">
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
+        variants={containerVariants}
+        initial="hidden"
+        animate={isLoaded ? "visible" : "hidden"}
         className="max-w-5xl mx-auto"
       >
-        <form
+        <motion.form
+          variants={itemVariants}
           onSubmit={handleCreateTask}
-          className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10 bg-white/80 dark:bg-gray-900/80 p-6 rounded-2xl shadow-xl backdrop-blur-sm"
+          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12 bg-white/95 dark:bg-gray-900/95 p-8 rounded-3xl shadow-2xl backdrop-blur-md border border-gray-100 dark:border-gray-800"
         >
           <div className="md:col-span-2">
-            <Label
-              htmlFor="new-task"
-              className="text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Task Title
+            <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
+              Aufgabe
             </Label>
             <Input
               id="new-task"
-              placeholder="Add a new task..."
+              placeholder="Neue Aufgabe hinzufügen..."
               value={newTodoTitle}
               onChange={(e) => setNewTodoTitle(e.target.value)}
-              className="mt-1 border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-indigo-500"
+              className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-xl bg-white/50 dark:bg-gray-800/50 transition-all duration-300"
             />
           </div>
           <div>
-            <Label
-              htmlFor="new-description"
-              className="text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Description
+            <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
+              Beschreibung
             </Label>
             <Input
               id="new-description"
-              placeholder="Optional description..."
+              placeholder="Optionale Beschreibung..."
               value={newTodoDescription}
               onChange={(e) => setNewTodoDescription(e.target.value)}
-              className="mt-1 border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-indigo-500"
+              className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-xl bg-white/50 dark:bg-gray-800/50 transition-all duration-300"
             />
           </div>
           <div className="flex items-end gap-4">
             <div className="flex-1">
-              <Label
-                htmlFor="quadrant"
-                className="text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
+              <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
                 Quadrant
               </Label>
               <Select
                 value={newTodoQuadrant}
                 onValueChange={setNewTodoQuadrant}
               >
-                <SelectTrigger id="quadrant" className="mt-1">
+                <SelectTrigger className="mt-1 bg-white/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-all duration-300 shadow-sm">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  {quadrants.map((q) => (
-                    <SelectItem key={q.id} value={q.id}>
-                      {q.title}
-                    </SelectItem>
-                  ))}
+                <SelectContent className="bg-white/95 dark:bg-gray-900/95 border-gray-200 dark:border-gray-800 rounded-xl shadow-xl backdrop-blur-sm">
+                  <AnimatePresence>
+                    <motion.div
+                      variants={selectVariants}
+                      initial="closed"
+                      animate="open"
+                      exit="closed"
+                    >
+                      {quadrants.map((q) => (
+                        <motion.div
+                          key={q.id}
+                          variants={selectItemVariants}
+                          whileHover={{
+                            scale: 1.02,
+                            backgroundColor: "rgba(99, 102, 241, 0.1)",
+                          }}
+                          className="rounded-lg"
+                        >
+                          <SelectItem
+                            value={q.id}
+                            className="cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors duration-200"
+                          >
+                            <span className="font-medium text-gray-800 dark:text-gray-200">
+                              {q.title}
+                            </span>
+                          </SelectItem>
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  </AnimatePresence>
                 </SelectContent>
               </Select>
             </div>
-            <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">
-              Add
+            <Button
+              type="submit"
+              className="bg-indigo-600 hover:bg-indigo-700 rounded-xl px-6 shadow-md hover:shadow-lg transition-all duration-300"
+            >
+              Hinzufügen
             </Button>
           </div>
-        </form>
+        </motion.form>
 
         {loading && (
-          <p className="text-center text-gray-500 dark:text-gray-400">
-            Loading tasks...
-          </p>
+          <motion.p
+            variants={itemVariants}
+            className="text-center text-gray-600 dark:text-gray-400"
+          >
+            Lade Aufgaben...
+          </motion.p>
         )}
 
         <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <motion.div
+            variants={containerVariants}
+            className="grid grid-cols-1 md:grid-cols-2 gap-8"
+          >
             {quadrants.map((q) => (
               <DroppableZone key={q.id} id={q.id} title={q.title}>
                 <AnimatePresence>
@@ -458,18 +536,19 @@ export default function EisenhowerMatrix() {
                     .filter((t) => t.quadrant === q.id && !t.done)
                     .sort((a, b) => a.position - b.position)
                     .map((task) => (
-                      <DraggableTask
-                        key={task.id}
-                        task={task}
-                        onToggle={toggleDone}
-                        onDelete={deleteTask}
-                        isActive={activeTask?.id === task.id} // Check if this task is being dragged
-                      />
+                      <motion.div variants={itemVariants} key={task.id}>
+                        <DraggableTask
+                          task={task}
+                          onToggle={toggleDone}
+                          onDelete={deleteTask}
+                          isActive={activeTask?.id === task.id}
+                        />
+                      </motion.div>
                     ))}
                 </AnimatePresence>
               </DroppableZone>
             ))}
-          </div>
+          </motion.div>
           <DragOverlay>
             {activeTask ? (
               <DraggableTask
@@ -482,79 +561,81 @@ export default function EisenhowerMatrix() {
           </DragOverlay>
         </DndContext>
 
-        <Collapsible
-          open={isDoneOpen}
-          onOpenChange={setIsDoneOpen}
-          className="mt-10"
-        >
-          <CollapsibleTrigger asChild>
-            <Button
-              variant="outline"
-              className="w-full flex justify-between items-center bg-white/80 dark:bg-gray-900/80 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              <span className="text-lg font-medium">
-                Done Tasks ({tasks.filter((t) => t.done).length})
-              </span>
-              {isDoneOpen ? (
-                <ChevronUp className="h-5 w-5" />
-              ) : (
-                <ChevronDown className="h-5 w-5" />
-              )}
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="mt-4 space-y-4">
-            <AnimatePresence>
-              {tasks
-                .filter((t) => t.done)
-                .map((task) => (
-                  <motion.div
-                    key={task.id}
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="bg-white/90 dark:bg-gray-900/90 p-4 rounded-lg shadow-md border border-gray-200 dark:border-gray-800"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Checkbox
-                          id={`done-task-${task.id}`}
-                          checked={task.done}
-                          onCheckedChange={() => toggleDone(task.id, task.done)}
-                          className="border-gray-400"
-                        />
-                        <Label
-                          htmlFor={`done-task-${task.id}`}
-                          className="text-sm font-medium text-gray-500 line-through"
+        <motion.div variants={itemVariants}>
+          <Collapsible
+            open={isDoneOpen}
+            onOpenChange={setIsDoneOpen}
+            className="mt-12"
+          >
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full flex justify-between items-center bg-white/90 dark:bg-gray-900/90 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl shadow-md transition-all duration-300"
+              >
+                <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                  Erledigte Aufgaben ({tasks.filter((t) => t.done).length})
+                </span>
+                {isDoneOpen ? (
+                  <ChevronUp className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                )}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-6 space-y-4">
+              <AnimatePresence>
+                {tasks
+                  .filter((t) => t.done)
+                  .map((task) => (
+                    <motion.div
+                      key={task.id}
+                      variants={itemVariants}
+                      className="bg-white/95 dark:bg-gray-900/95 p-5 rounded-xl shadow-md border border-gray-200 dark:border-gray-800"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <Checkbox
+                            id={`done-task-${task.id}`}
+                            checked={task.done}
+                            onCheckedChange={() =>
+                              toggleDone(task.id, task.done)
+                            }
+                            className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                          />
+                          <Label
+                            htmlFor={`done-task-${task.id}`}
+                            className="text-sm font-medium text-gray-500 dark:text-gray-400 line-through"
+                          >
+                            {task.title}
+                          </Label>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteTask(task.id)}
+                          className="text-red-500 hover:text-red-600 dark:hover:text-red-400"
                         >
-                          {task.title}
-                        </Label>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteTask(task.id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    {task.description && (
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                        {task.description}
+                      {task.description && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                          {task.description}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Erledigt: {formatTimestamp(task.completed_at!)}
                       </p>
-                    )}
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Completed: {formatTimestamp(task.completed_at!)}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Quadrant:{" "}
-                      {quadrants.find((q) => q.id === task.quadrant)?.title}
-                    </p>
-                  </motion.div>
-                ))}
-            </AnimatePresence>
-          </CollapsibleContent>
-        </Collapsible>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Quadrant:{" "}
+                        {quadrants.find((q) => q.id === task.quadrant)?.title}
+                      </p>
+                    </motion.div>
+                  ))}
+              </AnimatePresence>
+            </CollapsibleContent>
+          </Collapsible>
+        </motion.div>
       </motion.div>
     </div>
   );
