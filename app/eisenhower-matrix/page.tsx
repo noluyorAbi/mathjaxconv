@@ -786,7 +786,7 @@ export default function EisenhowerMatrix() {
           <Checkbox
             id="display-infos"
             checked={displayAllInfos}
-            onCheckedChange={() => setDisplayAllInfos((prev) => !prev)}
+            onCheckedChange={() => setDisplayAllInfos((prev: boolean) => !prev)}
             className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
           />
           <Label
@@ -881,7 +881,7 @@ export default function EisenhowerMatrix() {
                               : "text-gray-600 dark:text-gray-400"
                           }`}
                         >
-                          {getTimeRemaining(task.due_date)}
+                          {getTimeRemaining(task.due_date!)}
                         </span>
                         <motion.button
                           variants={buttonVariants}
