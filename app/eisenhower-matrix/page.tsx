@@ -79,7 +79,7 @@ const itemVariants = {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { type: "spring", stiffness: 300, damping: 20 },
+    transition: { type: "spring", stiffness: 400, damping: 20 },
   },
 };
 
@@ -139,12 +139,14 @@ function DraggableTask({
   onDelete,
   isDraggingOverlay = false,
   isActive = false,
+  displayAllInfos = false,
 }: {
   task: Task;
   onToggle: (id: number, done: boolean) => void;
   onDelete: (id: number) => void;
   isDraggingOverlay?: boolean;
   isActive?: boolean;
+  displayAllInfos?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: task.id.toString(),
@@ -161,6 +163,9 @@ function DraggableTask({
     if (!dueDate) return "Kein Fälligkeitsdatum";
     return new Date(dueDate).toLocaleDateString();
   };
+
+  // Determine if the collapsible should be open: either globally enabled or individually toggled
+  const shouldShowDetails = displayAllInfos || isOpen;
 
   return (
     <motion.div
@@ -185,7 +190,7 @@ function DraggableTask({
           isDraggingOverlay ? "shadow-2xl" : "hover:shadow-2xl"
         }`}
       >
-        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <Collapsible open={shouldShowDetails} onOpenChange={setIsOpen}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div
@@ -222,7 +227,7 @@ function DraggableTask({
                       size="sm"
                       className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                     >
-                      {isOpen ? (
+                      {shouldShowDetails ? (
                         <ChevronUp className="h-4 w-4" />
                       ) : (
                         <ChevronDown className="h-4 w-4" />
@@ -268,6 +273,7 @@ export default function EisenhowerMatrix() {
   const [isDoneOpen, setIsDoneOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [displayAllInfos, setDisplayAllInfos] = useState(false);
 
   useEffect(() => {
     async function fetchTasks() {
@@ -449,7 +455,7 @@ export default function EisenhowerMatrix() {
   };
 
   return (
-    <div className="container mx-auto p-8 bg-gradient-to-br from-gray-100 via-gray-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 min-h-screen overflow-x-hidden">
+    <div className="container overflow-clip mx-auto p-8 bg-gradient-to-br from-gray-100 via-gray-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 min-h-screen overflow-x-hidden">
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -561,6 +567,24 @@ export default function EisenhowerMatrix() {
           </motion.p>
         )}
 
+        <motion.div
+          variants={itemVariants}
+          className="mb-6 flex items-center gap-2"
+        >
+          <Checkbox
+            id="display-infos"
+            checked={displayAllInfos}
+            onCheckedChange={() => setDisplayAllInfos(!displayAllInfos)}
+            className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+          />
+          <Label
+            htmlFor="display-infos"
+            className="text-sm font-medium text-gray-800 dark:text-gray-200"
+          >
+            Display Infos
+          </Label>
+        </motion.div>
+
         <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <motion.div
             variants={containerVariants}
@@ -579,6 +603,7 @@ export default function EisenhowerMatrix() {
                           onToggle={toggleDone}
                           onDelete={deleteTask}
                           isActive={activeTask?.id === task.id}
+                          displayAllInfos={displayAllInfos}
                         />
                       </motion.div>
                     ))}
@@ -593,6 +618,7 @@ export default function EisenhowerMatrix() {
                 onToggle={toggleDone}
                 onDelete={deleteTask}
                 isDraggingOverlay={true}
+                displayAllInfos={displayAllInfos}
               />
             ) : null}
           </DragOverlay>
