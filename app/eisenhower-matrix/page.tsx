@@ -57,10 +57,10 @@ type Task = {
 };
 
 const quadrants = [
-  { id: "urgent-important", title: "Dringend & Wichtig" },
-  { id: "urgent-not-important", title: "Dringend, Nicht Wichtig" },
-  { id: "not-urgent-important", title: "Nicht Dringend, Wichtig" },
-  { id: "not-urgent-not-important", title: "Nicht Dringend, Nicht Wichtig" },
+  { id: "urgent-important", title: "Urgent & Important" },
+  { id: "urgent-not-important", title: "Urgent, Not Important" },
+  { id: "not-urgent-important", title: "Not Urgent, Important" },
+  { id: "not-urgent-not-important", title: "Not Urgent, Not Important" },
 ];
 
 const quadrantStyles: Record<string, string> = {
@@ -199,7 +199,7 @@ function DraggableTask({
       : { x: 0, y: 0, rotate: 0, scale: 1 };
 
   const formatDueDate = (dueDate: string | null) => {
-    if (!dueDate) return "Kein Fälligkeitsdatum";
+    if (!dueDate) return "No due date";
     return new Date(dueDate).toLocaleDateString();
   };
 
@@ -291,7 +291,7 @@ function DraggableTask({
                       description: e.target.value,
                     })
                   }
-                  placeholder="Beschreibung"
+                  placeholder="Description"
                   className="border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-500"
                 />
                 <Popover>
@@ -405,7 +405,7 @@ function DraggableTask({
                     )}
                     {task.due_date && (
                       <p className="flex items-center gap-1">
-                        <CalendarIcon className="h-3 w-3" /> Fällig:{" "}
+                        <CalendarIcon className="h-3 w-3" /> Due:{" "}
                         {formatDueDate(task.due_date)}
                       </p>
                     )}
@@ -623,16 +623,16 @@ export default function EisenhowerMatrix() {
   };
 
   const getTimeRemaining = (dueDate: string | null) => {
-    if (!dueDate) return "Kein Fälligkeitsdatum";
+    if (!dueDate) return "No due date";
     const now = new Date();
     const due = new Date(dueDate);
     const diffMs = due.getTime() - now.getTime();
     const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0)
-      return `Überfällig um ${-diffDays} Tag${-diffDays === 1 ? "" : "e"}`;
-    if (diffDays === 0) return "Fällig heute";
-    return `${diffDays} Tag${diffDays === 1 ? "" : "e"} verbleibend`;
+      return `Overdue by ${-diffDays} day${-diffDays === 1 ? "" : "s"}`;
+    if (diffDays === 0) return "Due today";
+    return `${diffDays} day${diffDays === 1 ? "" : "s"} remaining`;
   };
 
   const modifiers = {
@@ -659,11 +659,11 @@ export default function EisenhowerMatrix() {
         >
           <div className="md:col-span-1">
             <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
-              Aufgabe
+              Task
             </Label>
             <Input
               id="new-task"
-              placeholder="Neue Aufgabe hinzufügen..."
+              placeholder="Add a new task..."
               value={newTodoTitle}
               onChange={(e) => setNewTodoTitle(e.target.value)}
               className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-xl bg-white dark:bg-gray-900 shadow-sm transition-all duration-300"
@@ -671,11 +671,11 @@ export default function EisenhowerMatrix() {
           </div>
           <div className="md:col-span-1">
             <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
-              Beschreibung
+              Description
             </Label>
             <Input
               id="new-description"
-              placeholder="Optionale Beschreibung..."
+              placeholder="Optional description..."
               value={newTodoDescription}
               onChange={(e) => setNewTodoDescription(e.target.value)}
               className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-xl bg-white dark:bg-gray-900 shadow-sm transition-all duration-300"
@@ -683,7 +683,7 @@ export default function EisenhowerMatrix() {
           </div>
           <div className="md:col-span-1">
             <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
-              Fälligkeitsdatum
+              Due Date (optional)
             </Label>
             <Popover>
               <PopoverTrigger asChild>
@@ -775,7 +775,7 @@ export default function EisenhowerMatrix() {
               whileTap="tap"
               className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-6 py-2 shadow-md hover:shadow-lg transition-all duration-300"
             >
-              Hinzufügen
+              Add
             </motion.button>
           </div>
         </motion.form>
@@ -785,7 +785,7 @@ export default function EisenhowerMatrix() {
             variants={itemVariants}
             className="text-center text-gray-600 dark:text-gray-400"
           >
-            Lade Aufgaben...
+            Loading tasks...
           </motion.p>
         )}
 
@@ -803,7 +803,7 @@ export default function EisenhowerMatrix() {
             htmlFor="display-infos"
             className="text-sm font-medium text-gray-800 dark:text-gray-200"
           >
-            Display Infos
+            Display Info
           </Label>
         </motion.div>
 
@@ -850,7 +850,7 @@ export default function EisenhowerMatrix() {
 
         <motion.div variants={itemVariants} className="mt-12">
           <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-6">
-            Kommende Aufgaben
+            Upcoming Tasks
           </h3>
           <div className="space-y-4">
             <AnimatePresence>
@@ -928,7 +928,7 @@ export default function EisenhowerMatrix() {
                 className="w-full flex justify-between items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl shadow-md p-4 transition-all duration-300"
               >
                 <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                  Erledigte Aufgaben ({tasks.filter((t) => t.done).length})
+                  Completed Tasks ({tasks.filter((t) => t.done).length})
                 </span>
                 {isDoneOpen ? (
                   <ChevronUp className="h-5 w-5 text-gray-600 dark:text-gray-400" />
@@ -980,11 +980,11 @@ export default function EisenhowerMatrix() {
                         </p>
                       )}
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Erledigt: {formatTimestamp(task.completed_at!)}
+                        Completed: {formatTimestamp(task.completed_at!)}
                       </p>
                       {task.due_date && (
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Fällig war: {formatTimestamp(task.due_date)}
+                          Due: {formatTimestamp(task.due_date)}
                         </p>
                       )}
                       <p className="text-xs text-gray-500 dark:text-gray-400">
