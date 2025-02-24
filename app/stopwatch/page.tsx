@@ -144,12 +144,15 @@ export default function StopwatchPage() {
       if (videoRef.current.requestPictureInPicture) {
         videoRef.current
           .requestPictureInPicture()
-          .catch((err) => console.error("PiP error:", err));
-      } else if ((videoRef.current as any).webkitSetPresentationMode) {
-        // For Safari
-        (videoRef.current as any).webkitSetPresentationMode(
-          "picture-in-picture"
-        );
+          .catch((err: unknown) => console.error("PiP error:", err));
+      } else if ("webkitSetPresentationMode" in videoRef.current) {
+        // Type guard to safely access webkitSetPresentationMode
+        const video = videoRef.current as HTMLVideoElement & {
+          webkitSetPresentationMode: (
+            mode: "picture-in-picture" | "inline"
+          ) => void;
+        };
+        video.webkitSetPresentationMode("picture-in-picture");
       } else {
         console.warn("Picture-in-Picture is not supported by this browser.");
       }
@@ -181,7 +184,7 @@ export default function StopwatchPage() {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(formatTime(time), width / 2, height / 2);
-  }, [time, showMilliseconds]);
+  }, [time, showMilliseconds, formatTime]); // Added formatTime to dependencies
 
   // -------------------------------------------------------
   // Set up the video element with the canvas stream for PiP

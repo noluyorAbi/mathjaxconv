@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
   type DragEndEvent,
+  type DragStartEvent,
   DragOverlay,
   useDraggable,
   useDroppable,
@@ -508,16 +509,24 @@ export default function EisenhowerMatrix() {
   const [isDoneOpen, setIsDoneOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [displayAllInfos, setDisplayAllInfos] = useState(() => {
-    const storedValue = localStorage.getItem("displayAllInfos");
-    return storedValue ? JSON.parse(storedValue) : false;
-  });
+  const [displayAllInfos, setDisplayAllInfos] = useState<boolean>(false); // Default to false
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-  const [language, setLanguage] = useState<"en" | "de">(() => {
-    const storedLang = localStorage.getItem("language");
-    return storedLang === "de" ? "de" : "en";
-  });
+  const [language, setLanguage] = useState<"en" | "de">("en"); // Default to "en"
 
+  // Load initial values from localStorage only on the client side
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedDisplayAllInfos = localStorage.getItem("displayAllInfos");
+      setDisplayAllInfos(
+        storedDisplayAllInfos ? JSON.parse(storedDisplayAllInfos) : false
+      );
+
+      const storedLang = localStorage.getItem("language");
+      setLanguage(storedLang === "de" ? "de" : "en");
+    }
+  }, []);
+
+  // Fetch tasks from Supabase
   useEffect(() => {
     async function fetchTasks() {
       setLoading(true);
@@ -536,9 +545,12 @@ export default function EisenhowerMatrix() {
     fetchTasks();
   }, []);
 
+  // Save to localStorage when values change
   useEffect(() => {
-    localStorage.setItem("displayAllInfos", JSON.stringify(displayAllInfos));
-    localStorage.setItem("language", language);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("displayAllInfos", JSON.stringify(displayAllInfos));
+      localStorage.setItem("language", language);
+    }
   }, [displayAllInfos, language]);
 
   const handleCreateTask = async (e: React.FormEvent) => {
@@ -570,8 +582,8 @@ export default function EisenhowerMatrix() {
     }
   };
 
-  const handleDragStart = (event: any) => {
-    const taskId = Number.parseInt(event.active.id, 10);
+  const handleDragStart = (event: DragStartEvent) => {
+    const taskId = Number.parseInt(event.active.id as string, 10);
     const task = tasks.find((t) => t.id === taskId);
     if (task && !task.done) {
       setActiveTask(task);
@@ -728,7 +740,7 @@ export default function EisenhowerMatrix() {
   };
 
   const modifiersClassNames = {
-    currentMonth: "border-2 border-indigo-600 text-indigo-600 rounded-full",
+    currentMonth: "border-2 border-indigo-600 hover:border-gray-300 text-indigo-400 rounded-full",
   };
 
   const quadrants = language === "en" ? quadrantsEn : quadrantsDe;
@@ -834,7 +846,7 @@ export default function EisenhowerMatrix() {
                               <span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-2 mt-1.5 flex-shrink-0"></span>
                               <span>
                                 <span className="font-medium text-red-600 dark:text-red-400">
-                                  Urgent &amp; Important:
+                                  Urgent & Important:
                                 </span>{" "}
                                 Tasks requiring immediate action due to their
                                 critical nature.
@@ -964,7 +976,7 @@ export default function EisenhowerMatrix() {
                               <span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-2 mt-1.5 flex-shrink-0"></span>
                               <span>
                                 <span className="font-medium text-red-600 dark:text-red-400">
-                                  Dringend &amp; Wichtig:
+                                  Dringend & Wichtig:
                                 </span>{" "}
                                 Aufgaben, die sofortiges Handeln erfordern
                                 aufgrund ihrer kritischen Natur.
@@ -1223,7 +1235,7 @@ export default function EisenhowerMatrix() {
           <Checkbox
             id="display-infos"
             checked={displayAllInfos}
-            onCheckedChange={() => setDisplayAllInfos((prev: boolean) => !prev)}
+            onCheckedChange={() => setDisplayAllInfos((prev) => !prev)}
             className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
           />
           <Label

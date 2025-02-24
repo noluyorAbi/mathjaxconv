@@ -420,10 +420,14 @@ export default function PomodoroPage() {
         videoRef.current
           .requestPictureInPicture()
           .catch((err) => console.error("PiP error:", err));
-      } else if ((videoRef.current as any).webkitSetPresentationMode) {
-        (videoRef.current as any).webkitSetPresentationMode(
-          "picture-in-picture"
-        );
+      } else if ("webkitSetPresentationMode" in videoRef.current) {
+        // Type guard to safely access webkitSetPresentationMode
+        const video = videoRef.current as HTMLVideoElement & {
+          webkitSetPresentationMode: (
+            mode: "picture-in-picture" | "inline"
+          ) => void;
+        };
+        video.webkitSetPresentationMode("picture-in-picture");
       } else {
         console.warn("Picture-in-Picture is not supported by this browser.");
       }

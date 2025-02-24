@@ -95,12 +95,12 @@ const computeStreaks = (logs: { [key: string]: Status }) => {
 
   // Calculate current streak by going backward from today
   let current = 0;
-  let d = new Date();
+  const today = new Date();
   for (let i = 0; i < 365; i++) {
-    const dateStr = d.toISOString().split("T")[0];
+    const dateStr = today.toISOString().split("T")[0];
     if (logs[dateStr] === "success") {
       current++;
-      d.setDate(d.getDate() - 1);
+      today.setDate(today.getDate() - 1);
     } else {
       break;
     }
@@ -178,8 +178,12 @@ export default function Page() {
       // Optimistically update local state
       setLogs((prevLogs) => {
         if (status === null) {
-          const { [dateStr]: _, ...rest } = prevLogs;
-          return rest;
+          // Simply return a new object without the specified dateStr
+          return {
+            ...Object.fromEntries(
+              Object.entries(prevLogs).filter(([key]) => key !== dateStr)
+            ),
+          };
         }
         return { ...prevLogs, [dateStr]: status };
       });
@@ -451,7 +455,7 @@ export default function Page() {
 
       {/* FOOTER */}
       <footer className="text-center py-4 text-gray-400 text-sm">
-        &copy; {currentYear} Addiction Tracker. All rights reserved.
+        © {currentYear} Addiction Tracker. All rights reserved.
       </footer>
 
       {/* MODAL DIALOG */}
