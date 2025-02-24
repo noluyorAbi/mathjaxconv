@@ -12,7 +12,6 @@ import {
 import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -97,57 +96,106 @@ const quadrantTextColors: Record<string, string> = {
   "not-urgent-not-important": "text-green-600 dark:text-green-400",
 };
 
+// Animation Configuration
+const animationConfig = {
+  easing: [0.4, 0, 0.2, 1],
+  duration: 0.3,
+};
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.2, delayChildren: 0.3 },
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2,
+      ...animationConfig,
+    },
   },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 50, scale: 0.95 },
+  hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
-    scale: 1,
-    transition: { type: "spring", stiffness: 300, damping: 20 },
+    transition: {
+      type: "spring",
+      stiffness: 260,
+      damping: 20,
+      ...animationConfig,
+    },
   },
-};
-
-const selectVariants = {
-  closed: {
-    height: 0,
+  exit: {
     opacity: 0,
-    transition: { duration: 0.3, ease: "easeInOut" },
+    y: -20,
+    transition: { ...animationConfig },
   },
-  open: {
-    height: "auto",
-    opacity: 1,
-    transition: { duration: 0.3, ease: "easeInOut", staggerChildren: 0.05 },
-  },
-};
-
-const selectItemVariants = {
-  closed: { opacity: 0, y: -10 },
-  open: { opacity: 1, y: 0 },
 };
 
 const buttonVariants = {
-  hover: { scale: 1.05 },
-  tap: { scale: 0.95 },
+  initial: { scale: 1 },
+  hover: {
+    scale: 1.05,
+    transition: { ...animationConfig },
+  },
+  tap: {
+    scale: 0.95,
+    transition: { duration: 0.1 },
+  },
+};
+
+const dropdownVariants = {
+  closed: {
+    opacity: 0,
+    height: 0,
+    transition: { ...animationConfig },
+  },
+  open: {
+    opacity: 1,
+    height: "auto",
+    transition: {
+      ...animationConfig,
+      staggerChildren: 0.03,
+    },
+  },
+};
+
+const dropdownItemVariants = {
+  closed: { opacity: 0, y: -10 },
+  open: {
+    opacity: 1,
+    y: 0,
+    transition: { ...animationConfig },
+  },
 };
 
 const popoverVariants = {
-  hidden: { opacity: 0, y: -10, scale: 0.95 },
-  visible: { opacity: 1, y: 0, scale: 1 },
-  exit: { opacity: 0, y: -10, scale: 0.95 },
+  hidden: { opacity: 0, y: -10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { ...animationConfig },
+  },
+  exit: {
+    opacity: 0,
+    y: -10,
+    transition: { ...animationConfig },
+  },
 };
 
 const modalVariants = {
-  hidden: { opacity: 0, scale: 0.95 },
-  visible: { opacity: 1, scale: 1, transition: { duration: 0.2 } },
-  exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } },
+  hidden: { opacity: 0, scale: 0.98 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { ...animationConfig },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.98,
+    transition: { ...animationConfig },
+  },
 };
 
 function DroppableZone({
@@ -165,14 +213,10 @@ function DroppableZone({
     <motion.div
       ref={setNodeRef}
       variants={itemVariants}
-      className={`p-6 rounded-3xl ${
-        quadrantStyles[id]
-      } min-h-[300px] border border-gray-200/70 dark:border-gray-800/70 shadow-xl transition-all duration-300 ${
-        isOver ? "ring-2 ring-indigo-500 ring-opacity-70 scale-102" : ""
-      }`}
-      whileHover={{ scale: 1.02 }}
-      transition={{ type: "spring", stiffness: 400 }}
-      style={{ zIndex: 1, position: "relative" }}
+      className={`p-6 rounded-3xl ${quadrantStyles[id]} min-h-[300px] border border-gray-200/70 dark:border-gray-800/70 shadow-xl`}
+      whileHover={{ scale: 1.015 }}
+      animate={{ scale: isOver ? 1.015 : 1 }}
+      transition={{ type: "spring", stiffness: 300, damping: 25 }}
     >
       <h2 className="text-xl font-semibold mb-6 text-center text-gray-900 dark:text-gray-100 tracking-tight">
         {title}
@@ -217,8 +261,13 @@ function DraggableTask({
 
   const motionStyle =
     transform && !isDraggingOverlay
-      ? { x: transform.x, y: transform.y, rotate: 2, scale: 1.05 }
-      : { x: 0, y: 0, rotate: 0, scale: 1 };
+      ? {
+          x: transform.x,
+          y: transform.y,
+          zIndex: 10,
+          transition: { duration: 0 },
+        }
+      : { x: 0, y: 0, zIndex: 1 };
 
   const formatDueDate = (dueDate: string | null) => {
     if (!dueDate)
@@ -255,26 +304,15 @@ function DraggableTask({
   return (
     <motion.div
       ref={setNodeRef}
-      className="relative"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: isActive ? 0 : 1, ...motionStyle }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{
-        type: "spring",
-        stiffness: 200,
-        damping: 20,
-        rotate: { duration: 0.1 },
-      }}
-      style={{
-        zIndex: isDraggingOverlay ? 10000 : 2,
-        position: isDraggingOverlay ? "absolute" : "relative",
-      }}
+      variants={itemVariants}
+      initial="hidden"
+      animate={{ opacity: isActive ? 0.3 : 1, ...motionStyle }}
+      exit="exit"
+      className={`relative ${isDraggingOverlay ? "shadow-2xl" : ""}`}
+      layout
+      transition={{ type: "spring", stiffness: 260, damping: 20 }}
     >
-      <Card
-        className={`bg-white dark:bg-gray-900 shadow-lg rounded-xl border border-gray-200/70 dark:border-gray-800/70 transition-all duration-300 ${
-          isDraggingOverlay ? "shadow-2xl" : "hover:shadow-2xl"
-        }`}
-      >
+      <Card className="bg-white dark:bg-gray-900 shadow-lg rounded-xl border border-gray-200/70 dark:border-gray-800/70">
         <Collapsible open={shouldShowDetails} onOpenChange={setIsOpen}>
           <CardContent className="p-4">
             {isEditing ? (
@@ -289,19 +327,21 @@ function DraggableTask({
                   />
                   <motion.button
                     variants={buttonVariants}
+                    initial="initial"
                     whileHover="hover"
                     whileTap="tap"
                     onClick={handleSave}
-                    className="p-2 text-green-500 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+                    className="p-2 text-green-500 hover:text-green-600 dark:hover:text-green-400"
                   >
                     <Check className="h-4 w-4" />
                   </motion.button>
                   <motion.button
                     variants={buttonVariants}
+                    initial="initial"
                     whileHover="hover"
                     whileTap="tap"
                     onClick={handleCancel}
-                    className="p-2 text-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                    className="p-2 text-red-500 hover:text-red-600 dark:hover:text-red-400"
                   >
                     <X className="h-4 w-4" />
                   </motion.button>
@@ -323,9 +363,10 @@ function DraggableTask({
                   <PopoverTrigger asChild>
                     <motion.button
                       variants={buttonVariants}
+                      initial="initial"
                       whileHover="hover"
                       whileTap="tap"
-                      className="w-full flex items-center justify-start text-left font-normal border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 transition-all duration-300"
+                      className="w-full flex items-center justify-start text-left font-normal border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4 text-gray-500 dark:text-gray-400" />
                       {date ? (
@@ -346,7 +387,6 @@ function DraggableTask({
                         initial="hidden"
                         animate="visible"
                         exit="exit"
-                        transition={{ duration: 0.2, ease: "easeInOut" }}
                       >
                         <Calendar
                           mode="single"
@@ -368,7 +408,7 @@ function DraggableTask({
               <>
                 <div className="flex items-center justify-between">
                   <div
-                    className="flex mr-4 items-center justify-center w-6 h-6 cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                    className="flex mr-4 items-center justify-center w-6 h-6 cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                     {...listeners}
                     {...attributes}
                   >
@@ -399,9 +439,10 @@ function DraggableTask({
                         <CollapsibleTrigger asChild>
                           <motion.button
                             variants={buttonVariants}
+                            initial="initial"
                             whileHover="hover"
                             whileTap="tap"
-                            className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                            className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                           >
                             {shouldShowDetails ? (
                               <ChevronUp className="h-4 w-4" />
@@ -413,19 +454,21 @@ function DraggableTask({
                       )}
                     <motion.button
                       variants={buttonVariants}
+                      initial="initial"
                       whileHover="hover"
                       whileTap="tap"
                       onClick={() => setIsEditing(true)}
-                      className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                      className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                     >
                       <Pencil className="h-4 w-4" />
                     </motion.button>
                     <motion.button
                       variants={buttonVariants}
+                      initial="initial"
                       whileHover="hover"
                       whileTap="tap"
                       onClick={() => onDelete(task.id)}
-                      className="p-2 text-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                      className="p-2 text-red-500 hover:text-red-600 dark:hover:text-red-400"
                     >
                       <Trash2 className="h-4 w-4" />
                     </motion.button>
@@ -685,21 +728,21 @@ export default function EisenhowerMatrix() {
   };
 
   const modifiersClassNames = {
-    currentMonth:
-      "border-2 border-indigo-600 border-opacity-60 hover:border-gray-300 text-white rounded-full",
+    currentMonth: "border-2 border-indigo-600 text-indigo-600 rounded-full",
   };
 
   const quadrants = language === "en" ? quadrantsEn : quadrantsDe;
 
   return (
-    <div className="container overflow-clip mx-auto p-8 bg-gradient-to-br from-gray-100 via-gray-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 min-h-screen overflow-x-clip relative">
-      <motion.div className="absolute top-4 right-4">
+    <div className="container mx-auto p-8 bg-gradient-to-br from-gray-100 via-gray-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 min-h-screen">
+      <motion.div className="absolute top-4 right-4" variants={itemVariants}>
         <motion.button
           variants={buttonVariants}
+          initial="initial"
           whileHover="hover"
           whileTap="tap"
           onClick={() => setLanguage(language === "en" ? "de" : "en")}
-          className="p-2 text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 transition-colors"
+          className="p-2 text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
           title={
             language === "en" ? "Switch to German" : "Zu Englisch wechseln"
           }
@@ -707,6 +750,7 @@ export default function EisenhowerMatrix() {
           <Globe className="h-6 w-6" />
         </motion.button>
       </motion.div>
+
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -731,7 +775,7 @@ export default function EisenhowerMatrix() {
               }
               value={newTodoTitle}
               onChange={(e) => setNewTodoTitle(e.target.value)}
-              className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-xl bg-white dark:bg-gray-900 shadow-sm transition-all duration-300"
+              className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-xl bg-white dark:bg-gray-900 shadow-sm"
             />
             <Dialog open={isHelpModalOpen} onOpenChange={setIsHelpModalOpen}>
               <DialogTrigger asChild>
@@ -1055,7 +1099,7 @@ export default function EisenhowerMatrix() {
               }
               value={newTodoDescription}
               onChange={(e) => setNewTodoDescription(e.target.value)}
-              className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-xl bg-white dark:bg-gray-900 shadow-sm transition-all duration-300"
+              className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-xl bg-white dark:bg-gray-900 shadow-sm"
             />
           </div>
           <div className="md:col-span-1">
@@ -1068,9 +1112,10 @@ export default function EisenhowerMatrix() {
               <PopoverTrigger asChild>
                 <motion.button
                   variants={buttonVariants}
+                  initial="initial"
                   whileHover="hover"
                   whileTap="tap"
-                  className="w-full flex items-center justify-start text-left font-normal border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 transition-all duration-300"
+                  className="w-full flex items-center justify-start text-left font-normal border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2"
                 >
                   <CalendarIcon className="mr-2 h-4 w-4 text-gray-500 dark:text-gray-400" />
                   {newTodoDueDate ? (
@@ -1089,7 +1134,6 @@ export default function EisenhowerMatrix() {
                     initial="hidden"
                     animate="visible"
                     exit="exit"
-                    transition={{ duration: 0.2, ease: "easeInOut" }}
                   >
                     <Calendar
                       mode="single"
@@ -1112,13 +1156,13 @@ export default function EisenhowerMatrix() {
               {language === "en" ? "Quadrant" : "Quadrant"}
             </Label>
             <Select value={newTodoQuadrant} onValueChange={setNewTodoQuadrant}>
-              <SelectTrigger className="mt-1 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300">
+              <SelectTrigger className="mt-1 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 rounded-xl shadow-xl">
                 <AnimatePresence>
                   <motion.div
-                    variants={selectVariants}
+                    variants={dropdownVariants}
                     initial="closed"
                     animate="open"
                     exit="closed"
@@ -1126,16 +1170,15 @@ export default function EisenhowerMatrix() {
                     {quadrants.map((q) => (
                       <motion.div
                         key={q.id}
-                        variants={selectItemVariants}
+                        variants={dropdownItemVariants}
                         whileHover={{
                           scale: 1.02,
                           backgroundColor: "rgba(99, 102, 241, 0.1)",
                         }}
-                        className="rounded-lg"
                       >
                         <SelectItem
                           value={q.id}
-                          className={`cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors duration-200 ${
+                          className={`cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg ${
                             quadrantTextColors[q.id]
                           }`}
                         >
@@ -1152,9 +1195,10 @@ export default function EisenhowerMatrix() {
             <motion.button
               type="submit"
               variants={buttonVariants}
+              initial="initial"
               whileHover="hover"
               whileTap="tap"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-6 py-2 shadow-md hover:shadow-lg transition-all duration-300"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-6 py-2 shadow-md"
             >
               {language === "en" ? "Add" : "Hinzufügen"}
             </motion.button>
@@ -1202,24 +1246,23 @@ export default function EisenhowerMatrix() {
                     .filter((t) => t.quadrant === q.id && !t.done)
                     .sort((a, b) => a.position - b.position)
                     .map((task) => (
-                      <motion.div variants={itemVariants} key={task.id}>
-                        <DraggableTask
-                          task={task}
-                          onToggle={toggleDone}
-                          onDelete={deleteTask}
-                          onUpdate={updateTask}
-                          isActive={activeTask?.id === task.id}
-                          displayAllInfos={displayAllInfos}
-                          language={language}
-                        />
-                      </motion.div>
+                      <DraggableTask
+                        key={task.id}
+                        task={task}
+                        onToggle={toggleDone}
+                        onDelete={deleteTask}
+                        onUpdate={updateTask}
+                        isActive={activeTask?.id === task.id}
+                        displayAllInfos={displayAllInfos}
+                        language={language}
+                      />
                     ))}
                 </AnimatePresence>
               </DroppableZone>
             ))}
           </motion.div>
           <DragOverlay>
-            {activeTask ? (
+            {activeTask && (
               <DraggableTask
                 task={activeTask}
                 onToggle={toggleDone}
@@ -1229,7 +1272,7 @@ export default function EisenhowerMatrix() {
                 displayAllInfos={displayAllInfos}
                 language={language}
               />
-            ) : null}
+            )}
           </DragOverlay>
         </DndContext>
 
@@ -1279,10 +1322,11 @@ export default function EisenhowerMatrix() {
                         </span>
                         <motion.button
                           variants={buttonVariants}
+                          initial="initial"
                           whileHover="hover"
                           whileTap="tap"
                           onClick={() => deleteTask(task.id)}
-                          className="p-2 text-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                          className="p-2 text-red-500 hover:text-red-600 dark:hover:text-red-400"
                         >
                           <Trash2 className="h-4 w-4" />
                         </motion.button>
@@ -1308,9 +1352,10 @@ export default function EisenhowerMatrix() {
             <CollapsibleTrigger asChild>
               <motion.button
                 variants={buttonVariants}
+                initial="initial"
                 whileHover="hover"
                 whileTap="tap"
-                className="w-full flex justify-between items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl shadow-md p-4 transition-all duration-300"
+                className="w-full flex justify-between items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl shadow-md p-4"
               >
                 <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">
                   {language === "en"
@@ -1354,10 +1399,11 @@ export default function EisenhowerMatrix() {
                         </div>
                         <motion.button
                           variants={buttonVariants}
+                          initial="initial"
                           whileHover="hover"
                           whileTap="tap"
                           onClick={() => deleteTask(task.id)}
-                          className="p-2 text-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                          className="p-2 text-red-500 hover:text-red-600 dark:hover:text-red-400"
                         >
                           <Trash2 className="h-4 w-4" />
                         </motion.button>
