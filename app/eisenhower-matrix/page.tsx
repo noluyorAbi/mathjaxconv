@@ -306,12 +306,12 @@ function DraggableTask({
 
   const modifiers = {
     currentMonth: (d: Date) => isSameMonth(d, displayedMonth),
-    selected: (d: Date) => date && isSameDay(d, date),
+    selected: (d: Date) => date ? isSameDay(d, date) : false,
   };
 
   const modifiersClassNames = {
     currentMonth:
-      "border-2 border-indigo-600 hover:border-gray-300 text-indigo-400 rounded-full",
+      "border-2 border-indigo-600 hover:border-gray-300 text-indigo-600 rounded-full",
     selected: "bg-indigo-500 text-white rounded-full",
   };
 
@@ -771,12 +771,12 @@ export default function EisenhowerMatrix() {
 
   const modifiers = {
     currentMonth: (date: Date) => isSameMonth(date, displayedMonth),
-    selected: (date: Date) => newTodoDueDate && isSameDay(date, newTodoDueDate),
+    selected: (date: Date) => newTodoDueDate ? isSameDay(date, newTodoDueDate) : false,
   };
 
   const modifiersClassNames = {
     currentMonth:
-      "border-2 border-indigo-600 hover:border-gray-300 text-indigo-400 rounded-full",
+      "border-2 border-indigo-600 hover:border-gray-300 text-indigo-600 rounded-full",
     selected: "bg-indigo-500 text-white rounded-full",
   };
 
