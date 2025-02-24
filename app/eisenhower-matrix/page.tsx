@@ -353,22 +353,24 @@ function DraggableTask({
                     </Label>
                   </div>
                   <div className="flex items-center gap-2">
-                    {(task.description || task.due_date) && (
-                      <CollapsibleTrigger asChild>
-                        <motion.button
-                          variants={buttonVariants}
-                          whileHover="hover"
-                          whileTap="tap"
-                          className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-                        >
-                          {shouldShowDetails ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          )}
-                        </motion.button>
-                      </CollapsibleTrigger>
-                    )}
+                    {/* Conditionally render the dropdown button only if displayAllInfos is false */}
+                    {(task.description || task.due_date) &&
+                      !displayAllInfos && (
+                        <CollapsibleTrigger asChild>
+                          <motion.button
+                            variants={buttonVariants}
+                            whileHover="hover"
+                            whileTap="tap"
+                            className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                          >
+                            {shouldShowDetails ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </motion.button>
+                        </CollapsibleTrigger>
+                      )}
                     <motion.button
                       variants={buttonVariants}
                       whileHover="hover"
@@ -631,11 +633,12 @@ export default function EisenhowerMatrix() {
   };
 
   const modifiersClassNames = {
-    currentMonth: "border-2 border-indigo-600 border-opacity-60 hover:border-gray-300 text-white rounded-full",
+    currentMonth:
+      "border-2 border-indigo-600 border-opacity-60 hover:border-gray-300 text-white rounded-full",
   };
 
   return (
-    <div className="container mx-auto p-8 bg-gradient-to-br from-gray-100 via-gray-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 min-h-screen overflow-x-hidden">
+    <div className="container overflow-clip mx-auto p-8 bg-gradient-to-br from-gray-100 via-gray-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 min-h-screen overflow-x-hidden">
       <motion.div
         variants={containerVariants}
         initial="hidden"
