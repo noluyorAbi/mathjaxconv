@@ -34,6 +34,14 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   ChevronDown,
   ChevronUp,
   Trash2,
@@ -74,7 +82,6 @@ const quadrantStyles: Record<string, string> = {
     "bg-gradient-to-br from-green-300 via-green-200 to-green-100 dark:from-green-900 dark:via-green-800 dark:to-green-700",
 };
 
-// Color mapping for quadrant selector text
 const quadrantTextColors: Record<string, string> = {
   "urgent-important": "text-red-600 dark:text-red-400",
   "urgent-not-important": "text-yellow-600 dark:text-yellow-400",
@@ -82,7 +89,6 @@ const quadrantTextColors: Record<string, string> = {
   "not-urgent-not-important": "text-green-600 dark:text-green-400",
 };
 
-// Animation Variants
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -128,6 +134,12 @@ const popoverVariants = {
   hidden: { opacity: 0, y: -10, scale: 0.95 },
   visible: { opacity: 1, y: 0, scale: 1 },
   exit: { opacity: 0, y: -10, scale: 0.95 },
+};
+
+const modalVariants = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.2 } },
+  exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } },
 };
 
 function DroppableZone({
@@ -435,6 +447,7 @@ export default function EisenhowerMatrix() {
     const storedValue = localStorage.getItem("displayAllInfos");
     return storedValue ? JSON.parse(storedValue) : false;
   });
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchTasks() {
@@ -645,7 +658,7 @@ export default function EisenhowerMatrix() {
   };
 
   return (
-    <div className="container overflow-clip mx-auto p-8 bg-gradient-to-br from-gray-100 via-gray-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 min-h-screen overflow-x-hidden">
+    <div className="container overflow-clip mx-auto p-8 bg-gradient-to-br from-gray-100 via-gray-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 min-h-screen overflow-x-clip">
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -668,6 +681,82 @@ export default function EisenhowerMatrix() {
               onChange={(e) => setNewTodoTitle(e.target.value)}
               className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-xl bg-white dark:bg-gray-900 shadow-sm transition-all duration-300"
             />
+            <Dialog open={isHelpModalOpen} onOpenChange={setIsHelpModalOpen}>
+              <DialogTrigger asChild>
+                <motion.button
+                  variants={buttonVariants}
+                  whileHover="hover"
+                  whileTap="tap"
+                  className="mt-2 text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                >
+                  Explain Eisenhower Matrix
+                </motion.button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl">
+                <motion.div
+                  variants={modalVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <DialogHeader>
+                    <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                      The Eisenhower Matrix
+                    </DialogTitle>
+                    <DialogDescription className="text-sm text-gray-600 dark:text-gray-400">
+                      Learn how to prioritize tasks effectively.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="mt-4 text-gray-700 dark:text-gray-300">
+                    <p className="mb-4">
+                      The Eisenhower Matrix is a time management tool that helps
+                      you prioritize tasks based on urgency and importance. It
+                      divides tasks into four quadrants:
+                    </p>
+                    <ul className="list-disc pl-5 space-y-2">
+                      <li>
+                        <span className="font-medium text-red-600 dark:text-red-400">
+                          Urgent & Important (Red):
+                        </span>{" "}
+                        Do these tasks immediately. They are critical and
+                        time-sensitive (e.g., emergencies, deadlines).
+                      </li>
+                      <li>
+                        <span className="font-medium text-yellow-600 dark:text-yellow-400">
+                          Urgent, Not Important (Yellow):
+                        </span>{" "}
+                        Delegate these tasks if possible. They need quick action
+                        but aren’t crucial (e.g., interruptions, some emails).
+                      </li>
+                      <li>
+                        <span className="font-medium text-blue-600 dark:text-blue-400">
+                          Not Urgent, Important (Blue):
+                        </span>{" "}
+                        Schedule these tasks. They contribute to long-term goals
+                        but don’t need immediate attention (e.g., planning,
+                        learning).
+                      </li>
+                      <li>
+                        <span className="font-medium text-green-600 dark:text-green-400">
+                          Not Urgent, Not Important (Green):
+                        </span>{" "}
+                        Eliminate or minimize these tasks. They are often
+                        distractions (e.g., excessive social media, trivial
+                        activities).
+                      </li>
+                    </ul>
+                    <p className="mt-4">
+                      <span className="font-medium">How to Use It:</span> Enter
+                      a task in the input field, optionally add a description
+                      and due date, then select the appropriate quadrant from
+                      the dropdown. Drag tasks between quadrants if priorities
+                      change, check them off when done, and delete them if no
+                      longer needed.
+                    </p>
+                  </div>
+                </motion.div>
+              </DialogContent>
+            </Dialog>
           </div>
           <div className="md:col-span-1">
             <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
