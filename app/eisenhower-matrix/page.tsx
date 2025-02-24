@@ -50,6 +50,7 @@ import {
   Pencil,
   Check,
   X,
+  Globe,
 } from "lucide-react";
 import { format, isSameMonth } from "date-fns";
 
@@ -64,11 +65,18 @@ type Task = {
   due_date?: string | null;
 };
 
-const quadrants = [
+const quadrantsEn = [
   { id: "urgent-important", title: "Urgent & Important" },
   { id: "urgent-not-important", title: "Urgent, Not Important" },
   { id: "not-urgent-important", title: "Not Urgent, Important" },
   { id: "not-urgent-not-important", title: "Not Urgent, Not Important" },
+];
+
+const quadrantsDe = [
+  { id: "urgent-important", title: "Dringend & Wichtig" },
+  { id: "urgent-not-important", title: "Dringend, Nicht Wichtig" },
+  { id: "not-urgent-important", title: "Nicht Dringend, Wichtig" },
+  { id: "not-urgent-not-important", title: "Nicht Dringend, Nicht Wichtig" },
 ];
 
 const quadrantStyles: Record<string, string> = {
@@ -182,6 +190,7 @@ function DraggableTask({
   isDraggingOverlay = false,
   isActive = false,
   displayAllInfos = false,
+  language,
 }: {
   task: Task;
   onToggle: (id: number, done: boolean) => void;
@@ -190,6 +199,7 @@ function DraggableTask({
   isDraggingOverlay?: boolean;
   isActive?: boolean;
   displayAllInfos?: boolean;
+  language: "en" | "de";
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: task.id.toString(),
@@ -211,7 +221,8 @@ function DraggableTask({
       : { x: 0, y: 0, rotate: 0, scale: 1 };
 
   const formatDueDate = (dueDate: string | null) => {
-    if (!dueDate) return "No due date";
+    if (!dueDate)
+      return language === "en" ? "No due date" : "Kein Fälligkeitsdatum";
     return new Date(dueDate).toLocaleDateString();
   };
 
@@ -303,7 +314,9 @@ function DraggableTask({
                       description: e.target.value,
                     })
                   }
-                  placeholder="Description"
+                  placeholder={
+                    language === "en" ? "Description" : "Beschreibung"
+                  }
                   className="border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-500"
                 />
                 <Popover>
@@ -315,7 +328,15 @@ function DraggableTask({
                       className="w-full flex items-center justify-start text-left font-normal border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 transition-all duration-300"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4 text-gray-500 dark:text-gray-400" />
-                      {date ? format(date, "PPP") : <span>Pick a date</span>}
+                      {date ? (
+                        format(date, "PPP")
+                      ) : (
+                        <span>
+                          {language === "en"
+                            ? "Pick a date"
+                            : "Datum auswählen"}
+                        </span>
+                      )}
                     </motion.button>
                   </PopoverTrigger>
                   <AnimatePresence>
@@ -417,7 +438,8 @@ function DraggableTask({
                     )}
                     {task.due_date && (
                       <p className="flex items-center gap-1">
-                        <CalendarIcon className="h-3 w-3" /> Due:{" "}
+                        <CalendarIcon className="h-3 w-3" />{" "}
+                        {language === "en" ? "Due:" : "Fällig:"}{" "}
                         {formatDueDate(task.due_date)}
                       </p>
                     )}
@@ -437,7 +459,7 @@ export default function EisenhowerMatrix() {
   const [loading, setLoading] = useState(false);
   const [newTodoTitle, setNewTodoTitle] = useState("");
   const [newTodoDescription, setNewTodoDescription] = useState("");
-  const [newTodoQuadrant, setNewTodoQuadrant] = useState(quadrants[0].id);
+  const [newTodoQuadrant, setNewTodoQuadrant] = useState(quadrantsEn[0].id);
   const [newTodoDueDate, setNewTodoDueDate] = useState<Date | undefined>();
   const [displayedMonth, setDisplayedMonth] = useState<Date>(new Date());
   const [isDoneOpen, setIsDoneOpen] = useState(false);
@@ -448,6 +470,10 @@ export default function EisenhowerMatrix() {
     return storedValue ? JSON.parse(storedValue) : false;
   });
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [language, setLanguage] = useState<"en" | "de">(() => {
+    const storedLang = localStorage.getItem("language");
+    return storedLang === "de" ? "de" : "en";
+  });
 
   useEffect(() => {
     async function fetchTasks() {
@@ -469,7 +495,8 @@ export default function EisenhowerMatrix() {
 
   useEffect(() => {
     localStorage.setItem("displayAllInfos", JSON.stringify(displayAllInfos));
-  }, [displayAllInfos]);
+    localStorage.setItem("language", language);
+  }, [displayAllInfos, language]);
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -636,16 +663,21 @@ export default function EisenhowerMatrix() {
   };
 
   const getTimeRemaining = (dueDate: string | null) => {
-    if (!dueDate) return "No due date";
+    if (!dueDate)
+      return language === "en" ? "No due date" : "Kein Fälligkeitsdatum";
     const now = new Date();
     const due = new Date(dueDate);
     const diffMs = due.getTime() - now.getTime();
     const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0)
-      return `Overdue by ${-diffDays} day${-diffDays === 1 ? "" : "s"}`;
-    if (diffDays === 0) return "Due today";
-    return `${diffDays} day${diffDays === 1 ? "" : "s"} remaining`;
+      return language === "en"
+        ? `Overdue by ${-diffDays} day${-diffDays === 1 ? "" : "s"}`
+        : `Überfällig um ${-diffDays} Tag${-diffDays === 1 ? "" : "e"}`;
+    if (diffDays === 0) return language === "en" ? "Due today" : "Heute fällig";
+    return language === "en"
+      ? `${diffDays} day${diffDays === 1 ? "" : "s"} remaining`
+      : `${diffDays} Tag${diffDays === 1 ? "" : "e"} verbleibend`;
   };
 
   const modifiers = {
@@ -657,8 +689,24 @@ export default function EisenhowerMatrix() {
       "border-2 border-indigo-600 border-opacity-60 hover:border-gray-300 text-white rounded-full",
   };
 
+  const quadrants = language === "en" ? quadrantsEn : quadrantsDe;
+
   return (
-    <div className="container overflow-clip mx-auto p-8 bg-gradient-to-br from-gray-100 via-gray-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 min-h-screen overflow-x-clip">
+    <div className="container overflow-clip mx-auto p-8 bg-gradient-to-br from-gray-100 via-gray-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 min-h-screen overflow-x-clip relative">
+      <motion.div className="absolute top-4 right-4">
+        <motion.button
+          variants={buttonVariants}
+          whileHover="hover"
+          whileTap="tap"
+          onClick={() => setLanguage(language === "en" ? "de" : "en")}
+          className="p-2 text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 transition-colors"
+          title={
+            language === "en" ? "Switch to German" : "Zu Englisch wechseln"
+          }
+        >
+          <Globe className="h-6 w-6" />
+        </motion.button>
+      </motion.div>
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -672,11 +720,15 @@ export default function EisenhowerMatrix() {
         >
           <div className="md:col-span-1">
             <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
-              Task
+              {language === "en" ? "Task" : "Aufgabe"}
             </Label>
             <Input
               id="new-task"
-              placeholder="Add a new task..."
+              placeholder={
+                language === "en"
+                  ? "Add a new task..."
+                  : "Neue Aufgabe hinzufügen..."
+              }
               value={newTodoTitle}
               onChange={(e) => setNewTodoTitle(e.target.value)}
               className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-xl bg-white dark:bg-gray-900 shadow-sm transition-all duration-300"
@@ -689,7 +741,9 @@ export default function EisenhowerMatrix() {
                   whileTap="tap"
                   className="mt-2 text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
                 >
-                  Explain Eisenhower Matrix
+                  {language === "en"
+                    ? "Understanding the Eisenhower Matrix"
+                    : "Die Eisenhower-Matrix verstehen"}
                 </motion.button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl">
@@ -701,58 +755,227 @@ export default function EisenhowerMatrix() {
                 >
                   <DialogHeader>
                     <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                      The Eisenhower Matrix
+                      {language === "en"
+                        ? "The Eisenhower Matrix"
+                        : "Die Eisenhower-Matrix"}
                     </DialogTitle>
                     <DialogDescription className="text-sm text-gray-600 dark:text-gray-400">
-                      Learn how to prioritize tasks effectively.
+                      {language === "en"
+                        ? "A proven framework for effective task prioritization."
+                        : "Ein bewährtes Framework zur effektiven Aufgabenpriorisierung."}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="mt-4 text-gray-700 dark:text-gray-300">
-                    <p className="mb-4">
-                      The Eisenhower Matrix is a time management tool that helps
-                      you prioritize tasks based on urgency and importance. It
-                      divides tasks into four quadrants:
-                    </p>
-                    <ul className="list-disc pl-5 space-y-2">
-                      <li>
-                        <span className="font-medium text-red-600 dark:text-red-400">
-                          Urgent & Important (Red):
-                        </span>{" "}
-                        Do these tasks immediately. They are critical and
-                        time-sensitive (e.g., emergencies, deadlines).
-                      </li>
-                      <li>
-                        <span className="font-medium text-yellow-600 dark:text-yellow-400">
-                          Urgent, Not Important (Yellow):
-                        </span>{" "}
-                        Delegate these tasks if possible. They need quick action
-                        but aren’t crucial (e.g., interruptions, some emails).
-                      </li>
-                      <li>
-                        <span className="font-medium text-blue-600 dark:text-blue-400">
-                          Not Urgent, Important (Blue):
-                        </span>{" "}
-                        Schedule these tasks. They contribute to long-term goals
-                        but don’t need immediate attention (e.g., planning,
-                        learning).
-                      </li>
-                      <li>
-                        <span className="font-medium text-green-600 dark:text-green-400">
-                          Not Urgent, Not Important (Green):
-                        </span>{" "}
-                        Eliminate or minimize these tasks. They are often
-                        distractions (e.g., excessive social media, trivial
-                        activities).
-                      </li>
-                    </ul>
-                    <p className="mt-4">
-                      <span className="font-medium">How to Use It:</span> Enter
-                      a task in the input field, optionally add a description
-                      and due date, then select the appropriate quadrant from
-                      the dropdown. Drag tasks between quadrants if priorities
-                      change, check them off when done, and delete them if no
-                      longer needed.
-                    </p>
+                    {language === "en" ? (
+                      <>
+                        <section className="mb-4">
+                          <h3 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">
+                            Overview
+                          </h3>
+                          <p className="text-sm">
+                            The Eisenhower Matrix, developed by President Dwight
+                            D. Eisenhower, is a strategic tool designed to
+                            categorize tasks based on their urgency and
+                            importance. It organizes your workload into four
+                            quadrants to optimize productivity and
+                            decision-making.
+                          </p>
+                        </section>
+                        <section className="mb-4">
+                          <h3 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">
+                            Quadrants
+                          </h3>
+                          <ul className="list-none pl-0 space-y-2 text-sm">
+                            <li className="flex items-start">
+                              <span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-2 mt-1.5 flex-shrink-0"></span>
+                              <span>
+                                <span className="font-medium text-red-600 dark:text-red-400">
+                                  Urgent & Important:
+                                </span>{" "}
+                                Tasks requiring immediate action due to their
+                                critical nature. <br />
+                                <span className="italic">Example:</span>{" "}
+                                Resolving a server outage, meeting a project
+                                deadline today. <br />
+                                <span className="font-medium">
+                                  Action:
+                                </span>{" "}
+                                Address promptly.
+                              </span>
+                            </li>
+                            <li className="flex items-start">
+                              <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 mr-2 mt-1.5 flex-shrink-0"></span>
+                              <span>
+                                <span className="font-medium text-yellow-600 dark:text-yellow-400">
+                                  Urgent, Not Important:
+                                </span>{" "}
+                                Time-sensitive tasks with lower strategic value.{" "}
+                                <br />
+                                <span className="italic">Example:</span>{" "}
+                                Responding to non-critical emails, attending an
+                                unscheduled team update. <br />
+                                <span className="font-medium">
+                                  Action:
+                                </span>{" "}
+                                Delegate when feasible.
+                              </span>
+                            </li>
+                            <li className="flex items-start">
+                              <span className="inline-block w-2 h-2 rounded-full bg-blue-500 mr-2 mt-1.5 flex-shrink-0"></span>
+                              <span>
+                                <span className="font-medium text-blue-600 dark:text-blue-400">
+                                  Not Urgent, Important:
+                                </span>{" "}
+                                High-value tasks that contribute to long-term
+                                goals. <br />
+                                <span className="italic">Example:</span>{" "}
+                                Developing a new skill, planning a quarterly
+                                strategy. <br />
+                                <span className="font-medium">
+                                  Action:
+                                </span>{" "}
+                                Schedule for focused attention.
+                              </span>
+                            </li>
+                            <li className="flex items-start">
+                              <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2 mt-1.5 flex-shrink-0"></span>
+                              <span>
+                                <span className="font-medium text-green-600 dark:text-green-400">
+                                  Not Urgent, Not Important:
+                                </span>{" "}
+                                Low-priority tasks that offer minimal value.{" "}
+                                <br />
+                                <span className="italic">Example:</span>{" "}
+                                Browsing social media, organizing an already
+                                tidy desk. <br />
+                                <span className="font-medium">
+                                  Action:
+                                </span>{" "}
+                                Minimize or eliminate.
+                              </span>
+                            </li>
+                          </ul>
+                        </section>
+                        <section>
+                          <h3 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">
+                            How to Use This Tool
+                          </h3>
+                          <p className="text-sm">
+                            Input a task with its title, optional description,
+                            and due date. Select the appropriate quadrant from
+                            the dropdown menu. Adjust priorities using
+                            drag-and-drop, mark tasks as completed with the
+                            checkbox, or remove them with the delete button as
+                            required.
+                          </p>
+                        </section>
+                      </>
+                    ) : (
+                      <>
+                        <section className="mb-4">
+                          <h3 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">
+                            Überblick
+                          </h3>
+                          <p className="text-sm">
+                            Die Eisenhower-Matrix, entwickelt von Präsident
+                            Dwight D. Eisenhower, ist ein strategisches Werkzeug
+                            zur Kategorisierung von Aufgaben nach Dringlichkeit
+                            und Wichtigkeit. Sie strukturiert Ihre Arbeitslast
+                            in vier Quadranten, um Produktivität und
+                            Entscheidungsfindung zu optimieren.
+                          </p>
+                        </section>
+                        <section className="mb-4">
+                          <h3 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">
+                            Quadranten
+                          </h3>
+                          <ul className="list-none pl-0 space-y-2 text-sm">
+                            <li className="flex items-start">
+                              <span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-2 mt-1.5 flex-shrink-0"></span>
+                              <span>
+                                <span className="font-medium text-red-600 dark:text-red-400">
+                                  Dringend & Wichtig:
+                                </span>{" "}
+                                Aufgaben, die sofortiges Handeln erfordern
+                                aufgrund ihrer kritischen Natur. <br />
+                                <span className="italic">Beispiel:</span>{" "}
+                                Behebung eines Serverausfalls, Einhaltung einer
+                                heutigen Projektfrist. <br />
+                                <span className="font-medium">
+                                  Maßnahme:
+                                </span>{" "}
+                                Sofort bearbeiten.
+                              </span>
+                            </li>
+                            <li className="flex items-start">
+                              <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 mr-2 mt-1.5 flex-shrink-0"></span>
+                              <span>
+                                <span className="font-medium text-yellow-600 dark:text-yellow-400">
+                                  Dringend, Nicht Wichtig:
+                                </span>{" "}
+                                Zeitkritische Aufgaben mit geringerem
+                                strategischen Wert. <br />
+                                <span className="italic">Beispiel:</span>{" "}
+                                Beantwortung nicht kritischer E-Mails, Teilnahme
+                                an einem ungeplanten Team-Update. <br />
+                                <span className="font-medium">
+                                  Maßnahme:
+                                </span>{" "}
+                                Wenn möglich delegieren.
+                              </span>
+                            </li>
+                            <li className="flex items-start">
+                              <span className="inline-block w-2 h-2 rounded-full bg-blue-500 mr-2 mt-1.5 flex-shrink-0"></span>
+                              <span>
+                                <span className="font-medium text-blue-600 dark:text-blue-400">
+                                  Nicht Dringend, Wichtig:
+                                </span>{" "}
+                                Wertvolle Aufgaben, die langfristige Ziele
+                                unterstützen. <br />
+                                <span className="italic">Beispiel:</span>{" "}
+                                Entwicklung einer neuen Fertigkeit, Planung
+                                einer Quartalsstrategie. <br />
+                                <span className="font-medium">
+                                  Maßnahme:
+                                </span>{" "}
+                                Für gezielte Bearbeitung einplanen.
+                              </span>
+                            </li>
+                            <li className="flex items-start">
+                              <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2 mt-1.5 flex-shrink-0"></span>
+                              <span>
+                                <span className="font-medium text-green-600 dark:text-green-400">
+                                  Nicht Dringend, Nicht Wichtig:
+                                </span>{" "}
+                                Aufgaben mit geringer Priorität und minimalem
+                                Nutzen. <br />
+                                <span className="italic">Beispiel:</span> Surfen
+                                in sozialen Medien, Ordnen eines bereits
+                                aufgeräumten Schreibtisches. <br />
+                                <span className="font-medium">
+                                  Maßnahme:
+                                </span>{" "}
+                                Minimieren oder eliminieren.
+                              </span>
+                            </li>
+                          </ul>
+                        </section>
+                        <section>
+                          <h3 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">
+                            Wie dieses Tool genutzt wird
+                          </h3>
+                          <p className="text-sm">
+                            Geben Sie eine Aufgabe mit Titel, optionaler
+                            Beschreibung und Fälligkeitsdatum ein. Wählen Sie
+                            den passenden Quadranten aus dem Dropdown-Menü.
+                            Passen Sie Prioritäten per Drag-and-Drop an,
+                            markieren Sie Aufgaben als erledigt mit dem
+                            Kontrollkästchen oder entfernen Sie sie bei Bedarf
+                            mit dem Löschbutton.
+                          </p>
+                        </section>
+                      </>
+                    )}
                   </div>
                 </motion.div>
               </DialogContent>
@@ -760,11 +983,15 @@ export default function EisenhowerMatrix() {
           </div>
           <div className="md:col-span-1">
             <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
-              Description
+              {language === "en" ? "Description" : "Beschreibung"}
             </Label>
             <Input
               id="new-description"
-              placeholder="Optional description..."
+              placeholder={
+                language === "en"
+                  ? "Optional description..."
+                  : "Optionale Beschreibung..."
+              }
               value={newTodoDescription}
               onChange={(e) => setNewTodoDescription(e.target.value)}
               className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-xl bg-white dark:bg-gray-900 shadow-sm transition-all duration-300"
@@ -772,7 +999,9 @@ export default function EisenhowerMatrix() {
           </div>
           <div className="md:col-span-1">
             <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
-              Due Date (optional)
+              {language === "en"
+                ? "Due Date (optional)"
+                : "Fälligkeitsdatum (optional)"}
             </Label>
             <Popover>
               <PopoverTrigger asChild>
@@ -786,7 +1015,9 @@ export default function EisenhowerMatrix() {
                   {newTodoDueDate ? (
                     format(newTodoDueDate, "PPP")
                   ) : (
-                    <span>Pick a date</span>
+                    <span>
+                      {language === "en" ? "Pick a date" : "Datum auswählen"}
+                    </span>
                   )}
                 </motion.button>
               </PopoverTrigger>
@@ -817,7 +1048,7 @@ export default function EisenhowerMatrix() {
           </div>
           <div className="md:col-span-1 md:col-start-1">
             <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
-              Quadrant
+              {language === "en" ? "Quadrant" : "Quadrant"}
             </Label>
             <Select value={newTodoQuadrant} onValueChange={setNewTodoQuadrant}>
               <SelectTrigger className="mt-1 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300">
@@ -864,7 +1095,7 @@ export default function EisenhowerMatrix() {
               whileTap="tap"
               className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-6 py-2 shadow-md hover:shadow-lg transition-all duration-300"
             >
-              Add
+              {language === "en" ? "Add" : "Hinzufügen"}
             </motion.button>
           </div>
         </motion.form>
@@ -874,7 +1105,9 @@ export default function EisenhowerMatrix() {
             variants={itemVariants}
             className="text-center text-gray-600 dark:text-gray-400"
           >
-            Loading tasks...
+            {language === "en"
+              ? "Loading tasks..."
+              : "Aufgaben werden geladen..."}
           </motion.p>
         )}
 
@@ -892,7 +1125,7 @@ export default function EisenhowerMatrix() {
             htmlFor="display-infos"
             className="text-sm font-medium text-gray-800 dark:text-gray-200"
           >
-            Display Info
+            {language === "en" ? "Display Info" : "Informationen anzeigen"}
           </Label>
         </motion.div>
 
@@ -916,6 +1149,7 @@ export default function EisenhowerMatrix() {
                           onUpdate={updateTask}
                           isActive={activeTask?.id === task.id}
                           displayAllInfos={displayAllInfos}
+                          language={language}
                         />
                       </motion.div>
                     ))}
@@ -932,6 +1166,7 @@ export default function EisenhowerMatrix() {
                 onUpdate={updateTask}
                 isDraggingOverlay={true}
                 displayAllInfos={displayAllInfos}
+                language={language}
               />
             ) : null}
           </DragOverlay>
@@ -939,7 +1174,7 @@ export default function EisenhowerMatrix() {
 
         <motion.div variants={itemVariants} className="mt-12">
           <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-6">
-            Upcoming Tasks
+            {language === "en" ? "Upcoming Tasks" : "Kommende Aufgaben"}
           </h3>
           <div className="space-y-4">
             <AnimatePresence>
@@ -998,7 +1233,7 @@ export default function EisenhowerMatrix() {
                       </p>
                     )}
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Quadrant:{" "}
+                      {language === "en" ? "Quadrant:" : "Quadrant:"}{" "}
                       {quadrants.find((q) => q.id === task.quadrant)?.title}
                     </p>
                   </motion.div>
@@ -1017,7 +1252,10 @@ export default function EisenhowerMatrix() {
                 className="w-full flex justify-between items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl shadow-md p-4 transition-all duration-300"
               >
                 <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                  Completed Tasks ({tasks.filter((t) => t.done).length})
+                  {language === "en"
+                    ? "Completed Tasks"
+                    : "Abgeschlossene Aufgaben"}{" "}
+                  ({tasks.filter((t) => t.done).length})
                 </span>
                 {isDoneOpen ? (
                   <ChevronUp className="h-5 w-5 text-gray-600 dark:text-gray-400" />
@@ -1069,15 +1307,17 @@ export default function EisenhowerMatrix() {
                         </p>
                       )}
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Completed: {formatTimestamp(task.completed_at!)}
+                        {language === "en" ? "Completed:" : "Abgeschlossen:"}{" "}
+                        {formatTimestamp(task.completed_at!)}
                       </p>
                       {task.due_date && (
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Due: {formatTimestamp(task.due_date)}
+                          {language === "en" ? "Due:" : "Fällig:"}{" "}
+                          {formatTimestamp(task.due_date)}
                         </p>
                       )}
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Quadrant:{" "}
+                        {language === "en" ? "Quadrant:" : "Quadrant:"}{" "}
                         {quadrants.find((q) => q.id === task.quadrant)?.title}
                       </p>
                     </motion.div>
