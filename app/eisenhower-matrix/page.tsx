@@ -33,6 +33,9 @@ import {
   Trash2,
   GripVertical,
   Calendar,
+  Pencil,
+  Check,
+  X,
 } from "lucide-react";
 
 type Task = {
@@ -79,7 +82,7 @@ const itemVariants = {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { type: "spring", stiffness: 400, damping: 20 },
+    transition: { type: "spring", stiffness: 300, damping: 20 },
   },
 };
 
@@ -137,6 +140,7 @@ function DraggableTask({
   task,
   onToggle,
   onDelete,
+  onUpdate,
   isDraggingOverlay = false,
   isActive = false,
   displayAllInfos = false,
@@ -144,6 +148,7 @@ function DraggableTask({
   task: Task;
   onToggle: (id: number, done: boolean) => void;
   onDelete: (id: number) => void;
+  onUpdate: (task: Task) => void;
   isDraggingOverlay?: boolean;
   isActive?: boolean;
   displayAllInfos?: boolean;
@@ -153,6 +158,8 @@ function DraggableTask({
     disabled: isDraggingOverlay,
   });
   const [isOpen, setIsOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTask, setEditedTask] = useState(task);
 
   const motionStyle =
     transform && !isDraggingOverlay
@@ -164,7 +171,17 @@ function DraggableTask({
     return new Date(dueDate).toLocaleDateString();
   };
 
-  // Determine if the collapsible should be open: either globally enabled or individually toggled
+  const handleSave = async () => {
+    if (!editedTask.title.trim()) return;
+    await onUpdate(editedTask);
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditedTask(task);
+    setIsEditing(false);
+  };
+
   const shouldShowDetails = displayAllInfos || isOpen;
 
   return (
@@ -192,69 +209,136 @@ function DraggableTask({
       >
         <Collapsible open={shouldShowDetails} onOpenChange={setIsOpen}>
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div
-                className="flex mr-4 items-center justify-center w-6 h-6 cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-                {...listeners}
-                {...attributes}
-              >
-                <GripVertical className="h-5 w-5" />
-              </div>
-              <div className="flex items-center space-x-3 flex-1">
-                <Checkbox
-                  id={`task-${task.id}`}
-                  checked={task.done}
-                  onCheckedChange={() => onToggle(task.id, task.done)}
-                  onClick={(e) => e.stopPropagation()}
-                  className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+            {isEditing ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={editedTask.title}
+                    onChange={(e) =>
+                      setEditedTask({ ...editedTask, title: e.target.value })
+                    }
+                    className="flex-1 border-gray-200 dark:border-gray-700 rounded-xl bg-white/50 dark:bg-gray-800/50"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSave}
+                    className="text-green-500 hover:text-green-600"
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCancel}
+                    className="text-red-500 hover:text-red-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Input
+                  value={editedTask.description || ""}
+                  onChange={(e) =>
+                    setEditedTask({
+                      ...editedTask,
+                      description: e.target.value,
+                    })
+                  }
+                  placeholder="Beschreibung"
+                  className="border-gray-200 dark:border-gray-700 rounded-xl bg-white/50 dark:bg-gray-800/50"
                 />
-                <Label
-                  htmlFor={`task-${task.id}`}
-                  className={`text-sm font-medium ${
-                    task.done
-                      ? "line-through text-gray-500 dark:text-gray-400"
-                      : "text-gray-900 dark:text-gray-100"
-                  }`}
-                >
-                  {task.title}
-                </Label>
+                <div className="relative">
+                  <Input
+                    type="date"
+                    value={editedTask.due_date || ""}
+                    onChange={(e) =>
+                      setEditedTask({
+                        ...editedTask,
+                        due_date: e.target.value || null,
+                      })
+                    }
+                    className="border-gray-200 dark:border-gray-700 rounded-xl bg-white/50 dark:bg-gray-800/50 pl-8 hover:bg-white dark:hover:bg-gray-800 transition-all duration-300"
+                  />
+                  <Calendar className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                {(task.description || task.due_date) && (
-                  <CollapsibleTrigger asChild>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <div
+                    className="flex mr-4 items-center justify-center w-6 h-6 cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                    {...listeners}
+                    {...attributes}
+                  >
+                    <GripVertical className="h-5 w-5" />
+                  </div>
+                  <div className="flex items-center space-x-3 flex-1">
+                    <Checkbox
+                      id={`task-${task.id}`}
+                      checked={task.done}
+                      onCheckedChange={() => onToggle(task.id, task.done)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                    />
+                    <Label
+                      htmlFor={`task-${task.id}`}
+                      className={`text-sm font-medium ${
+                        task.done
+                          ? "line-through text-gray-500 dark:text-gray-400"
+                          : "text-gray-900 dark:text-gray-100"
+                      }`}
+                    >
+                      {task.title}
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {(task.description || task.due_date) && (
+                      <CollapsibleTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                        >
+                          {shouldShowDetails ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </CollapsibleTrigger>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
+                      onClick={() => setIsEditing(true)}
                       className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                     >
-                      {shouldShowDetails ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
+                      <Pencil className="h-4 w-4" />
                     </Button>
-                  </CollapsibleTrigger>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onDelete(task.id)}
+                      className="text-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                {(task.description || task.due_date) && (
+                  <CollapsibleContent className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                    {task.description && (
+                      <p className="mb-1">{task.description}</p>
+                    )}
+                    {task.due_date && (
+                      <p className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" /> Fällig:{" "}
+                        {formatDueDate(task.due_date)}
+                      </p>
+                    )}
+                  </CollapsibleContent>
                 )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDelete(task.id)}
-                  className="text-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            {(task.description || task.due_date) && (
-              <CollapsibleContent className="mt-2 text-xs text-gray-600 dark:text-gray-400">
-                {task.description && <p className="mb-1">{task.description}</p>}
-                {task.due_date && (
-                  <p className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" /> Fällig:{" "}
-                    {formatDueDate(task.due_date)}
-                  </p>
-                )}
-              </CollapsibleContent>
+              </>
             )}
           </CardContent>
         </Collapsible>
@@ -436,6 +520,22 @@ export default function EisenhowerMatrix() {
     if (error) console.error("Error deleting task:", error);
   };
 
+  const updateTask = async (updatedTask: Task) => {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === updatedTask.id ? updatedTask : t))
+    );
+
+    const { error } = await supabase
+      .from("tasks")
+      .update({
+        title: updatedTask.title,
+        description: updatedTask.description || null,
+        due_date: updatedTask.due_date || null,
+      })
+      .eq("id", updatedTask.id);
+    if (error) console.error("Error updating task:", error);
+  };
+
   const formatTimestamp = (timestamp: string | null) => {
     if (!timestamp) return "";
     return new Date(timestamp).toLocaleString();
@@ -495,12 +595,15 @@ export default function EisenhowerMatrix() {
             <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
               Fälligkeitsdatum
             </Label>
-            <Input
-              type="date"
-              value={newTodoDueDate}
-              onChange={(e) => setNewTodoDueDate(e.target.value)}
-              className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-xl bg-white/50 dark:bg-gray-800/50 transition-all duration-300"
-            />
+            <div className="relative">
+              <Input
+                type="date"
+                value={newTodoDueDate}
+                onChange={(e) => setNewTodoDueDate(e.target.value)}
+                className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-xl bg-white/50 dark:bg-gray-800/50 pl-8 hover:bg-white dark:hover:bg-gray-800 transition-all duration-300"
+              />
+              <Calendar className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+            </div>
           </div>
           <div className="md:grid-column-2/4 md:grid-row-2">
             <div className="flex items-end gap-4">
@@ -602,6 +705,7 @@ export default function EisenhowerMatrix() {
                           task={task}
                           onToggle={toggleDone}
                           onDelete={deleteTask}
+                          onUpdate={updateTask}
                           isActive={activeTask?.id === task.id}
                           displayAllInfos={displayAllInfos}
                         />
@@ -617,6 +721,7 @@ export default function EisenhowerMatrix() {
                 task={activeTask}
                 onToggle={toggleDone}
                 onDelete={deleteTask}
+                onUpdate={updateTask}
                 isDraggingOverlay={true}
                 displayAllInfos={displayAllInfos}
               />
