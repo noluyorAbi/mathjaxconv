@@ -27,7 +27,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, Trash2, GripVertical } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Trash2,
+  GripVertical,
+  Calendar,
+} from "lucide-react";
 
 type Task = {
   id: number;
@@ -37,6 +43,7 @@ type Task = {
   position: number;
   done: boolean;
   completed_at?: string | null;
+  due_date?: string | null;
 };
 
 const quadrants = [
@@ -57,15 +64,12 @@ const quadrantStyles: Record<string, string> = {
     "bg-gradient-to-br from-green-300 via-green-200 to-green-100 dark:from-green-900 dark:via-green-800 dark:to-green-700",
 };
 
-// Animation Variants für den Initial Load
+// Animation Variants
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.2,
-      delayChildren: 0.3,
-    },
+    transition: { staggerChildren: 0.2, delayChildren: 0.3 },
   },
 };
 
@@ -75,15 +79,10 @@ const itemVariants = {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 20,
-    },
+    transition: { type: "spring", stiffness: 300, damping: 20 },
   },
 };
 
-// Select Animation Variants
 const selectVariants = {
   closed: {
     height: 0,
@@ -93,11 +92,7 @@ const selectVariants = {
   open: {
     height: "auto",
     opacity: 1,
-    transition: {
-      duration: 0.3,
-      ease: "easeInOut",
-      staggerChildren: 0.05,
-    },
+    transition: { duration: 0.3, ease: "easeInOut", staggerChildren: 0.05 },
   },
 };
 
@@ -158,23 +153,22 @@ function DraggableTask({
 
   const motionStyle =
     transform && !isDraggingOverlay
-      ? {
-          x: transform.x,
-          y: transform.y,
-          rotate: 2,
-          scale: 1.05,
-        }
+      ? { x: transform.x, y: transform.y, rotate: 2, scale: 1.05 }
       : { x: 0, y: 0, rotate: 0, scale: 1 };
+
+  const formatDueDate = (dueDate: string | null) => {
+    if (!dueDate) return "Kein Fälligkeitsdatum";
+    return new Date(dueDate).toLocaleDateString();
+  };
 
   return (
     <motion.div
       ref={setNodeRef}
-      className="relative group"
+      className={`relative group ${
+        !isDraggingOverlay ? "group-hover:z-50" : ""
+      }`}
       initial={{ opacity: 0, y: 10 }}
-      animate={{
-        opacity: isActive ? 0 : 1,
-        ...motionStyle,
-      }}
+      animate={{ opacity: isActive ? 0 : 1, ...motionStyle }}
       exit={{ opacity: 0, y: -10 }}
       transition={{
         type: "spring",
@@ -229,15 +223,21 @@ function DraggableTask({
           </Button>
         </CardContent>
       </Card>
-      {task.description && (
+      {(task.description || task.due_date) && (
         <motion.div
-          className="absolute z-10 top-full left-0 mt-2 p-3 bg-gray-800/95 text-white text-xs rounded-lg shadow-xl hidden group-hover:block backdrop-blur-sm"
+          className="absolute z-50 top-full left-0 mt-2 p-3 bg-gray-800/95 text-white text-xs rounded-lg shadow-xl hidden group-hover:block backdrop-blur-sm"
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 5 }}
           transition={{ duration: 0.2 }}
         >
-          {task.description}
+          {task.description && <p className="mb-1">{task.description}</p>}
+          {task.due_date && (
+            <p className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" /> Fällig:{" "}
+              {formatDueDate(task.due_date)}
+            </p>
+          )}
         </motion.div>
       )}
     </motion.div>
@@ -250,6 +250,7 @@ export default function EisenhowerMatrix() {
   const [newTodoTitle, setNewTodoTitle] = useState("");
   const [newTodoDescription, setNewTodoDescription] = useState("");
   const [newTodoQuadrant, setNewTodoQuadrant] = useState(quadrants[0].id);
+  const [newTodoDueDate, setNewTodoDueDate] = useState<string>("");
   const [isDoneOpen, setIsDoneOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -288,6 +289,7 @@ export default function EisenhowerMatrix() {
         quadrant: newTodoQuadrant,
         position: maxPosition,
         done: false,
+        due_date: newTodoDueDate || null,
       })
       .select();
     if (error) {
@@ -296,6 +298,7 @@ export default function EisenhowerMatrix() {
       setTasks((prev) => [...prev, data[0]]);
       setNewTodoTitle("");
       setNewTodoDescription("");
+      setNewTodoDueDate("");
     }
   };
 
@@ -323,17 +326,14 @@ export default function EisenhowerMatrix() {
       updatedTasks = updatedTasks.map((t) =>
         t.id === taskId ? { ...t, quadrant: newQuadrant } : t
       );
-
       const oldQuadrantTasks = updatedTasks
         .filter((t) => t.quadrant === task.quadrant && !t.done)
         .sort((a, b) => a.position - b.position)
         .map((t, index) => ({ ...t, position: index }));
-
       const newQuadrantTasks = updatedTasks
         .filter((t) => t.quadrant === newQuadrant && !t.done)
         .sort((a, b) => a.position - b.position)
         .map((t, index) => ({ ...t, position: index }));
-
       updatedTasks = updatedTasks.map((t) => {
         const oldMatch = oldQuadrantTasks.find((ot) => ot.id === t.id);
         const newMatch = newQuadrantTasks.find((nt) => nt.id === t.id);
@@ -351,7 +351,6 @@ export default function EisenhowerMatrix() {
         quadrantTasks.length
       );
       quadrantTasks.splice(newIndex, 0, task);
-
       updatedTasks = updatedTasks.map((t) => {
         const match = quadrantTasks.find((qt) => qt.id === t.id);
         return match ? { ...t, position: quadrantTasks.indexOf(match) } : t;
@@ -370,15 +369,13 @@ export default function EisenhowerMatrix() {
         done: t.done,
         description: t.description || null,
         completed_at: t.completed_at || null,
+        due_date: t.due_date || null,
       }));
 
-    const { error } = await supabase.from("tasks").upsert(updates, {
-      onConflict: "id",
-    });
-
-    if (error) {
-      console.error("Error updating tasks:", error);
-    }
+    const { error } = await supabase
+      .from("tasks")
+      .upsert(updates, { onConflict: "id" });
+    if (error) console.error("Error updating tasks:", error);
   };
 
   const toggleDone = async (taskId: number, currentDone: boolean) => {
@@ -424,6 +421,19 @@ export default function EisenhowerMatrix() {
     return new Date(timestamp).toLocaleString();
   };
 
+  const getTimeRemaining = (dueDate: string | null) => {
+    if (!dueDate) return "Kein Fälligkeitsdatum";
+    const now = new Date();
+    const due = new Date(dueDate);
+    const diffMs = due.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0)
+      return `Überfällig um ${-diffDays} Tag${-diffDays === 1 ? "" : "e"}`;
+    if (diffDays === 0) return "Fällig heute";
+    return `${diffDays} Tag${diffDays === 1 ? "" : "e"} verbleibend`;
+  };
+
   return (
     <div className="container mx-auto p-8 bg-gradient-to-br from-gray-100 via-gray-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 min-h-screen overflow-x-hidden">
       <motion.div
@@ -435,9 +445,9 @@ export default function EisenhowerMatrix() {
         <motion.form
           variants={itemVariants}
           onSubmit={handleCreateTask}
-          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12 bg-white/95 dark:bg-gray-900/95 p-8 rounded-3xl shadow-2xl backdrop-blur-md border border-gray-100 dark:border-gray-800"
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 bg-white/95 dark:bg-gray-900/95 p-8 rounded-3xl shadow-2xl backdrop-blur-md border border-gray-100 dark:border-gray-800"
         >
-          <div className="md:col-span-2">
+          <div className="md:grid-column-1/3">
             <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
               Aufgabe
             </Label>
@@ -449,7 +459,7 @@ export default function EisenhowerMatrix() {
               className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-xl bg-white/50 dark:bg-gray-800/50 transition-all duration-300"
             />
           </div>
-          <div>
+          <div className="md:grid-column-3/4">
             <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
               Beschreibung
             </Label>
@@ -461,57 +471,70 @@ export default function EisenhowerMatrix() {
               className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-xl bg-white/50 dark:bg-gray-800/50 transition-all duration-300"
             />
           </div>
-          <div className="flex items-end gap-4">
-            <div className="flex-1">
-              <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
-                Quadrant
-              </Label>
-              <Select
-                value={newTodoQuadrant}
-                onValueChange={setNewTodoQuadrant}
-              >
-                <SelectTrigger className="mt-1 bg-white/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-all duration-300 shadow-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-white/95 dark:bg-gray-900/95 border-gray-200 dark:border-gray-800 rounded-xl shadow-xl backdrop-blur-sm">
-                  <AnimatePresence>
-                    <motion.div
-                      variants={selectVariants}
-                      initial="closed"
-                      animate="open"
-                      exit="closed"
-                    >
-                      {quadrants.map((q) => (
-                        <motion.div
-                          key={q.id}
-                          variants={selectItemVariants}
-                          whileHover={{
-                            scale: 1.02,
-                            backgroundColor: "rgba(99, 102, 241, 0.1)",
-                          }}
-                          className="rounded-lg"
-                        >
-                          <SelectItem
-                            value={q.id}
-                            className="cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors duration-200"
+          <div className="md:grid-column-1/2 md:grid-row-2">
+            <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
+              Fälligkeitsdatum
+            </Label>
+            <Input
+              type="date"
+              value={newTodoDueDate}
+              onChange={(e) => setNewTodoDueDate(e.target.value)}
+              className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-xl bg-white/50 dark:bg-gray-800/50 transition-all duration-300"
+            />
+          </div>
+          <div className="md:grid-column-2/4 md:grid-row-2">
+            <div className="flex items-end gap-4">
+              <div className="flex-1">
+                <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
+                  Quadrant
+                </Label>
+                <Select
+                  value={newTodoQuadrant}
+                  onValueChange={setNewTodoQuadrant}
+                >
+                  <SelectTrigger className="mt-1 bg-white/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-all duration-300 shadow-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white/95 dark:bg-gray-900/95 border-gray-200 dark:border-gray-800 rounded-xl shadow-xl backdrop-blur-sm">
+                    <AnimatePresence>
+                      <motion.div
+                        variants={selectVariants}
+                        initial="closed"
+                        animate="open"
+                        exit="closed"
+                      >
+                        {quadrants.map((q) => (
+                          <motion.div
+                            key={q.id}
+                            variants={selectItemVariants}
+                            whileHover={{
+                              scale: 1.02,
+                              backgroundColor: "rgba(99, 102, 241, 0.1)",
+                            }}
+                            className="rounded-lg"
                           >
-                            <span className="font-medium text-gray-800 dark:text-gray-200">
-                              {q.title}
-                            </span>
-                          </SelectItem>
-                        </motion.div>
-                      ))}
-                    </motion.div>
-                  </AnimatePresence>
-                </SelectContent>
-              </Select>
+                            <SelectItem
+                              value={q.id}
+                              className="cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors duration-200"
+                            >
+                              <span className="font-medium text-gray-800 dark:text-gray-200">
+                                {q.title}
+                              </span>
+                            </SelectItem>
+                          </motion.div>
+                        ))}
+                      </motion.div>
+                    </AnimatePresence>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                type="submit"
+                className="bg-indigo-600 hover:bg-indigo-700 rounded-xl px-6 shadow-md hover:shadow-lg transition-all duration-300"
+              >
+                Hinzufügen
+              </Button>
             </div>
-            <Button
-              type="submit"
-              className="bg-indigo-600 hover:bg-indigo-700 rounded-xl px-6 shadow-md hover:shadow-lg transition-all duration-300"
-            >
-              Hinzufügen
-            </Button>
           </div>
         </motion.form>
 
@@ -561,12 +584,79 @@ export default function EisenhowerMatrix() {
           </DragOverlay>
         </DndContext>
 
-        <motion.div variants={itemVariants}>
-          <Collapsible
-            open={isDoneOpen}
-            onOpenChange={setIsDoneOpen}
-            className="mt-12"
-          >
+        {/* Upcoming Tasks nach Due Date sortiert */}
+        <motion.div variants={itemVariants} className="mt-12">
+          <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-6">
+            Kommende Aufgaben
+          </h3>
+          <div className="space-y-4">
+            <AnimatePresence>
+              {tasks
+                .filter((t) => !t.done && t.due_date)
+                .sort(
+                  (a, b) =>
+                    new Date(a.due_date!).getTime() -
+                    new Date(b.due_date!).getTime()
+                )
+                .map((task) => (
+                  <motion.div
+                    key={task.id}
+                    variants={itemVariants}
+                    className="bg-white/95 dark:bg-gray-900/95 p-5 rounded-xl shadow-md border border-gray-200 dark:border-gray-800"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <Checkbox
+                          id={`upcoming-task-${task.id}`}
+                          checked={task.done}
+                          onCheckedChange={() => toggleDone(task.id, task.done)}
+                          className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                        />
+                        <Label
+                          htmlFor={`upcoming-task-${task.id}`}
+                          className="text-sm font-medium text-gray-900 dark:text-gray-100"
+                        >
+                          {task.title}
+                        </Label>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span
+                          className={`text-xs font-medium ${
+                            new Date(task.due_date!).getTime() < Date.now()
+                              ? "text-red-500 dark:text-red-400"
+                              : "text-gray-600 dark:text-gray-400"
+                          }`}
+                        >
+                          {getTimeRemaining(task.due_date)}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteTask(task.id)}
+                          className="text-red-500 hover:text-red-600 dark:hover:text-red-400"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    {task.description && (
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                        {task.description}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Quadrant:{" "}
+                      {quadrants.find((q) => q.id === task.quadrant)?.title}
+                    </p>
+                  </motion.div>
+                ))}
+            </AnimatePresence>
+          </div>
+        </motion.div>
+
+        {/* Erledigte Aufgaben */}
+        <motion.div variants={itemVariants} className="mt-12">
+          <Collapsible open={isDoneOpen} onOpenChange={setIsDoneOpen}>
             <CollapsibleTrigger asChild>
               <Button
                 variant="outline"
@@ -578,7 +668,7 @@ export default function EisenhowerMatrix() {
                 {isDoneOpen ? (
                   <ChevronUp className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 ) : (
-                  <ChevronDown className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                  <ChevronUp className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 )}
               </Button>
             </CollapsibleTrigger>
@@ -626,6 +716,11 @@ export default function EisenhowerMatrix() {
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Erledigt: {formatTimestamp(task.completed_at!)}
                       </p>
+                      {task.due_date && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Fällig war: {formatTimestamp(task.due_date)}
+                        </p>
+                      )}
                       <p className="text-xs text-gray-500 dark:text-gray-400">
                         Quadrant:{" "}
                         {quadrants.find((q) => q.id === task.quadrant)?.title}
