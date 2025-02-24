@@ -790,13 +790,20 @@ export default function EisenhowerMatrix() {
                               <span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-2 mt-1.5 flex-shrink-0"></span>
                               <span>
                                 <span className="font-medium text-red-600 dark:text-red-400">
-                                  Urgent & Important:
+                                  Urgent &amp; Important:
                                 </span>{" "}
                                 Tasks requiring immediate action due to their
-                                critical nature. <br />
-                                <span className="italic">Example:</span>{" "}
-                                Resolving a server outage, meeting a project
-                                deadline today. <br />
+                                critical nature.
+                                <br />
+                                <span className="italic">Examples:</span>{" "}
+                                <strong>Job:</strong> Fixing a production bug or
+                                finalizing a client proposal due within hours.
+                                <br />
+                                <span className="italic">Examples:</span>{" "}
+                                <strong>Student:</strong> Completing a research
+                                paper due tomorrow or preparing for an exam
+                                scheduled early in the morning.
+                                <br />
                                 <span className="font-medium">
                                   Action:
                                 </span>{" "}
@@ -809,11 +816,18 @@ export default function EisenhowerMatrix() {
                                 <span className="font-medium text-yellow-600 dark:text-yellow-400">
                                   Urgent, Not Important:
                                 </span>{" "}
-                                Time-sensitive tasks with lower strategic value.{" "}
+                                Time-sensitive tasks with lower strategic value.
                                 <br />
-                                <span className="italic">Example:</span>{" "}
-                                Responding to non-critical emails, attending an
-                                unscheduled team update. <br />
+                                <span className="italic">Examples:</span>{" "}
+                                <strong>Job:</strong> Answering routine emails
+                                or attending a brief, unscheduled meeting that
+                                could be delegated.
+                                <br />
+                                <span className="italic">Examples:</span>{" "}
+                                <strong>Student:</strong> Replying to
+                                non-critical group chat messages or addressing
+                                minor assignment clarifications.
+                                <br />
                                 <span className="font-medium">
                                   Action:
                                 </span>{" "}
@@ -827,10 +841,16 @@ export default function EisenhowerMatrix() {
                                   Not Urgent, Important:
                                 </span>{" "}
                                 High-value tasks that contribute to long-term
-                                goals. <br />
-                                <span className="italic">Example:</span>{" "}
-                                Developing a new skill, planning a quarterly
-                                strategy. <br />
+                                goals.
+                                <br />
+                                <span className="italic">Examples:</span>{" "}
+                                <strong>Job:</strong> Engaging in professional
+                                development or planning long-term projects.
+                                <br />
+                                <span className="italic">Examples:</span>{" "}
+                                <strong>Student:</strong> Studying ahead for
+                                major exams or working on a long-term project.
+                                <br />
                                 <span className="font-medium">
                                   Action:
                                 </span>{" "}
@@ -843,11 +863,17 @@ export default function EisenhowerMatrix() {
                                 <span className="font-medium text-green-600 dark:text-green-400">
                                   Not Urgent, Not Important:
                                 </span>{" "}
-                                Low-priority tasks that offer minimal value.{" "}
+                                Low-priority tasks that offer minimal value.
                                 <br />
-                                <span className="italic">Example:</span>{" "}
-                                Browsing social media, organizing an already
-                                tidy desk. <br />
+                                <span className="italic">Examples:</span>{" "}
+                                <strong>Job:</strong> Casual web browsing or
+                                organizing already sorted files.
+                                <br />
+                                <span className="italic">Examples:</span>{" "}
+                                <strong>Student:</strong> Scrolling through
+                                social media during study sessions or watching
+                                videos that aren’t related to coursework.
+                                <br />
                                 <span className="font-medium">
                                   Action:
                                 </span>{" "}
@@ -894,13 +920,23 @@ export default function EisenhowerMatrix() {
                               <span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-2 mt-1.5 flex-shrink-0"></span>
                               <span>
                                 <span className="font-medium text-red-600 dark:text-red-400">
-                                  Dringend & Wichtig:
+                                  Dringend &amp; Wichtig:
                                 </span>{" "}
                                 Aufgaben, die sofortiges Handeln erfordern
-                                aufgrund ihrer kritischen Natur. <br />
-                                <span className="italic">Beispiel:</span>{" "}
-                                Behebung eines Serverausfalls, Einhaltung einer
-                                heutigen Projektfrist. <br />
+                                aufgrund ihrer kritischen Natur.
+                                <br />
+                                <span className="italic">Beispiele:</span>{" "}
+                                <strong>Beruf:</strong> Behebung eines
+                                kritischen Fehlers in der Produktion oder
+                                Fertigstellung eines Kundenangebots, das in
+                                wenigen Stunden fällig ist.
+                                <br />
+                                <span className="italic">Beispiele:</span>{" "}
+                                <strong>Student:</strong> Abschluss einer
+                                Forschungsarbeit, die morgen fällig ist, oder
+                                Vorbereitung auf eine früh am Morgen anstehende
+                                Prüfung.
+                                <br />
                                 <span className="font-medium">
                                   Maßnahme:
                                 </span>{" "}
@@ -914,10 +950,19 @@ export default function EisenhowerMatrix() {
                                   Dringend, Nicht Wichtig:
                                 </span>{" "}
                                 Zeitkritische Aufgaben mit geringerem
-                                strategischen Wert. <br />
-                                <span className="italic">Beispiel:</span>{" "}
-                                Beantwortung nicht kritischer E-Mails, Teilnahme
-                                an einem ungeplanten Team-Update. <br />
+                                strategischen Wert.
+                                <br />
+                                <span className="italic">Beispiele:</span>{" "}
+                                <strong>Beruf:</strong> Beantwortung
+                                routinemäßiger E-Mails oder Teilnahme an einem
+                                kurzfristig anberaumten Meeting, das delegiert
+                                werden könnte.
+                                <br />
+                                <span className="italic">Beispiele:</span>{" "}
+                                <strong>Student:</strong> Antwort auf nicht
+                                dringende Nachrichten in der Studiengruppe oder
+                                Klärung von geringfügigen Aufgaben.
+                                <br />
                                 <span className="font-medium">
                                   Maßnahme:
                                 </span>{" "}
@@ -930,11 +975,19 @@ export default function EisenhowerMatrix() {
                                 <span className="font-medium text-blue-600 dark:text-blue-400">
                                   Nicht Dringend, Wichtig:
                                 </span>{" "}
-                                Wertvolle Aufgaben, die langfristige Ziele
-                                unterstützen. <br />
-                                <span className="italic">Beispiel:</span>{" "}
-                                Entwicklung einer neuen Fertigkeit, Planung
-                                einer Quartalsstrategie. <br />
+                                Aufgaben mit hohem langfristigen Wert.
+                                <br />
+                                <span className="italic">Beispiele:</span>{" "}
+                                <strong>Beruf:</strong> Teilnahme an
+                                Fortbildungen oder Planung langfristiger
+                                Projekte.
+                                <br />
+                                <span className="italic">Beispiele:</span>{" "}
+                                <strong>Student:</strong> Frühzeitiges Lernen
+                                für wichtige Prüfungen oder die Bearbeitung von
+                                Projekten, die langfristig an Bedeutung
+                                gewinnen.
+                                <br />
                                 <span className="font-medium">
                                   Maßnahme:
                                 </span>{" "}
@@ -948,10 +1001,18 @@ export default function EisenhowerMatrix() {
                                   Nicht Dringend, Nicht Wichtig:
                                 </span>{" "}
                                 Aufgaben mit geringer Priorität und minimalem
-                                Nutzen. <br />
-                                <span className="italic">Beispiel:</span> Surfen
-                                in sozialen Medien, Ordnen eines bereits
-                                aufgeräumten Schreibtisches. <br />
+                                Nutzen.
+                                <br />
+                                <span className="italic">Beispiele:</span>{" "}
+                                <strong>Beruf:</strong> Gelegentliches Surfen im
+                                Internet oder Ordnen von bereits gut
+                                strukturierten Dateien.
+                                <br />
+                                <span className="italic">Beispiele:</span>{" "}
+                                <strong>Student:</strong> Ungezwungenes Scrollen
+                                durch soziale Medien während Lernpausen oder
+                                Anschauen von nicht studienrelevanten Videos.
+                                <br />
                                 <span className="font-medium">
                                   Maßnahme:
                                 </span>{" "}
