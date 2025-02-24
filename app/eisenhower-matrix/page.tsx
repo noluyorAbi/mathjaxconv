@@ -150,6 +150,7 @@ function DraggableTask({
     id: task.id.toString(),
     disabled: isDraggingOverlay,
   });
+  const [isOpen, setIsOpen] = useState(false);
 
   const motionStyle =
     transform && !isDraggingOverlay
@@ -164,9 +165,7 @@ function DraggableTask({
   return (
     <motion.div
       ref={setNodeRef}
-      className={`relative group ${
-        !isDraggingOverlay ? "group-hover:z-50" : ""
-      }`}
+      className="relative"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: isActive ? 0 : 1, ...motionStyle }}
       exit={{ opacity: 0, y: -10 }}
@@ -186,60 +185,75 @@ function DraggableTask({
           isDraggingOverlay ? "shadow-2xl" : "hover:shadow-2xl"
         }`}
       >
-        <CardContent className="p-4 flex items-center justify-between">
-          <div
-            className="flex mr-4 items-center justify-center w-6 h-6 cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-            {...listeners}
-            {...attributes}
-          >
-            <GripVertical className="h-5 w-5" />
-          </div>
-          <div className="flex items-center space-x-3 flex-1">
-            <Checkbox
-              id={`task-${task.id}`}
-              checked={task.done}
-              onCheckedChange={() => onToggle(task.id, task.done)}
-              onClick={(e) => e.stopPropagation()}
-              className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
-            />
-            <Label
-              htmlFor={`task-${task.id}`}
-              className={`text-sm font-medium ${
-                task.done
-                  ? "line-through text-gray-500 dark:text-gray-400"
-                  : "text-gray-900 dark:text-gray-100"
-              }`}
-            >
-              {task.title}
-            </Label>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDelete(task.id)}
-            className="text-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </CardContent>
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div
+                className="flex mr-4 items-center justify-center w-6 h-6 cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                {...listeners}
+                {...attributes}
+              >
+                <GripVertical className="h-5 w-5" />
+              </div>
+              <div className="flex items-center space-x-3 flex-1">
+                <Checkbox
+                  id={`task-${task.id}`}
+                  checked={task.done}
+                  onCheckedChange={() => onToggle(task.id, task.done)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                />
+                <Label
+                  htmlFor={`task-${task.id}`}
+                  className={`text-sm font-medium ${
+                    task.done
+                      ? "line-through text-gray-500 dark:text-gray-400"
+                      : "text-gray-900 dark:text-gray-100"
+                  }`}
+                >
+                  {task.title}
+                </Label>
+              </div>
+              <div className="flex items-center gap-2">
+                {(task.description || task.due_date) && (
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                    >
+                      {isOpen ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </CollapsibleTrigger>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onDelete(task.id)}
+                  className="text-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            {(task.description || task.due_date) && (
+              <CollapsibleContent className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                {task.description && <p className="mb-1">{task.description}</p>}
+                {task.due_date && (
+                  <p className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" /> Fällig:{" "}
+                    {formatDueDate(task.due_date)}
+                  </p>
+                )}
+              </CollapsibleContent>
+            )}
+          </CardContent>
+        </Collapsible>
       </Card>
-      {(task.description || task.due_date) && (
-        <motion.div
-          className="absolute z-50 top-full left-0 mt-2 p-3 bg-gray-800/95 text-white text-xs rounded-lg shadow-xl hidden group-hover:block backdrop-blur-sm"
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 5 }}
-          transition={{ duration: 0.2 }}
-        >
-          {task.description && <p className="mb-1">{task.description}</p>}
-          {task.due_date && (
-            <p className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" /> Fällig:{" "}
-              {formatDueDate(task.due_date)}
-            </p>
-          )}
-        </motion.div>
-      )}
     </motion.div>
   );
 }
@@ -668,7 +682,7 @@ export default function EisenhowerMatrix() {
                 {isDoneOpen ? (
                   <ChevronUp className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 ) : (
-                  <ChevronUp className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                  <ChevronDown className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 )}
               </Button>
             </CollapsibleTrigger>
