@@ -52,7 +52,8 @@ import {
   X,
   Globe,
 } from "lucide-react";
-import { format, isSameMonth } from "date-fns";
+import { format, isSameMonth, isSameDay } from "date-fns";
+import { Button } from "@/components/ui/button";
 
 type Task = {
   id: number;
@@ -259,6 +260,7 @@ function DraggableTask({
   const [displayedMonth, setDisplayedMonth] = useState<Date>(
     date || new Date()
   );
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const motionStyle =
     transform && !isDraggingOverlay
@@ -292,12 +294,25 @@ function DraggableTask({
     setIsEditing(false);
   };
 
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    setDate(selectedDate);
+    setIsPopoverOpen(false); // Schließt das Popover nach Auswahl
+  };
+
+  const handleClearDate = () => {
+    setDate(undefined);
+    setIsPopoverOpen(false); // Schließt das Popover nach Löschen
+  };
+
   const modifiers = {
     currentMonth: (d: Date) => isSameMonth(d, displayedMonth),
+    selected: (d: Date) => date && isSameDay(d, date),
   };
 
   const modifiersClassNames = {
-    currentMonth: "border-2 border-indigo-600 text-indigo-600 rounded-full",
+    currentMonth:
+      "border-2 border-indigo-600 hover:border-gray-300 text-indigo-400 rounded-full",
+    selected: "bg-indigo-500 text-white rounded-full",
   };
 
   const shouldShowDetails = displayAllInfos || isOpen;
@@ -360,7 +375,7 @@ function DraggableTask({
                   }
                   className="border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-500"
                 />
-                <Popover>
+                <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
                   <PopoverTrigger asChild>
                     <motion.button
                       variants={buttonVariants}
@@ -382,26 +397,37 @@ function DraggableTask({
                     </motion.button>
                   </PopoverTrigger>
                   <AnimatePresence>
-                    <PopoverContent className="w-auto p-0 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-xl shadow-xl">
-                      <motion.div
-                        variants={popoverVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
-                      >
-                        <Calendar
-                          mode="single"
-                          selected={date}
-                          onSelect={setDate}
-                          month={displayedMonth}
-                          onMonthChange={setDisplayedMonth}
-                          initialFocus
-                          className="rounded-xl border-none"
-                          modifiers={modifiers}
-                          modifiersClassNames={modifiersClassNames}
-                        />
-                      </motion.div>
-                    </PopoverContent>
+                    {isPopoverOpen && (
+                      <PopoverContent className="w-auto p-0 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-xl shadow-xl">
+                        <motion.div
+                          variants={popoverVariants}
+                          initial="hidden"
+                          animate="visible"
+                          exit="exit"
+                          className="p-4"
+                        >
+                          <Calendar
+                            mode="single"
+                            selected={date}
+                            onSelect={handleDateSelect}
+                            month={displayedMonth}
+                            onMonthChange={setDisplayedMonth}
+                            initialFocus
+                            className="rounded-xl border-none"
+                            modifiers={modifiers}
+                            modifiersClassNames={modifiersClassNames}
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleClearDate}
+                            className="mt-2 w-full border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                          >
+                            {language === "en" ? "Clear Date" : "Datum löschen"}
+                          </Button>
+                        </motion.div>
+                      </PopoverContent>
+                    )}
                   </AnimatePresence>
                 </Popover>
               </div>
@@ -509,11 +535,11 @@ export default function EisenhowerMatrix() {
   const [isDoneOpen, setIsDoneOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [displayAllInfos, setDisplayAllInfos] = useState<boolean>(false); // Default to false
+  const [displayAllInfos, setDisplayAllInfos] = useState<boolean>(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-  const [language, setLanguage] = useState<"en" | "de">("en"); // Default to "en"
+  const [language, setLanguage] = useState<"en" | "de">("en");
+  const [isNewTodoPopoverOpen, setIsNewTodoPopoverOpen] = useState(false);
 
-  // Load initial values from localStorage only on the client side
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedDisplayAllInfos = localStorage.getItem("displayAllInfos");
@@ -526,7 +552,6 @@ export default function EisenhowerMatrix() {
     }
   }, []);
 
-  // Fetch tasks from Supabase
   useEffect(() => {
     async function fetchTasks() {
       setLoading(true);
@@ -545,7 +570,6 @@ export default function EisenhowerMatrix() {
     fetchTasks();
   }, []);
 
-  // Save to localStorage when values change
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem("displayAllInfos", JSON.stringify(displayAllInfos));
@@ -735,12 +759,25 @@ export default function EisenhowerMatrix() {
       : `${diffDays} Tag${diffDays === 1 ? "" : "e"} verbleibend`;
   };
 
+  const handleNewTodoDateSelect = (selectedDate: Date | undefined) => {
+    setNewTodoDueDate(selectedDate);
+    setIsNewTodoPopoverOpen(false); // Schließt das Popover nach Auswahl
+  };
+
+  const handleNewTodoClearDate = () => {
+    setNewTodoDueDate(undefined);
+    setIsNewTodoPopoverOpen(false); // Schließt das Popover nach Löschen
+  };
+
   const modifiers = {
     currentMonth: (date: Date) => isSameMonth(date, displayedMonth),
+    selected: (date: Date) => newTodoDueDate && isSameDay(date, newTodoDueDate),
   };
 
   const modifiersClassNames = {
-    currentMonth: "border-2 border-indigo-600 hover:border-gray-300 text-indigo-400 rounded-full",
+    currentMonth:
+      "border-2 border-indigo-600 hover:border-gray-300 text-indigo-400 rounded-full",
+    selected: "bg-indigo-500 text-white rounded-full",
   };
 
   const quadrants = language === "en" ? quadrantsEn : quadrantsDe;
@@ -1120,7 +1157,10 @@ export default function EisenhowerMatrix() {
                 ? "Due Date (optional)"
                 : "Fälligkeitsdatum (optional)"}
             </Label>
-            <Popover>
+            <Popover
+              open={isNewTodoPopoverOpen}
+              onOpenChange={setIsNewTodoPopoverOpen}
+            >
               <PopoverTrigger asChild>
                 <motion.button
                   variants={buttonVariants}
@@ -1140,26 +1180,37 @@ export default function EisenhowerMatrix() {
                 </motion.button>
               </PopoverTrigger>
               <AnimatePresence>
-                <PopoverContent className="w-auto p-0 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-xl shadow-xl">
-                  <motion.div
-                    variants={popoverVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit="exit"
-                  >
-                    <Calendar
-                      mode="single"
-                      selected={newTodoDueDate}
-                      onSelect={setNewTodoDueDate}
-                      month={displayedMonth}
-                      onMonthChange={setDisplayedMonth}
-                      initialFocus
-                      className="rounded-xl border-none"
-                      modifiers={modifiers}
-                      modifiersClassNames={modifiersClassNames}
-                    />
-                  </motion.div>
-                </PopoverContent>
+                {isNewTodoPopoverOpen && (
+                  <PopoverContent className="w-auto p-0 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-xl shadow-xl">
+                    <motion.div
+                      variants={popoverVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      className="p-4"
+                    >
+                      <Calendar
+                        mode="single"
+                        selected={newTodoDueDate}
+                        onSelect={handleNewTodoDateSelect}
+                        month={displayedMonth}
+                        onMonthChange={setDisplayedMonth}
+                        initialFocus
+                        className="rounded-xl border-none"
+                        modifiers={modifiers}
+                        modifiersClassNames={modifiersClassNames}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleNewTodoClearDate}
+                        className="mt-2 w-full border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        {language === "en" ? "Clear Date" : "Datum löschen"}
+                      </Button>
+                    </motion.div>
+                  </PopoverContent>
+                )}
               </AnimatePresence>
             </Popover>
           </div>
