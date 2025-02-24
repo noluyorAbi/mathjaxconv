@@ -74,6 +74,14 @@ const quadrantStyles: Record<string, string> = {
     "bg-gradient-to-br from-green-300 via-green-200 to-green-100 dark:from-green-900 dark:via-green-800 dark:to-green-700",
 };
 
+// Color mapping for quadrant selector text
+const quadrantTextColors: Record<string, string> = {
+  "urgent-important": "text-red-600 dark:text-red-400",
+  "urgent-not-important": "text-yellow-600 dark:text-yellow-400",
+  "not-urgent-important": "text-blue-600 dark:text-blue-400",
+  "not-urgent-not-important": "text-green-600 dark:text-green-400",
+};
+
 // Animation Variants
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -353,7 +361,6 @@ function DraggableTask({
                     </Label>
                   </div>
                   <div className="flex items-center gap-2">
-                    {/* Conditionally render the dropdown button only if displayAllInfos is false */}
                     {(task.description || task.due_date) &&
                       !displayAllInfos && (
                         <CollapsibleTrigger asChild>
@@ -747,11 +754,11 @@ export default function EisenhowerMatrix() {
                       >
                         <SelectItem
                           value={q.id}
-                          className="cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors duration-200"
+                          className={`cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors duration-200 ${
+                            quadrantTextColors[q.id]
+                          }`}
                         >
-                          <span className="font-medium text-gray-800 dark:text-gray-200">
-                            {q.title}
-                          </span>
+                          <span className="font-medium">{q.title}</span>
                         </SelectItem>
                       </motion.div>
                     ))}
@@ -841,7 +848,6 @@ export default function EisenhowerMatrix() {
           </DragOverlay>
         </DndContext>
 
-        {/* Upcoming Tasks nach Due Date sortiert */}
         <motion.div variants={itemVariants} className="mt-12">
           <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-6">
             Kommende Aufgaben
@@ -912,7 +918,6 @@ export default function EisenhowerMatrix() {
           </div>
         </motion.div>
 
-        {/* Erledigte Aufgaben */}
         <motion.div variants={itemVariants} className="mt-12">
           <Collapsible open={isDoneOpen} onOpenChange={setIsDoneOpen}>
             <CollapsibleTrigger asChild>
