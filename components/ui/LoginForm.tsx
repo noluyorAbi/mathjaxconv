@@ -41,7 +41,7 @@ export default function LoginForm({
       if (res.ok && data.success) {
         setTimeout(() => {
           router.push(redirectPath);
-        }, 1200); // Matches fireworks duration
+        }, 1200); // Matches loading bar duration
       } else {
         setIsValidating(false);
         setError(data.message || "Invalid password");
@@ -80,17 +80,6 @@ export default function LoginForm({
     },
   };
 
-  const fireworkVariants = {
-    initial: { opacity: 0, scale: 0, x: 0, y: 0 },
-    animate: (i: number) => ({
-      opacity: [0, 1, 0],
-      scale: [0, 1, 0.5],
-      x: Math.cos((i * Math.PI) / 4) * 50,
-      y: Math.sin((i * Math.PI) / 4) * 50,
-      transition: { duration: 1, ease: [0.4, 0, 0.2, 1] },
-    }),
-  };
-
   const errorIconVariants = {
     initial: { opacity: 0, x: 0 },
     animate: {
@@ -115,8 +104,17 @@ export default function LoginForm({
         animate="visible"
         className="relative w-full max-w-md bg-gray-900/90 rounded-xl p-8 border border-gray-800 shadow-2xl shadow-black/20"
       >
-        {/* Top accent */}
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-400 via-gray-200 to-gray-400 rounded-t-xl" />
+        {/* Top accent with loading bar */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-gray-800 rounded-t-xl overflow-hidden">
+          {isValidating && !error && (
+            <motion.div
+              initial={{ width: "0%" }}
+              animate={{ width: "100%" }}
+              transition={{ duration: 1.2, ease: "easeInOut" }}
+              className="h-full bg-gradient-to-r from-blue-400 via-purple-500 to-blue-400"
+            />
+          )}
+        </div>
 
         {/* Title */}
         <motion.h1
@@ -162,28 +160,6 @@ export default function LoginForm({
               animate={isValidating ? "visible" : "hidden"}
               className="w-full px-4 py-3 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-gray-500 transition-all duration-500 placeholder-gray-500"
             />
-            <AnimatePresence>
-              {isValidating && !error && (
-                <>
-                  {/* Fireworks for correct password */}
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <motion.div
-                      key={i}
-                      variants={fireworkVariants}
-                      initial="initial"
-                      animate="animate"
-                      custom={i}
-                      className="absolute w-2 h-2 rounded-full"
-                      style={{
-                        background: `hsl(${i * 45}, 100%, 50%)`,
-                        top: "50%",
-                        left: "50%",
-                      }}
-                    />
-                  ))}
-                </>
-              )}
-            </AnimatePresence>
           </motion.div>
 
           {/* Error with icon */}
