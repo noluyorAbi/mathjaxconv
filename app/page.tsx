@@ -21,6 +21,7 @@ import {
   Timer,
   Monitor, // For Black-White Screen
   StopCircle, // New icon for the Stop Addiction tool
+  Grid2x2, // Icon for Eisenhower Matrix
 } from "lucide-react";
 
 export default function Page() {
@@ -178,14 +179,14 @@ export default function Page() {
             <ToolCard
               href="/black-whitescreen"
               title="Black-White Screen"
-              description="Displays a simple black or white screen."
+              description="Toggle between a  black and  white screen for a distraction-free, minimalist workspace."
               icon={<Monitor className="h-6 w-6" />}
               gradient="from-gray-700 to-gray-900"
             >
-              Perfect for a minimal distraction environment.
+              Perfect for a minimal distraction environment with additional
+              sunlight feature.
             </ToolCard>
 
-            {/* New Card for Stop Addiction */}
             <ToolCard
               href="/stop-addic"
               title="Stop Addiction"
@@ -195,6 +196,17 @@ export default function Page() {
             >
               Stay on track with an interactive calendar, status alerts, and
               streak counters.
+            </ToolCard>
+
+            {/* New Eisenhower Matrix Tool Card */}
+            <ToolCard
+              href="/eisenhower-matrix"
+              title="Eisenhower Matrix"
+              description="Prioritize your tasks effectively using the Eisenhower decision principle."
+              icon={<Grid2x2 className="h-6 w-6" />}
+              gradient="from-teal-500 to-green-500"
+            >
+              Visualize and categorize your tasks to decide what matters most.
             </ToolCard>
           </div>
         </main>
