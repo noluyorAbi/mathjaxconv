@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface LoginFormProps {
   apiEndpoint?: string;
@@ -12,18 +13,20 @@ interface LoginFormProps {
 }
 
 export default function LoginForm({
-  apiEndpoint = "/api/stop-addic/login", // or "/api/eisenhower-matrix/login" as needed
-  redirectPath = "/stop-addic", // or "/eisenhower-matrix" accordingly
-  title = "Sign In",
-  subtitle = "Enter your password to continue",
+  apiEndpoint = "/api/stop-addic/login",
+  redirectPath = "/stop-addic",
+  title = "Login",
+  subtitle = "Enter your password",
 }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isValidating, setIsValidating] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+    setIsValidating(true);
 
     try {
       const res = await fetch(apiEndpoint, {
@@ -36,51 +39,247 @@ export default function LoginForm({
       const data = await res.json();
 
       if (res.ok && data.success) {
-        router.push(redirectPath);
+        setTimeout(() => {
+          router.push(redirectPath);
+        }, 1200); // Matches fireworks duration
       } else {
-        setError(data.message || "Incorrect password");
+        setIsValidating(false);
+        setError(data.message || "Invalid password");
       }
     } catch (err) {
       console.error("Login error:", err);
+      setIsValidating(false);
       setError("An error occurred. Please try again.");
     }
   };
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.8, ease: [0.4, 0, 0.2, 1] },
+    },
+  };
+
+  const glowVariants = {
+    hidden: { opacity: 1 },
+    visible: {
+      boxShadow: [
+        "0 0 0px rgba(255, 255, 255, 0)",
+        "0 0 20px rgba(255, 255, 255, 0.3)",
+        "0 0 0px rgba(255, 255, 255, 0)",
+      ],
+      background: [
+        "radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(31,41,55,1) 70%)",
+        "radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(31,41,55,1) 70%)",
+        "radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(31,41,55,1) 70%)",
+      ],
+      transition: { duration: 1.5, repeat: Infinity, ease: "easeInOut" },
+    },
+  };
+
+  const fireworkVariants = {
+    initial: { opacity: 0, scale: 0, x: 0, y: 0 },
+    animate: (i: number) => ({
+      opacity: [0, 1, 0],
+      scale: [0, 1, 0.5],
+      x: Math.cos((i * Math.PI) / 4) * 50,
+      y: Math.sin((i * Math.PI) / 4) * 50,
+      transition: { duration: 1, ease: [0.4, 0, 0.2, 1] },
+    }),
+  };
+
+  const errorIconVariants = {
+    initial: { opacity: 0, x: 0 },
+    animate: {
+      opacity: 1,
+      x: [-5, 5, -5, 0], // Shake effect
+      transition: { duration: 0.5, ease: "easeInOut" },
+    },
+    exit: { opacity: 0, transition: { duration: 0.2 } },
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-700 px-4">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-950 to-gray-900 px-4 relative overflow-hidden">
+      {/* Wave background */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="wave-background" />
+      </div>
+
+      {/* Form container */}
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="relative w-full max-w-md bg-gray-900/90 rounded-xl p-8 border border-gray-800 shadow-2xl shadow-black/20"
+      >
+        {/* Top accent */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-400 via-gray-200 to-gray-400 rounded-t-xl" />
+
+        {/* Title */}
+        <motion.h1
+          initial={{ opacity: 0, y: -20 }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            transition: { duration: 0.6, delay: 0.2, ease: "easeOut" },
+          }}
+          className="text-3xl font-semibold text-center text-white mb-2"
+        >
           {title}
-        </h1>
-        <p className="text-center text-gray-600 mb-8">{subtitle}</p>
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0, y: -10 }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            transition: { duration: 0.6, delay: 0.3, ease: "easeOut" },
+          }}
+          className="text-center text-gray-400 text-sm mb-8"
+        >
+          {subtitle}
+        </motion.p>
+
+        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
+          <motion.div className="relative">
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm text-gray-300 mb-2"
             >
               Password
             </label>
-            <input
+            <motion.input
               id="password"
               name="password"
               type="password"
-              placeholder="Your secure password"
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border text-black border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              variants={glowVariants}
+              animate={isValidating ? "visible" : "hidden"}
+              className="w-full px-4 py-3 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-gray-500 transition-all duration-500 placeholder-gray-500"
             />
-          </div>
-          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-          <button
+            <AnimatePresence>
+              {isValidating && !error && (
+                <>
+                  {/* Fireworks for correct password */}
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <motion.div
+                      key={i}
+                      variants={fireworkVariants}
+                      initial="initial"
+                      animate="animate"
+                      custom={i}
+                      className="absolute w-2 h-2 rounded-full"
+                      style={{
+                        background: `hsl(${i * 45}, 100%, 50%)`,
+                        top: "50%",
+                        left: "50%",
+                      }}
+                    />
+                  ))}
+                </>
+              )}
+            </AnimatePresence>
+          </motion.div>
+
+          {/* Error with icon */}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                className="flex items-center justify-center gap-2 text-red-500 text-sm"
+              >
+                <motion.svg
+                  variants={errorIconVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </motion.svg>
+                <span>{error}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Button */}
+          <motion.button
+            whileHover={{
+              scale: 1.02,
+              boxShadow: "0 0 20px rgba(255, 255, 255, 0.2)",
+            }}
+            whileTap={{ scale: 0.98 }}
             type="submit"
-            className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed"
+            className="w-full py-3 px-4 bg-gray-200 text-black text-base font-medium rounded-lg transition-all duration-500 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed relative overflow-hidden"
             disabled={!password.trim()}
           >
-            Sign In
-          </button>
+            <span className="relative z-10">Go</span>
+            <motion.span
+              className="absolute inset-0 bg-white/30"
+              initial={{ x: "-100%" }}
+              whileHover={{ x: "100%" }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            />
+          </motion.button>
         </form>
-      </div>
+      </motion.div>
+
+      {/* Inline CSS for wave animation */}
+      <style jsx>{`
+        .wave-background {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(
+              45deg,
+              #0a0a0a 25%,
+              #111111 25%,
+              #111111 50%,
+              #0a0a0a 50%,
+              #0a0a0a 75%,
+              #111111 75%,
+              #111111
+            ),
+            linear-gradient(
+              -45deg,
+              #0a0a0a 25%,
+              #111111 25%,
+              #111111 50%,
+              #0a0a0a 50%,
+              #0a0a0a 75%,
+              #111111 75%,
+              #111111
+            );
+          background-color: #000;
+          background-size: 100px 100px;
+          animation: wave 20s linear infinite;
+          opacity: 0.5;
+        }
+
+        @keyframes wave {
+          0% {
+            background-position: 0 0, 50px 50px;
+          }
+          100% {
+            background-position: 100px 0, 150px 50px;
+          }
+        }
+      `}</style>
     </div>
   );
 }
