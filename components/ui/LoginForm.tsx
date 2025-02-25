@@ -12,9 +12,8 @@ interface LoginFormProps {
 }
 
 export default function LoginForm({
-  apiEndpoint = "/api/stop-addic/login",
-  redirectPath = "/stop-addic",
-  cookieName = "stop-addic-auth",
+  apiEndpoint = "/api/stop-addic/login", // or "/api/eisenhower-matrix/login" as needed
+  redirectPath = "/stop-addic", // or "/eisenhower-matrix" accordingly
   title = "Sign In",
   subtitle = "Enter your password to continue",
 }: LoginFormProps) {
@@ -24,20 +23,19 @@ export default function LoginForm({
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(""); // Clear previous errors
+    setError("");
 
     try {
       const res = await fetch(apiEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
-        credentials: "include", // Include cookies in the request
+        credentials: "include",
       });
 
       const data = await res.json();
 
       if (res.ok && data.success) {
-        // Redirect on success based on the API response
         router.push(redirectPath);
       } else {
         setError(data.message || "Incorrect password");

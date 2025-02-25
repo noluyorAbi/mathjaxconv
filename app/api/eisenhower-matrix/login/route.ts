@@ -1,16 +1,16 @@
-// app/api/eisenhower-matrix/login/route.ts
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const { password } = await request.json();
-  const envPassword = process.env.MATRIX_PASSWORD?.trim(); // Use a different env var if needed
+  // Use the same password for both sites
+  const envPassword = process.env.AUTH_PASSWORD?.trim();
   if (password.trim() === envPassword) {
     const response = NextResponse.json({ success: true });
-    response.cookies.set("matrix-auth", "true", {
+    response.cookies.set("auth-cookie", "true", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      path: "/eisenhower-matrix",
-      maxAge: 60 * 60 * 24 * 7,
+      path: "/", // Makes cookie available across the entire app
+      maxAge: 60 * 60 * 24 * 7, // 7 days
     });
     return response;
   }
