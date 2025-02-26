@@ -69,6 +69,7 @@ const getDaysInMonth = (year: number, month: number): Date[] => {
 
 // Helper: Compute streaks from the logs
 const computeStreaks = (logs: { [key: string]: Status }) => {
+  // Compute longest streak from all success dates (sorted ascending)
   const successDates = Object.keys(logs)
     .filter((dateStr) => logs[dateStr] === "success")
     .map((dateStr) => new Date(dateStr));
@@ -93,14 +94,28 @@ const computeStreaks = (logs: { [key: string]: Status }) => {
     prevDate = date;
   }
 
-  // Calculate current streak by going backward from today
+  // Determine the most recent logged day regardless of status.
+  const allDates = Object.keys(logs).map((dateStr) => new Date(dateStr));
+  if (allDates.length === 0) {
+    return { currentStreak: 0, longestStreak: longest };
+  }
+  allDates.sort((a, b) => b.getTime() - a.getTime());
+  const latestDate = allDates[0];
+  const latestDateStr = latestDate.toISOString().split("T")[0];
+
+  // If the most recent logged day was a fail, current streak is 0.
+  if (logs[latestDateStr] !== "success") {
+    return { currentStreak: 0, longestStreak: longest };
+  }
+
+  // Count backward from the latest logged success.
   let current = 0;
-  const today = new Date();
-  for (let i = 0; i < 365; i++) {
-    const dateStr = today.toISOString().split("T")[0];
+  let referenceDate = new Date(latestDate);
+  while (true) {
+    const dateStr = referenceDate.toISOString().split("T")[0];
     if (logs[dateStr] === "success") {
       current++;
-      today.setDate(today.getDate() - 1);
+      referenceDate.setDate(referenceDate.getDate() - 1);
     } else {
       break;
     }
@@ -178,7 +193,6 @@ export default function Page() {
       // Optimistically update local state
       setLogs((prevLogs) => {
         if (status === null) {
-          // Simply return a new object without the specified dateStr
           return {
             ...Object.fromEntries(
               Object.entries(prevLogs).filter(([key]) => key !== dateStr)
@@ -205,7 +219,7 @@ export default function Page() {
     }
   };
 
-  // Compute streaks
+  // Compute streaks using the updated logic
   const { currentStreak, longestStreak } = computeStreaks(logs);
 
   // Prepare chart data for the displayed month
@@ -476,7 +490,6 @@ export default function Page() {
           >
             <DialogHeader>
               <DialogTitle className="text-center text-lg font-semibold mb-1">
-                {/* Use a stable, timezone-independent format */}
                 {selectedDate ? selectedDate.toISOString().split("T")[0] : ""}
               </DialogTitle>
               <p className="text-center text-sm text-gray-500 mb-4">
