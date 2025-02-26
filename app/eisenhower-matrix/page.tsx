@@ -387,7 +387,7 @@ function DraggableTask({
     setDate(undefined);
     setIsPopoverOpen(false);
   };
-  /* 
+
   const modifiers = {
     currentMonth: (d: Date) => isSameMonth(d, displayedMonth),
     selected: (d: Date) => (date ? isSameDay(d, date) : false),
@@ -398,7 +398,7 @@ function DraggableTask({
       "border-2 border-indigo-600 hover:border-gray-300 text-indigo-600 rounded-full",
     selected: "bg-indigo-500 text-white rounded-full",
   };
- */
+
   const shouldShowDetails = displayAllInfos || isOpen;
 
   return (
@@ -497,6 +497,8 @@ function DraggableTask({
                             onMonthChange={setDisplayedMonth}
                             initialFocus
                             className="rounded-xl border-none"
+                            modifiers={modifiers}
+                            modifiersClassNames={modifiersClassNames}
                           />
                           <Button
                             variant="outline"
@@ -536,7 +538,6 @@ function DraggableTask({
                       className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
                     />
                     <Label
-                      htmlFor={`task-${task.id}`}
                       className={`text-sm font-medium truncate ${
                         task.done
                           ? "line-through text-gray-500 dark:text-gray-400"
@@ -1115,6 +1116,7 @@ export default function EisenhowerMatrix() {
                         onMonthChange={setDisplayedMonth}
                         initialFocus
                         className="rounded-xl border-none"
+
                       />
                       <Button
                         variant="outline"

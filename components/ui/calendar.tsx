@@ -13,18 +13,18 @@ export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 function Calendar({
   className,
   classNames,
-  showOutsideDays = false, // Changed default to false
+  showOutsideDays = false,
   month,
   ...props
 }: CalendarProps) {
   const modifiers = {
     currentMonth: (d: Date) => (month ? isSameMonth(d, month) : true),
-    outside: (d: Date) => (month ? !isSameMonth(d, month) : false), // Added outside modifier
+    outside: (d: Date) => (month ? !isSameMonth(d, month) : false),
   };
 
   const modifiersClassNames = {
     currentMonth: "border-2 border-indigo-600 rounded-full",
-    outside: "invisible", // Hide outside days
+    outside: "invisible",
   };
 
   return (
@@ -51,7 +51,14 @@ function Calendar({
         cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
+          "h-9 w-9 p-0 font-normal aria-selected:opacity-100",
+          // Added hover styles for non-selected, enabled days
+          "hover:bg-gray-100 hover:text-black hover:cursor-pointer",
+          // Ensure hover doesn't override selected state
+          "[&:not([aria-selected])]:hover:bg-gray-100",
+          // Prevent hover on disabled days
+          "[&:disabled]:hover:bg-transparent",
+          "[&:disabled]:hover:cursor-default"
         ),
         day_range_end: "day-range-end",
         day_selected:
