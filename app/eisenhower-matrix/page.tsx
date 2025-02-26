@@ -988,9 +988,6 @@ export default function EisenhowerMatrix() {
     }
   };
 
-  const handleDragOver = (event: DragOverEvent) => {
-    // custom logic if needed
-  };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -1610,7 +1607,6 @@ export default function EisenhowerMatrix() {
         {/* DnD Context for quadrant reordering */}
         <DndContext
           onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
           collisionDetection={closestCenter}
           measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
