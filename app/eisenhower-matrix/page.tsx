@@ -4,9 +4,9 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
-  type DragStartEvent,
-  type DragOverEvent,
-  type DragEndEvent,
+  DragStartEvent,
+  DragOverEvent,
+  DragEndEvent,
   DragOverlay,
   useDroppable,
   MeasuringStrategy,
@@ -231,7 +231,6 @@ function DroppableZone({
   const { isOver, setNodeRef } = useDroppable({ id });
 
   return (
-    // We wrap the quadrant in a SortableContext so we can reorder within this container
     <SortableContext
       id={id}
       items={tasks.map((t) => t.id.toString())}
@@ -240,21 +239,20 @@ function DroppableZone({
       <motion.div
         ref={setNodeRef}
         variants={itemVariants}
-        className={`p-6 rounded-3xl ${quadrantStyles[id]} min-h-[300px] border border-gray-200/70 dark:border-gray-800/70 shadow-xl`}
+        className={`p-4 rounded-3xl ${quadrantStyles[id]} min-h-[220px] border border-gray-200/70 dark:border-gray-800/70 shadow-xl`}
         whileHover={{ scale: 1.015 }}
         animate={{ scale: isOver ? 1.015 : 1 }}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
       >
-        <h2 className="text-xl font-semibold mb-6 text-center text-gray-900 dark:text-gray-100 tracking-tight">
+        <h2 className="text-lg sm:text-xl font-semibold mb-4 text-center text-gray-900 dark:text-gray-100 tracking-tight">
           {title}
         </h2>
-        <div className="space-y-4">{children}</div>
+        <div className="space-y-3">{children}</div>
       </motion.div>
     </SortableContext>
   );
 }
 
-// Wraps the "task card" with `useSortable` to allow reordering in the same quadrant
 function SortableTask({
   task,
   onToggle,
@@ -278,7 +276,6 @@ function SortableTask({
   canMoveDown: boolean;
   displayAllInfos?: boolean;
   language: "en" | "de";
-  // isActive is used to fade out the "original" item if it's being dragged
   isActive?: boolean;
 }) {
   const {
@@ -288,25 +285,17 @@ function SortableTask({
     transform,
     transition,
     isDragging,
-    isOver,
-    over,
   } = useSortable({ id: task.id.toString() });
 
-  // Convert transform to string for inline style
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    // Increase z-index while dragging to avoid overshadow by siblings
     zIndex: isDragging ? 999 : undefined,
-    // Slightly fade the non-dragging copy if it is "active"
     opacity: isActive ? 0.3 : 1,
   };
 
-
-
   return (
     <div ref={setNodeRef} style={style}>
-
       <DraggableTask
         task={task}
         onToggle={onToggle}
@@ -327,8 +316,7 @@ function SortableTask({
 
 /**
  * The "display" portion of each task card.
- * We separated the actual DnD logic into `SortableTask`.
- * If you want to keep the manual up/down arrows, you can do so here.
+ * We separate the DnD logic into `SortableTask`.
  */
 function DraggableTask({
   task,
@@ -341,7 +329,6 @@ function DraggableTask({
   canMoveDown,
   displayAllInfos = false,
   language,
-  // These come from useSortable in `SortableTask`.
   dragListeners,
   dragAttributes,
 }: {
@@ -400,7 +387,7 @@ function DraggableTask({
     setDate(undefined);
     setIsPopoverOpen(false);
   };
-
+  /* 
   const modifiers = {
     currentMonth: (d: Date) => isSameMonth(d, displayedMonth),
     selected: (d: Date) => (date ? isSameDay(d, date) : false),
@@ -411,7 +398,7 @@ function DraggableTask({
       "border-2 border-indigo-600 hover:border-gray-300 text-indigo-600 rounded-full",
     selected: "bg-indigo-500 text-white rounded-full",
   };
-
+ */
   const shouldShowDetails = displayAllInfos || isOpen;
 
   return (
@@ -426,10 +413,10 @@ function DraggableTask({
       <Card className="bg-white dark:bg-gray-900 shadow-lg rounded-xl border border-gray-200/70 dark:border-gray-800/70">
         <Collapsible open={shouldShowDetails} onOpenChange={setIsOpen}>
           <CardContent className="p-4">
+            {/* EDIT MODE */}
             {isEditing ? (
-              // Edit Mode
               <div className="space-y-3">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Input
                     value={editedTask.title}
                     onChange={(e) =>
@@ -469,7 +456,7 @@ function DraggableTask({
                   placeholder={
                     language === "en" ? "Description" : "Beschreibung"
                   }
-                  className="border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-500"
+                  className="border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-500 w-full"
                 />
                 <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
                   <PopoverTrigger asChild>
@@ -510,8 +497,6 @@ function DraggableTask({
                             onMonthChange={setDisplayedMonth}
                             initialFocus
                             className="rounded-xl border-none"
-                            modifiers={modifiers}
-                            modifiersClassNames={modifiersClassNames}
                           />
                           <Button
                             variant="outline"
@@ -528,20 +513,21 @@ function DraggableTask({
                 </Popover>
               </div>
             ) : (
-              // Normal Display Mode
+              // NORMAL DISPLAY MODE
               <>
-                <div className="flex items-center justify-between">
-                  {/* Drag Handle (only if not done) */}
-                  {!task.done && (
-                    <div
-                      className="mr-3 flex items-center justify-center w-6 h-6 cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                      {...dragListeners}
-                      {...dragAttributes}
-                    >
-                      <GripVertical className="h-5 w-5" />
-                    </div>
-                  )}
-                  <div className="flex items-center space-x-3 flex-1">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  {/* Left side: Drag + Checkbox + Title */}
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    {/* Drag handle if not done */}
+                    {!task.done && (
+                      <div
+                        className="flex items-center justify-center w-6 h-6 cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                        {...dragListeners}
+                        {...dragAttributes}
+                      >
+                        <GripVertical className="h-4 w-4" />
+                      </div>
+                    )}
                     <Checkbox
                       id={`task-${task.id}`}
                       checked={task.done}
@@ -551,7 +537,7 @@ function DraggableTask({
                     />
                     <Label
                       htmlFor={`task-${task.id}`}
-                      className={`text-sm font-medium ${
+                      className={`text-sm font-medium truncate ${
                         task.done
                           ? "line-through text-gray-500 dark:text-gray-400"
                           : "text-gray-900 dark:text-gray-100"
@@ -560,8 +546,9 @@ function DraggableTask({
                       {task.title}
                     </Label>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {/* Up/Down arrow buttons (only if not done) */}
+
+                  {/* Right side: Buttons */}
+                  <div className="flex items-center gap-1 sm:gap-2">
                     {!task.done && (
                       <>
                         <motion.button
@@ -574,7 +561,7 @@ function DraggableTask({
                             e.stopPropagation();
                             onMoveUp(task);
                           }}
-                          className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30"
+                          className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30"
                         >
                           <ArrowUp className="h-4 w-4" />
                         </motion.button>
@@ -588,7 +575,7 @@ function DraggableTask({
                             e.stopPropagation();
                             onMoveDown(task);
                           }}
-                          className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30"
+                          className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30"
                         >
                           <ArrowDown className="h-4 w-4" />
                         </motion.button>
@@ -602,7 +589,7 @@ function DraggableTask({
                             initial="initial"
                             whileHover="hover"
                             whileTap="tap"
-                            className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                            className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                           >
                             {shouldShowDetails ? (
                               <ChevronUp className="h-4 w-4" />
@@ -618,7 +605,7 @@ function DraggableTask({
                       whileHover="hover"
                       whileTap="tap"
                       onClick={() => setIsEditing(true)}
-                      className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                      className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                     >
                       <Pencil className="h-4 w-4" />
                     </motion.button>
@@ -628,16 +615,18 @@ function DraggableTask({
                       whileHover="hover"
                       whileTap="tap"
                       onClick={() => onDelete(task.id)}
-                      className="p-2 text-red-500 hover:text-red-600 dark:hover:text-red-400"
+                      className="p-1 text-red-500 hover:text-red-600 dark:hover:text-red-400"
                     >
                       <Trash2 className="h-4 w-4" />
                     </motion.button>
                   </div>
                 </div>
+
+                {/* Expanded details */}
                 {(task.description || task.due_date) && (
                   <CollapsibleContent className="mt-2 text-xs text-gray-600 dark:text-gray-400">
                     {task.description && (
-                      <p className="mb-1">{task.description}</p>
+                      <p className="mb-1 break-words">{task.description}</p>
                     )}
                     {task.due_date && (
                       <p className="flex items-center gap-1">
@@ -676,7 +665,7 @@ export default function EisenhowerMatrix() {
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [language, setLanguage] = useState<"en" | "de">("en");
 
-  // For DnD overlay (the "ghost" item)
+  // For DnD overlay
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
   // Load user preferences & fetch tasks
@@ -722,7 +711,6 @@ export default function EisenhowerMatrix() {
     e.preventDefault();
     if (!newTodoTitle.trim()) return;
 
-    // position = number of existing tasks in that quadrant (not done)
     const maxPosition =
       tasks.filter((t) => t.quadrant === newTodoQuadrant && !t.done).length ||
       0;
@@ -774,9 +762,7 @@ export default function EisenhowerMatrix() {
     if (!task) return;
 
     setTasks((prev) => {
-      // remove from array
       const updated = prev.filter((t) => t.id !== taskId);
-      // reassign positions in the old quadrant
       const quadrantTasks = updated
         .filter((t) => t.quadrant === task.quadrant && !t.done)
         .sort((a, b) => a.position - b.position)
@@ -790,12 +776,11 @@ export default function EisenhowerMatrix() {
     if (error) console.error("Error deleting task:", error);
   };
 
-  // Updating a task's data (title, desc, due date)
+  // Updating a task's data
   const updateTask = async (updatedTask: Task) => {
     setTasks((prev) =>
       prev.map((t) => (t.id === updatedTask.id ? updatedTask : t))
     );
-
     const { error } = await supabase
       .from("tasks")
       .update({
@@ -807,7 +792,7 @@ export default function EisenhowerMatrix() {
     if (error) console.error("Error updating task:", error);
   };
 
-  // Move a task "up" within its quadrant (manual arrow)
+  // Move up/down within quadrant (arrow buttons)
   const moveTaskUp = async (task: Task) => {
     const quadrantTasks = tasks
       .filter((t) => t.quadrant === task.quadrant && !t.done)
@@ -821,26 +806,20 @@ export default function EisenhowerMatrix() {
     const newPosPrev = task.position;
 
     setTasks((prev) =>
-      prev.map((t) => {
-        if (t.id === task.id) {
-          return { ...t, position: newPosTask };
-        } else if (t.id === prevTask.id) {
-          return { ...t, position: newPosPrev };
-        }
-        return t;
-      })
+      prev.map((t) =>
+        t.id === task.id
+          ? { ...t, position: newPosTask }
+          : t.id === prevTask.id
+          ? { ...t, position: newPosPrev }
+          : t
+      )
     );
 
-    // Persist
     const updates = [
       { ...task, position: newPosTask },
       { ...prevTask, position: newPosPrev },
     ].map((t) => ({
-      id: t.id,
-      quadrant: t.quadrant,
-      position: t.position,
-      title: t.title,
-      done: t.done,
+      ...t,
       description: t.description || null,
       completed_at: t.completed_at || null,
       due_date: t.due_date || null,
@@ -849,7 +828,6 @@ export default function EisenhowerMatrix() {
     if (error) console.error("Error updating tasks:", error);
   };
 
-  // Move a task "down" within its quadrant (manual arrow)
   const moveTaskDown = async (task: Task) => {
     const quadrantTasks = tasks
       .filter((t) => t.quadrant === task.quadrant && !t.done)
@@ -863,26 +841,20 @@ export default function EisenhowerMatrix() {
     const newPosNext = task.position;
 
     setTasks((prev) =>
-      prev.map((t) => {
-        if (t.id === task.id) {
-          return { ...t, position: newPosTask };
-        } else if (t.id === nextTask.id) {
-          return { ...t, position: newPosNext };
-        }
-        return t;
-      })
+      prev.map((t) =>
+        t.id === task.id
+          ? { ...t, position: newPosTask }
+          : t.id === nextTask.id
+          ? { ...t, position: newPosNext }
+          : t
+      )
     );
 
-    // Persist
     const updates = [
       { ...task, position: newPosTask },
       { ...nextTask, position: newPosNext },
     ].map((t) => ({
-      id: t.id,
-      quadrant: t.quadrant,
-      position: t.position,
-      title: t.title,
-      done: t.done,
+      ...t,
       description: t.description || null,
       completed_at: t.completed_at || null,
       due_date: t.due_date || null,
@@ -891,13 +863,13 @@ export default function EisenhowerMatrix() {
     if (error) console.error("Error updating tasks:", error);
   };
 
-  // Display completed tasks' timestamps
+  // Completed tasks
   const formatTimestamp = (timestamp: string | null) => {
     if (!timestamp) return "";
     return new Date(timestamp).toLocaleString();
   };
 
-  // For "Upcoming" tasks
+  // "Upcoming" tasks
   const getTimeRemaining = (dueDate: string | null) => {
     if (!dueDate)
       return language === "en" ? "No due date" : "Kein Fälligkeitsdatum";
@@ -905,7 +877,6 @@ export default function EisenhowerMatrix() {
     const due = new Date(dueDate);
     const diffMs = due.getTime() - now.getTime();
     const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
     if (diffDays < 0)
       return language === "en"
         ? `Overdue by ${-diffDays} day${-diffDays === 1 ? "" : "s"}`
@@ -916,11 +887,7 @@ export default function EisenhowerMatrix() {
       : `${diffDays} Tag${diffDays === 1 ? "" : "e"} verbleibend`;
   };
 
-  /**
-   * DnDKit events:
-   * 1) If we drag a task from one quadrant to the same quadrant => reorder
-   * 2) If we drag it to a new quadrant => move it to bottom of new quadrant
-   */
+  // DnDKit events
   const handleDragStart = (event: DragStartEvent) => {
     const taskId = Number.parseInt(event.active.id as string, 10);
     const task = tasks.find((t) => t.id === taskId);
@@ -930,36 +897,26 @@ export default function EisenhowerMatrix() {
   };
 
   const handleDragOver = (event: DragOverEvent) => {
-    // You can handle custom logic here if needed
-    // e.g. highlight droppable areas
+    // custom logic if needed
   };
 
-  async function handleDragEnd(event: DragEndEvent) {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    // Clear any "ghost" item you may have
     setActiveTask(null);
-
-    // If no valid drop target, do nothing
     if (!over) return;
 
     const taskId = Number(active.id);
     const oldTask = tasks.find((t) => t.id === taskId);
     if (!oldTask || oldTask.done) return;
 
-    // 1) Extract the container ID from the drop event data
-    //    If we're dropping onto another *task*, `over.id` is that task's ID,
-    //    but `over.data.current.sortable.containerId` is the actual quadrant name.
     const containerId = over?.data?.current?.sortable?.containerId as
       | string
       | undefined;
-
-    // 2) If containerId is missing, fall back to over.id (which might be the quadrant)
     const newQuadrant = containerId || (over.id as string);
     const oldQuadrant = oldTask.quadrant;
 
-    // 3) If the quadrant didn't change, we're just reordering tasks in the same quadrant
     if (oldQuadrant === newQuadrant) {
-      // Find the old quadrant tasks sorted by position
+      // reorder in same quadrant
       const quadrantTasks = tasks
         .filter((t) => t.quadrant === oldQuadrant && !t.done)
         .sort((a, b) => a.position - b.position);
@@ -967,23 +924,15 @@ export default function EisenhowerMatrix() {
       const activeIndex = quadrantTasks.findIndex((t) => t.id === taskId);
       const overId = Number(over.id);
       const overIndex = quadrantTasks.findIndex((t) => t.id === overId);
-
-      // If we dragged over a valid item and the order changed, reorder with arrayMove
       if (overIndex !== -1 && activeIndex !== overIndex) {
         const updated = arrayMove(quadrantTasks, activeIndex, overIndex);
-
-        // Reassign position indexes in the updated list
         updated.forEach((item, idx) => {
           item.position = idx;
         });
-
-        // Merge back into our main tasks array
         setTasks((prev) => {
           const nonQuadrant = prev.filter((p) => p.quadrant !== oldQuadrant);
           return [...nonQuadrant, ...updated];
         });
-
-        // Persist to DB
         const { error } = await supabase.from("tasks").upsert(
           updated.map((t) => ({
             ...t,
@@ -995,32 +944,27 @@ export default function EisenhowerMatrix() {
         if (error) console.error("Error reordering tasks:", error);
       }
     } else {
-      // 4) Quadrant changed => place the task at bottom of new quadrant
+      // move to a different quadrant
       const newPosition = tasks.filter(
         (t) => t.quadrant === newQuadrant && !t.done
       ).length;
 
-      // Update quadrant & position of this one item
       setTasks((prev) => {
-        // 1) First, update the quadrant for the dragged item
         const changed = prev.map((p) =>
           p.id === oldTask.id
             ? { ...p, quadrant: newQuadrant, position: newPosition }
             : p
         );
-        // 2) Reassign positions in the OLD quadrant
         const oldQuadrantTasks = changed
           .filter((t) => t.quadrant === oldQuadrant && !t.done)
           .sort((a, b) => a.position - b.position)
           .map((t, index) => ({ ...t, position: index }));
 
-        // 3) Reassign positions in the NEW quadrant
         const newQuadrantTasks = changed
           .filter((t) => t.quadrant === newQuadrant && !t.done)
           .sort((a, b) => a.position - b.position)
           .map((t, index) => ({ ...t, position: index }));
 
-        // 4) Merge them all back
         return changed.map(
           (x) =>
             oldQuadrantTasks.find((o) => o.id === x.id) ??
@@ -1029,7 +973,6 @@ export default function EisenhowerMatrix() {
         );
       });
 
-      // Persist to DB for all affected tasks
       const relevantTasks = tasks.filter(
         (t) => t.quadrant === oldQuadrant || t.quadrant === newQuadrant
       );
@@ -1045,9 +988,9 @@ export default function EisenhowerMatrix() {
       );
       if (error) console.error("Error updating quadrant:", error);
     }
-  }
+  };
 
-  // New todo date selection
+  // Handle new-task date
   const handleNewTodoDateSelect = (selectedDate: Date | undefined) => {
     setNewTodoDueDate(selectedDate);
     setIsNewTodoPopoverOpen(false);
@@ -1057,23 +1000,12 @@ export default function EisenhowerMatrix() {
     setIsNewTodoPopoverOpen(false);
   };
 
-  const modifiers = {
-    currentMonth: (date: Date) => isSameMonth(date, displayedMonth),
-    selected: (date: Date) =>
-      newTodoDueDate ? isSameDay(date, newTodoDueDate) : false,
-  };
-  const modifiersClassNames = {
-    currentMonth:
-      "border-2 border-indigo-600 hover:border-gray-300 text-indigo-600 rounded-full",
-    selected: "bg-indigo-500 text-white rounded-full",
-  };
-
   const quadrants = language === "en" ? quadrantsEn : quadrantsDe;
 
   return (
-    <div className="container mx-auto p-8 bg-gradient-to-br from-gray-100 via-gray-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 min-h-screen">
+    <div className="p-8 bg-gradient-to-br from-gray-100 via-gray-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 min-h-screen">
       {/* Language Switch */}
-      <motion.div className="absolute top-4 right-4" variants={itemVariants}>
+      <motion.div className="mb-4 flex justify-end" variants={itemVariants}>
         <motion.button
           variants={buttonVariants}
           initial="initial"
@@ -1093,17 +1025,16 @@ export default function EisenhowerMatrix() {
         variants={containerVariants}
         initial="hidden"
         animate={isLoaded ? "visible" : "hidden"}
-        className="max-w-5xl mx-auto"
       >
         {/* New Task Form */}
         <motion.form
           variants={itemVariants}
           onSubmit={handleCreateTask}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4  bg-white dark:bg-gray-900 p-4 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800"
         >
           {/* Title */}
-          <div className="md:col-span-1">
-            <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
+          <div className="flex flex-col">
+            <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">
               {language === "en" ? "Task" : "Aufgabe"}
             </Label>
             <Input
@@ -1117,321 +1048,11 @@ export default function EisenhowerMatrix() {
               onChange={(e) => setNewTodoTitle(e.target.value)}
               className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-xl bg-white dark:bg-gray-900 shadow-sm"
             />
-            {/* Info Modal Trigger */}
-            <Dialog open={isHelpModalOpen} onOpenChange={setIsHelpModalOpen}>
-              <DialogTrigger asChild>
-                <motion.button
-                  variants={buttonVariants}
-                  whileHover="hover"
-                  whileTap="tap"
-                  className="mt-2 text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
-                >
-                  {language === "en"
-                    ? "Understanding the Eisenhower Matrix"
-                    : "Die Eisenhower-Matrix verstehen"}
-                </motion.button>
-              </DialogTrigger>
-              {/* Info Modal */}
-              <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl">
-                <motion.div
-                  variants={modalVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                >
-                  <DialogHeader>
-                    <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                      {language === "en"
-                        ? "The Eisenhower Matrix"
-                        : "Die Eisenhower-Matrix"}
-                    </DialogTitle>
-                    <DialogDescription className="text-sm text-gray-600 dark:text-gray-400">
-                      {language === "en"
-                        ? "A proven framework for effective task prioritization."
-                        : "Ein bewährtes Framework zur effektiven Aufgabenpriorisierung."}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="mt-4 text-gray-700 dark:text-gray-300">
-                    {language === "en" ? (
-                      <>
-                        <section className="mb-4">
-                          <h3 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">
-                            Overview
-                          </h3>
-                          <p className="text-sm">
-                            The Eisenhower Matrix, developed by President Dwight
-                            D. Eisenhower, is a strategic tool designed to
-                            categorize tasks based on their urgency and
-                            importance. It organizes your workload into four
-                            quadrants to optimize productivity and
-                            decision-making.
-                          </p>
-                        </section>
-                        <section className="mb-4">
-                          <h3 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">
-                            Quadrants
-                          </h3>
-                          <ul className="list-none pl-0 space-y-2 text-sm">
-                            <li className="flex items-start">
-                              <span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-2 mt-1.5 flex-shrink-0"></span>
-                              <span>
-                                <span className="font-medium text-red-600 dark:text-red-400">
-                                  Urgent & Important:
-                                </span>{" "}
-                                Tasks requiring immediate action due to their
-                                critical nature.
-                                <br />
-                                <span className="italic">Examples:</span>{" "}
-                                <strong>Job:</strong> Fixing a production bug or
-                                finalizing a client proposal due within hours.
-                                <br />
-                                <span className="italic">Examples:</span>{" "}
-                                <strong>Student:</strong> Completing a research
-                                paper due tomorrow or preparing for an exam
-                                scheduled early in the morning.
-                                <br />
-                                <span className="font-medium">
-                                  Action:
-                                </span>{" "}
-                                Address promptly.
-                              </span>
-                            </li>
-                            <li className="flex items-start">
-                              <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 mr-2 mt-1.5 flex-shrink-0"></span>
-                              <span>
-                                <span className="font-medium text-yellow-600 dark:text-yellow-400">
-                                  Urgent, Not Important:
-                                </span>{" "}
-                                Time-sensitive tasks with lower strategic value.
-                                <br />
-                                <span className="italic">Examples:</span>{" "}
-                                <strong>Job:</strong> Answering routine emails
-                                or attending a brief, unscheduled meeting that
-                                could be delegated.
-                                <br />
-                                <span className="italic">Examples:</span>{" "}
-                                <strong>Student:</strong> Replying to
-                                non-critical group chat messages or addressing
-                                minor assignment clarifications.
-                                <br />
-                                <span className="font-medium">
-                                  Action:
-                                </span>{" "}
-                                Delegate when feasible.
-                              </span>
-                            </li>
-                            <li className="flex items-start">
-                              <span className="inline-block w-2 h-2 rounded-full bg-blue-500 mr-2 mt-1.5 flex-shrink-0"></span>
-                              <span>
-                                <span className="font-medium text-blue-600 dark:text-blue-400">
-                                  Not Urgent, Important:
-                                </span>{" "}
-                                High-value tasks that contribute to long-term
-                                goals.
-                                <br />
-                                <span className="italic">Examples:</span>{" "}
-                                <strong>Job:</strong> Engaging in professional
-                                development or planning long-term projects.
-                                <br />
-                                <span className="italic">Examples:</span>{" "}
-                                <strong>Student:</strong> Studying ahead for
-                                major exams or working on a long-term project.
-                                <br />
-                                <span className="font-medium">
-                                  Action:
-                                </span>{" "}
-                                Schedule for focused attention.
-                              </span>
-                            </li>
-                            <li className="flex items-start">
-                              <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2 mt-1.5 flex-shrink-0"></span>
-                              <span>
-                                <span className="font-medium text-green-600 dark:text-green-400">
-                                  Not Urgent, Not Important:
-                                </span>{" "}
-                                Low-priority tasks that offer minimal value.
-                                <br />
-                                <span className="italic">Examples:</span>{" "}
-                                <strong>Job:</strong> Casual web browsing or
-                                organizing already sorted files.
-                                <br />
-                                <span className="italic">Examples:</span>{" "}
-                                <strong>Student:</strong> Scrolling through
-                                social media during study sessions or watching
-                                videos that aren’t related to coursework.
-                                <br />
-                                <span className="font-medium">
-                                  Action:
-                                </span>{" "}
-                                Minimize or eliminate.
-                              </span>
-                            </li>
-                          </ul>
-                        </section>
-                        <section>
-                          <h3 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">
-                            How to Use This Tool
-                          </h3>
-                          <p className="text-sm">
-                            Input a task with its title, optional description,
-                            and due date. Select the appropriate quadrant from
-                            the dropdown menu. Adjust priorities using
-                            drag-and-drop, mark tasks as completed with the
-                            checkbox, or remove them with the delete button as
-                            required.
-                          </p>
-                        </section>
-                      </>
-                    ) : (
-                      <>
-                        <section className="mb-4">
-                          <h3 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">
-                            Überblick
-                          </h3>
-                          <p className="text-sm">
-                            Die Eisenhower-Matrix, entwickelt von Präsident
-                            Dwight D. Eisenhower, ist ein strategisches Werkzeug
-                            zur Kategorisierung von Aufgaben nach Dringlichkeit
-                            und Wichtigkeit. Sie strukturiert Ihre Arbeitslast
-                            in vier Quadranten, um Produktivität und
-                            Entscheidungsfindung zu optimieren.
-                          </p>
-                        </section>
-                        <section className="mb-4">
-                          <h3 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">
-                            Quadranten
-                          </h3>
-                          <ul className="list-none pl-0 space-y-2 text-sm">
-                            <li className="flex items-start">
-                              <span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-2 mt-1.5 flex-shrink-0"></span>
-                              <span>
-                                <span className="font-medium text-red-600 dark:text-red-400">
-                                  Dringend & Wichtig:
-                                </span>{" "}
-                                Aufgaben, die sofortiges Handeln erfordern
-                                aufgrund ihrer kritischen Natur.
-                                <br />
-                                <span className="italic">Beispiele:</span>{" "}
-                                <strong>Beruf:</strong> Behebung eines
-                                kritischen Fehlers in der Produktion oder
-                                Fertigstellung eines Kundenangebots, das in
-                                wenigen Stunden fällig ist.
-                                <br />
-                                <span className="italic">Beispiele:</span>{" "}
-                                <strong>Student:</strong> Abschluss einer
-                                Forschungsarbeit, die morgen fällig ist, oder
-                                Vorbereitung auf eine früh am Morgen anstehende
-                                Prüfung.
-                                <br />
-                                <span className="font-medium">
-                                  Maßnahme:
-                                </span>{" "}
-                                Sofort bearbeiten.
-                              </span>
-                            </li>
-                            <li className="flex items-start">
-                              <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 mr-2 mt-1.5 flex-shrink-0"></span>
-                              <span>
-                                <span className="font-medium text-yellow-600 dark:text-yellow-400">
-                                  Dringend, Nicht Wichtig:
-                                </span>{" "}
-                                Zeitkritische Aufgaben mit geringerem
-                                strategischen Wert.
-                                <br />
-                                <span className="italic">Beispiele:</span>{" "}
-                                <strong>Beruf:</strong> Beantwortung
-                                routinemäßiger E-Mails oder Teilnahme an einem
-                                kurzfristig anberaumten Meeting, das delegiert
-                                werden könnte.
-                                <br />
-                                <span className="italic">Beispiele:</span>{" "}
-                                <strong>Student:</strong> Antwort auf nicht
-                                dringende Nachrichten in der Studiengruppe oder
-                                Klärung von geringfügigen Aufgaben.
-                                <br />
-                                <span className="font-medium">
-                                  Maßnahme:
-                                </span>{" "}
-                                Wenn möglich delegieren.
-                              </span>
-                            </li>
-                            <li className="flex items-start">
-                              <span className="inline-block w-2 h-2 rounded-full bg-blue-500 mr-2 mt-1.5 flex-shrink-0"></span>
-                              <span>
-                                <span className="font-medium text-blue-600 dark:text-blue-400">
-                                  Nicht Dringend, Wichtig:
-                                </span>{" "}
-                                Aufgaben mit hohem langfristigen Wert.
-                                <br />
-                                <span className="italic">Beispiele:</span>{" "}
-                                <strong>Beruf:</strong> Teilnahme an
-                                Fortbildungen oder Planung langfristiger
-                                Projekte.
-                                <br />
-                                <span className="italic">Beispiele:</span>{" "}
-                                <strong>Student:</strong> Frühzeitiges Lernen
-                                für wichtige Prüfungen oder die Bearbeitung von
-                                Projekten, die langfristig an Bedeutung
-                                gewinnen.
-                                <br />
-                                <span className="font-medium">
-                                  Maßnahme:
-                                </span>{" "}
-                                Für gezielte Bearbeitung einplanen.
-                              </span>
-                            </li>
-                            <li className="flex items-start">
-                              <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2 mt-1.5 flex-shrink-0"></span>
-                              <span>
-                                <span className="font-medium text-green-600 dark:text-green-400">
-                                  Nicht Dringend, Nicht Wichtig:
-                                </span>{" "}
-                                Aufgaben mit geringer Priorität und minimalem
-                                Nutzen.
-                                <br />
-                                <span className="italic">Beispiele:</span>{" "}
-                                <strong>Beruf:</strong> Gelegentliches Surfen im
-                                Internet oder Ordnen von bereits gut
-                                strukturierten Dateien.
-                                <br />
-                                <span className="italic">Beispiele:</span>{" "}
-                                <strong>Student:</strong> Ungezwungenes Scrollen
-                                durch soziale Medien während Lernpausen oder
-                                Anschauen von nicht studienrelevanten Videos.
-                                <br />
-                                <span className="font-medium">
-                                  Maßnahme:
-                                </span>{" "}
-                                Minimieren oder eliminieren.
-                              </span>
-                            </li>
-                          </ul>
-                        </section>
-                        <section>
-                          <h3 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">
-                            Wie dieses Tool genutzt wird
-                          </h3>
-                          <p className="text-sm">
-                            Geben Sie eine Aufgabe mit Titel, optionaler
-                            Beschreibung und Fälligkeitsdatum ein. Wählen Sie
-                            den passenden Quadranten aus dem Dropdown-Menü.
-                            Passen Sie Prioritäten per Drag-and-Drop an,
-                            markieren Sie Aufgaben als erledigt mit dem
-                            Kontrollkästchen oder entfernen Sie sie bei Bedarf
-                            mit dem Löschbutton.
-                          </p>
-                        </section>
-                      </>
-                    )}
-                  </div>
-                </motion.div>
-              </DialogContent>
-            </Dialog>
           </div>
 
           {/* Description */}
-          <div className="md:col-span-1">
-            <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
+          <div className="flex flex-col">
+            <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">
               {language === "en" ? "Description" : "Beschreibung"}
             </Label>
             <Input
@@ -1494,8 +1115,6 @@ export default function EisenhowerMatrix() {
                         onMonthChange={setDisplayedMonth}
                         initialFocus
                         className="rounded-xl border-none"
-                        modifiers={modifiers}
-                        modifiersClassNames={modifiersClassNames}
                       />
                       <Button
                         variant="outline"
@@ -1567,6 +1186,305 @@ export default function EisenhowerMatrix() {
           </div>
         </motion.form>
 
+        {/* Help Dialog - placed directly under the form with no extra top margin */}
+        <div className="mb-8">
+          <Dialog open={isHelpModalOpen} onOpenChange={setIsHelpModalOpen}>
+            <DialogTrigger asChild>
+              <motion.button
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
+                className="mt-2 text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+              >
+                {language === "en"
+                  ? "Understanding the Eisenhower Matrix"
+                  : "Die Eisenhower-Matrix verstehen"}
+              </motion.button>
+            </DialogTrigger>
+            {/* Info Modal */}
+            <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl">
+              <motion.div
+                variants={modalVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+              >
+                <DialogHeader>
+                  <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    {language === "en"
+                      ? "The Eisenhower Matrix"
+                      : "Die Eisenhower-Matrix"}
+                  </DialogTitle>
+                  <DialogDescription className="text-sm text-gray-600 dark:text-gray-400">
+                    {language === "en"
+                      ? "A proven framework for effective task prioritization."
+                      : "Ein bewährtes Framework zur effektiven Aufgabenpriorisierung."}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="mt-4 text-gray-700 dark:text-gray-300">
+                  {language === "en" ? (
+                    <>
+                      <section className="mb-4">
+                        <h3 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">
+                          Overview
+                        </h3>
+                        <p className="text-sm">
+                          The Eisenhower Matrix, developed by President Dwight
+                          D. Eisenhower, is a strategic tool designed to
+                          categorize tasks based on their urgency and
+                          importance. It organizes your workload into four
+                          quadrants to optimize productivity and
+                          decision-making.
+                        </p>
+                      </section>
+                      <section className="mb-4">
+                        <h3 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">
+                          Quadrants
+                        </h3>
+                        <ul className="list-none pl-0 space-y-2 text-sm">
+                          <li className="flex items-start">
+                            <span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-2 mt-1.5 flex-shrink-0"></span>
+                            <span>
+                              <span className="font-medium text-red-600 dark:text-red-400">
+                                Urgent & Important:
+                              </span>{" "}
+                              Tasks requiring immediate action due to their
+                              critical nature.
+                              <br />
+                              <span className="italic">Examples:</span>{" "}
+                              <strong>Job:</strong> Fixing a production bug or
+                              finalizing a client proposal due within hours.
+                              <br />
+                              <span className="italic">Examples:</span>{" "}
+                              <strong>Student:</strong> Completing a research
+                              paper due tomorrow or preparing for an exam
+                              scheduled early in the morning.
+                              <br />
+                              <span className="font-medium">Action:</span>{" "}
+                              Address promptly.
+                            </span>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 mr-2 mt-1.5 flex-shrink-0"></span>
+                            <span>
+                              <span className="font-medium text-yellow-600 dark:text-yellow-400">
+                                Urgent, Not Important:
+                              </span>{" "}
+                              Time-sensitive tasks with lower strategic value.
+                              <br />
+                              <span className="italic">Examples:</span>{" "}
+                              <strong>Job:</strong> Answering routine emails or
+                              attending a brief, unscheduled meeting that could
+                              be delegated.
+                              <br />
+                              <span className="italic">Examples:</span>{" "}
+                              <strong>Student:</strong> Replying to non-critical
+                              group chat messages or addressing minor assignment
+                              clarifications.
+                              <br />
+                              <span className="font-medium">Action:</span>{" "}
+                              Delegate when feasible.
+                            </span>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="inline-block w-2 h-2 rounded-full bg-blue-500 mr-2 mt-1.5 flex-shrink-0"></span>
+                            <span>
+                              <span className="font-medium text-blue-600 dark:text-blue-400">
+                                Not Urgent, Important:
+                              </span>{" "}
+                              High-value tasks that contribute to long-term
+                              goals.
+                              <br />
+                              <span className="italic">Examples:</span>{" "}
+                              <strong>Job:</strong> Engaging in professional
+                              development or planning long-term projects.
+                              <br />
+                              <span className="italic">Examples:</span>{" "}
+                              <strong>Student:</strong> Studying ahead for major
+                              exams or working on a long-term project.
+                              <br />
+                              <span className="font-medium">Action:</span>{" "}
+                              Schedule for focused attention.
+                            </span>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2 mt-1.5 flex-shrink-0"></span>
+                            <span>
+                              <span className="font-medium text-green-600 dark:text-green-400">
+                                Not Urgent, Not Important:
+                              </span>{" "}
+                              Low-priority tasks that offer minimal value.
+                              <br />
+                              <span className="italic">Examples:</span>{" "}
+                              <strong>Job:</strong> Casual web browsing or
+                              organizing already sorted files.
+                              <br />
+                              <span className="italic">Examples:</span>{" "}
+                              <strong>Student:</strong> Scrolling through social
+                              media during study sessions or watching videos
+                              that aren’t related to coursework.
+                              <br />
+                              <span className="font-medium">Action:</span>{" "}
+                              Minimize or eliminate.
+                            </span>
+                          </li>
+                        </ul>
+                      </section>
+                      <section>
+                        <h3 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">
+                          How to Use This Tool
+                        </h3>
+                        <p className="text-sm">
+                          Input a task with its title, optional description, and
+                          due date. Select the appropriate quadrant from the
+                          dropdown menu. Adjust priorities using drag-and-drop,
+                          mark tasks as completed with the checkbox, or remove
+                          them with the delete button as required.
+                        </p>
+                      </section>
+                    </>
+                  ) : (
+                    <>
+                      <section className="mb-4">
+                        <h3 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">
+                          Überblick
+                        </h3>
+                        <p className="text-sm">
+                          Die Eisenhower-Matrix, entwickelt von Präsident Dwight
+                          D. Eisenhower, ist ein strategisches Werkzeug zur
+                          Kategorisierung von Aufgaben nach Dringlichkeit und
+                          Wichtigkeit. Sie strukturiert Ihre Arbeitslast in vier
+                          Quadranten, um Produktivität und Entscheidungsfindung
+                          zu optimieren.
+                        </p>
+                      </section>
+                      <section className="mb-4">
+                        <h3 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">
+                          Quadranten
+                        </h3>
+                        <ul className="list-none pl-0 space-y-2 text-sm">
+                          <li className="flex items-start">
+                            <span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-2 mt-1.5 flex-shrink-0"></span>
+                            <span>
+                              <span className="font-medium text-red-600 dark:text-red-400">
+                                Dringend & Wichtig:
+                              </span>{" "}
+                              Aufgaben, die sofortiges Handeln erfordern
+                              aufgrund ihrer kritischen Natur.
+                              <br />
+                              <span className="italic">Beispiele:</span>{" "}
+                              <strong>Beruf:</strong> Behebung eines kritischen
+                              Fehlers in der Produktion oder Fertigstellung
+                              eines Kundenangebots, das in wenigen Stunden
+                              fällig ist.
+                              <br />
+                              <span className="italic">Beispiele:</span>{" "}
+                              <strong>Student:</strong> Abschluss einer
+                              Forschungsarbeit, die morgen fällig ist, oder
+                              Vorbereitung auf eine früh am Morgen anstehende
+                              Prüfung.
+                              <br />
+                              <span className="font-medium">
+                                Maßnahme:
+                              </span>{" "}
+                              Sofort bearbeiten.
+                            </span>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 mr-2 mt-1.5 flex-shrink-0"></span>
+                            <span>
+                              <span className="font-medium text-yellow-600 dark:text-yellow-400">
+                                Dringend, Nicht Wichtig:
+                              </span>{" "}
+                              Zeitkritische Aufgaben mit geringerem
+                              strategischen Wert.
+                              <br />
+                              <span className="italic">Beispiele:</span>{" "}
+                              <strong>Beruf:</strong> Beantwortung
+                              routinemäßiger E-Mails oder Teilnahme an einem
+                              kurzfristig anberaumten Meeting, das delegiert
+                              werden könnte.
+                              <br />
+                              <span className="italic">Beispiele:</span>{" "}
+                              <strong>Student:</strong> Antwort auf nicht
+                              dringende Nachrichten in der Studiengruppe oder
+                              Klärung von geringfügigen Aufgaben.
+                              <br />
+                              <span className="font-medium">
+                                Maßnahme:
+                              </span>{" "}
+                              Wenn möglich delegieren.
+                            </span>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="inline-block w-2 h-2 rounded-full bg-blue-500 mr-2 mt-1.5 flex-shrink-0"></span>
+                            <span>
+                              <span className="font-medium text-blue-600 dark:text-blue-400">
+                                Nicht Dringend, Wichtig:
+                              </span>{" "}
+                              Aufgaben mit hohem langfristigen Wert.
+                              <br />
+                              <span className="italic">Beispiele:</span>{" "}
+                              <strong>Beruf:</strong> Teilnahme an Fortbildungen
+                              oder Planung langfristiger Projekte.
+                              <br />
+                              <span className="italic">Beispiele:</span>{" "}
+                              <strong>Student:</strong> Frühzeitiges Lernen für
+                              wichtige Prüfungen oder die Bearbeitung von
+                              Projekten, die langfristig an Bedeutung gewinnen.
+                              <br />
+                              <span className="font-medium">Maßnahme:</span> Für
+                              gezielte Bearbeitung einplanen.
+                            </span>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2 mt-1.5 flex-shrink-0"></span>
+                            <span>
+                              <span className="font-medium text-green-600 dark:text-green-400">
+                                Nicht Dringend, Nicht Wichtig:
+                              </span>{" "}
+                              Aufgaben mit geringer Priorität und minimalem
+                              Nutzen.
+                              <br />
+                              <span className="italic">Beispiele:</span>{" "}
+                              <strong>Beruf:</strong> Gelegentliches Surfen im
+                              Internet oder Ordnen von bereits gut
+                              strukturierten Dateien.
+                              <br />
+                              <span className="italic">Beispiele:</span>{" "}
+                              <strong>Student:</strong> Ungezwungenes Scrollen
+                              durch soziale Medien während Lernpausen oder
+                              Anschauen von nicht studienrelevanten Videos.
+                              <br />
+                              <span className="font-medium">
+                                Maßnahme:
+                              </span>{" "}
+                              Minimieren oder eliminieren.
+                            </span>
+                          </li>
+                        </ul>
+                      </section>
+                      <section>
+                        <h3 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">
+                          Wie dieses Tool genutzt wird
+                        </h3>
+                        <p className="text-sm">
+                          Geben Sie eine Aufgabe mit Titel, optionaler
+                          Beschreibung und Fälligkeitsdatum ein. Wählen Sie den
+                          passenden Quadranten aus dem Dropdown-Menü. Passen Sie
+                          Prioritäten per Drag-and-Drop an, markieren Sie
+                          Aufgaben als erledigt mit dem Kontrollkästchen oder
+                          entfernen Sie sie bei Bedarf mit dem Löschbutton.
+                        </p>
+                      </section>
+                    </>
+                  )}
+                </div>
+              </motion.div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
         {/* Loading Indicator */}
         {loading && (
           <motion.p
@@ -1598,7 +1516,7 @@ export default function EisenhowerMatrix() {
           </Label>
         </motion.div>
 
-        {/* DnD Context for cross-quadrant moves & in-quadrant reorder */}
+        {/* DnD Context for quadrant reordering */}
         <DndContext
           onDragStart={handleDragStart}
           onDragOver={handleDragOver}
@@ -1608,10 +1526,9 @@ export default function EisenhowerMatrix() {
         >
           <motion.div
             variants={containerVariants}
-            className="grid grid-cols-1 md:grid-cols-2 gap-8"
+            className="grid grid-cols-1 md:grid-cols-2 gap-6"
           >
             {quadrants.map((q) => {
-              // All tasks in quadrant q.id, not done, sorted by position
               const quadrantTasks = tasks
                 .filter((t) => t.quadrant === q.id && !t.done)
                 .sort((a, b) => a.position - b.position);
@@ -1637,7 +1554,6 @@ export default function EisenhowerMatrix() {
                         canMoveDown={index < quadrantTasks.length - 1}
                         displayAllInfos={displayAllInfos}
                         language={language}
-                        // Fade the "original" item if it's currently dragged as an overlay
                         isActive={activeTask?.id === task.id}
                       />
                     ))}
@@ -1647,7 +1563,6 @@ export default function EisenhowerMatrix() {
             })}
           </motion.div>
 
-          {/* DragOverlay for cross-quadrant ghost */}
           <DragOverlay>
             {activeTask && (
               <DraggableTask
@@ -1668,10 +1583,10 @@ export default function EisenhowerMatrix() {
 
         {/* Upcoming Tasks */}
         <motion.div variants={itemVariants} className="mt-12">
-          <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-6">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
             {language === "en" ? "Upcoming Tasks" : "Kommende Aufgaben"}
           </h3>
-          <div className="space-y-4">
+          <div className="space-y-3">
             <AnimatePresence>
               {tasks
                 .filter((t) => !t.done && t.due_date)
@@ -1684,10 +1599,10 @@ export default function EisenhowerMatrix() {
                   <motion.div
                     key={task.id}
                     variants={itemVariants}
-                    className="bg-white dark:bg-gray-900 p-5 rounded-xl shadow-md border border-gray-200 dark:border-gray-800"
+                    className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-md border border-gray-200 dark:border-gray-800"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
                         <Checkbox
                           id={`upcoming-task-${task.id}`}
                           checked={task.done}
@@ -1701,7 +1616,7 @@ export default function EisenhowerMatrix() {
                           {task.title}
                         </Label>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
                         <span
                           className={`text-xs font-medium ${
                             new Date(task.due_date!).getTime() < Date.now()
@@ -1717,14 +1632,14 @@ export default function EisenhowerMatrix() {
                           whileHover="hover"
                           whileTap="tap"
                           onClick={() => deleteTask(task.id)}
-                          className="p-2 text-red-500 hover:text-red-600 dark:hover:text-red-400"
+                          className="p-1 text-red-500 hover:text-red-600 dark:hover:text-red-400"
                         >
                           <Trash2 className="h-4 w-4" />
                         </motion.button>
                       </div>
                     </div>
                     {task.description && (
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 break-words">
                         {task.description}
                       </p>
                     )}
@@ -1749,7 +1664,7 @@ export default function EisenhowerMatrix() {
                 whileTap="tap"
                 className="w-full flex justify-between items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl shadow-md p-4"
               >
-                <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                <span className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200">
                   {language === "en"
                     ? "Completed Tasks"
                     : "Abgeschlossene Aufgaben"}{" "}
@@ -1762,7 +1677,7 @@ export default function EisenhowerMatrix() {
                 )}
               </motion.button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-6 space-y-4">
+            <CollapsibleContent className="mt-4 space-y-3">
               <AnimatePresence>
                 {tasks
                   .filter((t) => t.done)
@@ -1770,10 +1685,10 @@ export default function EisenhowerMatrix() {
                     <motion.div
                       key={task.id}
                       variants={itemVariants}
-                      className="bg-white dark:bg-gray-900 p-5 rounded-xl shadow-md border border-gray-200 dark:border-gray-800"
+                      className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-md border border-gray-200 dark:border-gray-800"
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
                           <Checkbox
                             id={`done-task-${task.id}`}
                             checked={task.done}
@@ -1795,13 +1710,13 @@ export default function EisenhowerMatrix() {
                           whileHover="hover"
                           whileTap="tap"
                           onClick={() => deleteTask(task.id)}
-                          className="p-2 text-red-500 hover:text-red-600 dark:hover:text-red-400"
+                          className="p-1 text-red-500 hover:text-red-600 dark:hover:text-red-400"
                         >
                           <Trash2 className="h-4 w-4" />
                         </motion.button>
                       </div>
                       {task.description && (
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 break-words">
                           {task.description}
                         </p>
                       )}
