@@ -1105,6 +1105,16 @@ export default function EisenhowerMatrix() {
       // If there's at least one undone task, highlight differently
       return dayTasks.some((t) => !t.done);
     },
+
+    // 3) Current day highlight
+    today: (date: Date) => {
+      const today = new Date();
+      return (
+        date.getDate() === today.getDate() &&
+        date.getMonth() === today.getMonth() &&
+        date.getFullYear() === today.getFullYear()
+      );
+    },
   };
 
   const calendarModifiersClassNames = {
@@ -1115,6 +1125,10 @@ export default function EisenhowerMatrix() {
     // When there is at least one undone task => highlight in your previous color
     hasDue:
       "bg-indigo-200 text-indigo-900 dark:bg-indigo-700 dark:text-indigo-100 font-semibold",
+
+    // Current day styling - using a distinct color (e.g., blue)
+    today:
+      "bg-blue-200 text-blue-900 dark:bg-yellow-600 dark:text-blue-100 font-semibold",
   };
 
   // (C) Track which date is selected in the calendar
@@ -1807,54 +1821,82 @@ export default function EisenhowerMatrix() {
                               : ""
                           }`}
                         >
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex items-center gap-2">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            {/* Task Title and Checkbox */}
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
                               <Checkbox
                                 id={`upcoming-task-${task.id}`}
                                 checked={task.done}
                                 onCheckedChange={() =>
                                   toggleDone(task.id, task.done)
                                 }
-                                className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                                className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600 h-5 w-5"
                               />
-                              <Label className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              <Label className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                                 {task.title}
                               </Label>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span
-                                className={`text-xs font-medium ${
-                                  new Date(task.due_date!).getTime() <
-                                  Date.now()
-                                    ? "text-red-500 dark:text-red-400"
-                                    : "text-gray-600 dark:text-gray-400"
-                                }`}
-                              >
-                                {getTimeRemaining(task.due_date!)}
-                              </span>
+
+                            {/* Due Date and Actions */}
+                            <div className="flex items-center gap-3 flex-shrink-0">
+                              <div className="flex flex-col items-end">
+                                <span
+                                  className={`text-xs font-medium flex items-center gap-1 ${
+                                    new Date(task.due_date!).getTime() <
+                                    Date.now()
+                                      ? "text-red-500 dark:text-red-400"
+                                      : getTimeRemaining(task.due_date!) ===
+                                        "1 day"
+                                      ? "text-orange-500 dark:text-orange-400"
+                                      : "text-gray-600 dark:text-gray-400"
+                                  }`}
+                                >
+                                  {getTimeRemaining(task.due_date!)}
+                                  {getTimeRemaining(task.due_date!) ===
+                                    "1 day" && (
+                                    <AlertCircle className="h-3 w-3" />
+                                  )}
+                                </span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                  {new Date(task.due_date!).toLocaleDateString(
+                                    "en-US",
+                                    {
+                                      month: "short",
+                                      day: "numeric",
+                                      year: "numeric",
+                                    }
+                                  )}
+                                </span>
+                              </div>
                               <motion.button
                                 variants={buttonVariants}
                                 initial="initial"
                                 whileHover="hover"
                                 whileTap="tap"
                                 onClick={() => deleteTask(task.id)}
-                                className="p-1 text-red-500 hover:text-red-600 dark:hover:text-red-400"
+                                className="p-1.5 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </motion.button>
                             </div>
                           </div>
+
+                          {/* Description */}
                           {task.description && (
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 break-words">
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-3 border-t border-gray-100 dark:border-gray-800 pt-2 break-words">
                               {task.description}
                             </p>
                           )}
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+
+                          {/* Quadrant */}
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                             {language === "en" ? "Quadrant:" : "Quadrant:"}{" "}
-                            {
-                              quadrants.find((q) => q.id === task.quadrant)
-                                ?.title
-                            }
+                            <span className="font-medium">
+                              {
+                                quadrants.find((q) => q.id === task.quadrant)
+                                  ?.title
+                              }
+                            </span>
                           </p>
                         </motion.div>
                       );
