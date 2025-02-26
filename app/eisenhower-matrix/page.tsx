@@ -1815,11 +1815,13 @@ export default function EisenhowerMatrix() {
                         <motion.div
                           key={task.id}
                           variants={itemVariants}
-                          className={`bg-white dark:bg-gray-900 p-4 rounded-xl shadow-md border border-gray-200 dark:border-gray-800 ${
-                            isHighlighted
-                              ? "bg-yellow-50 ring-2 ring-yellow-300"
-                              : ""
-                          }`}
+                          className={`bg-white dark:bg-gray-900 p-4 rounded-xl shadow-md border border-gray-200 dark:border-gray-800
+    ${
+      isHighlighted
+        ? "bg-yellow-50 ring-2 ring-yellow-300 dark:bg-yellow-900/10"
+        : ""
+    }
+    transition-all duration-200`}
                         >
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             {/* Task Title and Checkbox */}
@@ -1841,21 +1843,14 @@ export default function EisenhowerMatrix() {
                             <div className="flex items-center gap-3 flex-shrink-0">
                               <div className="flex flex-col items-end">
                                 <span
-                                  className={`text-xs font-medium flex items-center gap-1 ${
+                                  className={`text-xs font-medium ${
                                     new Date(task.due_date!).getTime() <
                                     Date.now()
                                       ? "text-red-500 dark:text-red-400"
-                                      : getTimeRemaining(task.due_date!) ===
-                                        "1 day"
-                                      ? "text-orange-500 dark:text-orange-400"
                                       : "text-gray-600 dark:text-gray-400"
                                   }`}
                                 >
                                   {getTimeRemaining(task.due_date!)}
-                                  {getTimeRemaining(task.due_date!) ===
-                                    "1 day" && (
-                                    <AlertCircle className="h-3 w-3" />
-                                  )}
                                 </span>
                                 <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                                   {new Date(task.due_date!).toLocaleDateString(
