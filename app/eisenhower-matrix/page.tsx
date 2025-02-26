@@ -64,12 +64,14 @@ import {
   ArrowUp,
   ArrowDown,
   Globe,
+  CheckCircleIcon,
 } from "lucide-react";
 import { format, isSameMonth, isSameDay } from "date-fns";
 import { Button } from "@/components/ui/button";
 
 // IMPORTANT: your mobile detection hook
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { ViewGridIcon } from "@heroicons/react/solid";
 
 type Task = {
   id: number;
@@ -1730,7 +1732,7 @@ export default function EisenhowerMatrix() {
               <motion.button
                 variants={buttonVariants}
                 initial="initial"
-                whileHover="hover"
+                whileHover="none"
                 whileTap="tap"
                 className="w-full flex justify-between items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl shadow-md p-4"
               >
@@ -1747,7 +1749,25 @@ export default function EisenhowerMatrix() {
                 )}
               </motion.button>
             </DialogTrigger>
-            <DialogContent className="mt-4 space-y-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl">
+            <DialogContent
+              className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto mt-4 space-y-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl p-4 
+                 overflow-y-auto max-h-[calc(100vh-100px)]"
+            >
+              <DialogHeader className="border-b border-gray-200 dark:border-gray-800 pb-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                  <DialogTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                    {language === "en"
+                      ? "Completed Tasks"
+                      : "Abgeschlossene Aufgaben"}
+                  </DialogTitle>
+                </div>
+                <DialogDescription className="text-sm text-gray-600 dark:text-gray-400">
+                  {language === "en"
+                    ? "Here are the tasks you have completed."
+                    : "Hier sind die Aufgaben, die Sie abgeschlossen haben."}
+                </DialogDescription>
+              </DialogHeader>
               <AnimatePresence>
                 {tasks
                   .filter((t) => t.done)
@@ -1790,17 +1810,22 @@ export default function EisenhowerMatrix() {
                           {task.description}
                         </p>
                       )}
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {language === "en" ? "Completed:" : "Abgeschlossen:"}{" "}
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
+                        <CheckCircleIcon className="h-4 w-4 text-green-500" />
+                        {language === "en"
+                          ? "Completed:"
+                          : "Abgeschlossen:"}{" "}
                         {formatTimestamp(task.completed_at!)}
                       </p>
                       {task.due_date && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                          <CalendarIcon className="h-4 w-4 text-blue-500" />
                           {language === "en" ? "Due:" : "Fällig:"}{" "}
                           {formatTimestamp(task.due_date)}
                         </p>
                       )}
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                        <ViewGridIcon className="h-4 w-4 text-purple-500" />
                         {language === "en" ? "Quadrant:" : "Quadrant:"}{" "}
                         {quadrants.find((q) => q.id === task.quadrant)?.title}
                       </p>
