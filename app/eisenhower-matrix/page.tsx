@@ -663,26 +663,28 @@ function DraggableTask({
 
                   {/* The Collapsible content */}
                   {(task.description || task.due_date || task.title) && (
-                    <CollapsibleContent className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                    <CollapsibleContent className="mt-4 px-2">
                       {task.title && isMobile && (
-                        <h3 className="mb-4 pl-2 font-semibold text-base text-gray-900 dark:text-gray-100 break-words tracking-tight">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 break-words tracking-tight">
                           {task.title}
                         </h3>
                       )}
-                      {task.description && (
-                        <p className="mb-4 break-words leading-relaxed text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 py-2 px-3 rounded-lg shadow-sm">
-                          {task.description}
-                        </p>
-                      )}
-                      {task.due_date && (
-                        <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 py-2 px-4 rounded-lg w-fit shadow-sm border border-gray-200 dark:border-gray-700">
-                          <CalendarIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                          <span className="font-semibold text-gray-800 dark:text-gray-200">
-                            {language === "en" ? "Due:" : "Fällig:"}
-                          </span>
-                          <span className="text-gray-700 dark:text-gray-300 font-medium">
-                            {formatDueDate(task.due_date)}
-                          </span>
+                      {(task.description || task.due_date) && (
+                        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                          {task.description && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 break-words">
+                              {task.description}
+                            </p>
+                          )}
+                          {task.due_date && (
+                            <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                              <CalendarIcon className="h-4 w-4" />
+                              <span>
+                                {language === "en" ? "Due:" : "Fällig:"}
+                              </span>
+                              <span>{formatDueDate(task.due_date)}</span>
+                            </div>
+                          )}
                         </div>
                       )}
                     </CollapsibleContent>
@@ -1774,6 +1776,7 @@ export default function EisenhowerMatrix() {
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
                   {language === "en" ? "Calendar View" : "Kalenderansicht"}
                 </h3>
+                <div className="md:pl-0 pl-6">
                 <Calendar
                   mode="single"
                   selected={selectedCalendarDate}
@@ -1783,13 +1786,15 @@ export default function EisenhowerMatrix() {
                   // Pass both modifiers
                   modifiers={calendarModifiers}
                   modifiersClassNames={calendarModifiersClassNames}
-                  className="mx-auto rounded-xl border dark:border-gray-800"
+                  className="mx-auto rounded-xl border dark:border-gray-800 "
                 />
+                </div>
+
               </div>
             </div>
 
             {/* UPCOMING TASKS */}
-            <div className="md:w-8/12">
+            <div className="md:w-8/12 w-full">
               <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
                 {language === "en" ? "Upcoming Tasks" : "Kommende Aufgaben"}
               </h3>
