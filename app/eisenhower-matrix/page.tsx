@@ -68,6 +68,9 @@ import {
 import { format, isSameMonth, isSameDay } from "date-fns";
 import { Button } from "@/components/ui/button";
 
+// IMPORTANT: your mobile detection hook
+import { useIsMobile } from "@/hooks/useIsMobile";
+
 type Task = {
   id: number;
   title: string;
@@ -253,6 +256,7 @@ function DroppableZone({
   );
 }
 
+/** SortableTask: DnD wrapper that delegates actual rendering to DraggableTask. */
 function SortableTask({
   task,
   onToggle,
@@ -315,8 +319,7 @@ function SortableTask({
 }
 
 /**
- * The "display" portion of each task card.
- * We separate the DnD logic into `SortableTask`.
+ * DraggableTask: The actual "Task" UI with Collapsible + hover tooltip.
  */
 function DraggableTask({
   task,
@@ -345,7 +348,7 @@ function DraggableTask({
   dragListeners?: any;
   dragAttributes?: any;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); // Collapsible open state
   const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState(task);
   const [date, setDate] = useState<Date | undefined>(
@@ -356,12 +359,27 @@ function DraggableTask({
   );
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
+  // For hover/click tooltip
+  const isMobile = useIsMobile();
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+
   const formatDueDate = (dueDate: string | null) => {
     if (!dueDate)
       return language === "en" ? "No due date" : "Kein Fälligkeitsdatum";
     return new Date(dueDate).toLocaleDateString();
   };
 
+  // Collapsible logic: combine "displayAllInfos" + isOpen
+  const shouldShowDetails = displayAllInfos || isOpen;
+
+  // Toggle tooltip on mobile tap
+  const handleMobileTap = () => {
+    if (isMobile) {
+      setTooltipOpen((prev) => !prev);
+    }
+  };
+
+  // Save edited
   const handleSave = async () => {
     if (!editedTask.title.trim()) return;
     const updatedTask = {
@@ -372,6 +390,7 @@ function DraggableTask({
     setIsEditing(false);
   };
 
+  // Cancel editing
   const handleCancel = () => {
     setEditedTask(task);
     setDate(task.due_date ? new Date(task.due_date) : undefined);
@@ -392,14 +411,11 @@ function DraggableTask({
     currentMonth: (d: Date) => isSameMonth(d, displayedMonth),
     selected: (d: Date) => (date ? isSameDay(d, date) : false),
   };
-
   const modifiersClassNames = {
     currentMonth:
       "border-2 border-indigo-600 hover:border-gray-300 text-indigo-600 rounded-full",
     selected: "bg-indigo-500 text-white rounded-full",
   };
-
-  const shouldShowDetails = displayAllInfos || isOpen;
 
   return (
     <motion.div
@@ -410,239 +426,275 @@ function DraggableTask({
       layout
       transition={{ type: "spring", stiffness: 260, damping: 20 }}
     >
-      <Card className="bg-white dark:bg-gray-900 shadow-lg rounded-xl border border-gray-200/70 dark:border-gray-800/70">
-        <Collapsible open={shouldShowDetails} onOpenChange={setIsOpen}>
-          <CardContent className="p-4">
-            {/* EDIT MODE */}
-            {isEditing ? (
-              <div className="space-y-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Input
-                    value={editedTask.title}
-                    onChange={(e) =>
-                      setEditedTask({ ...editedTask, title: e.target.value })
-                    }
-                    className="flex-1 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-500"
-                  />
-                  <motion.button
-                    variants={buttonVariants}
-                    initial="initial"
-                    whileHover="hover"
-                    whileTap="tap"
-                    onClick={handleSave}
-                    className="p-2 text-green-500 hover:text-green-600 dark:hover:text-green-400"
-                  >
-                    <Check className="h-4 w-4" />
-                  </motion.button>
-                  <motion.button
-                    variants={buttonVariants}
-                    initial="initial"
-                    whileHover="hover"
-                    whileTap="tap"
-                    onClick={handleCancel}
-                    className="p-2 text-red-500 hover:text-red-600 dark:hover:text-red-400"
-                  >
-                    <X className="h-4 w-4" />
-                  </motion.button>
-                </div>
-                <Input
-                  value={editedTask.description || ""}
-                  onChange={(e) =>
-                    setEditedTask({
-                      ...editedTask,
-                      description: e.target.value,
-                    })
-                  }
-                  placeholder={
-                    language === "en" ? "Description" : "Beschreibung"
-                  }
-                  className="border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-500 w-full"
-                />
-                <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-                  <PopoverTrigger asChild>
+      {/* Wrap everything in a relative group for the hover tooltip */}
+      <div className="relative group" onClick={handleMobileTap}>
+        <Card className="bg-white dark:bg-gray-900 shadow-lg rounded-xl border border-gray-200/70 dark:border-gray-800/70">
+          <Collapsible open={shouldShowDetails} onOpenChange={setIsOpen}>
+            <CardContent className="p-4">
+              {/* EDIT MODE */}
+              {isEditing ? (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Input
+                      value={editedTask.title}
+                      onChange={(e) =>
+                        setEditedTask({ ...editedTask, title: e.target.value })
+                      }
+                      className="flex-1 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-500"
+                    />
                     <motion.button
                       variants={buttonVariants}
                       initial="initial"
                       whileHover="hover"
                       whileTap="tap"
-                      className="w-full flex items-center justify-start text-left font-normal border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2"
+                      onClick={handleSave}
+                      className="p-2 text-green-500 hover:text-green-600 dark:hover:text-green-400"
                     >
-                      <CalendarIcon className="mr-2 h-4 w-4 text-gray-500 dark:text-gray-400" />
-                      {date ? (
-                        format(date, "PPP")
-                      ) : (
-                        <span>
-                          {language === "en"
-                            ? "Pick a date"
-                            : "Datum auswählen"}
-                        </span>
-                      )}
+                      <Check className="h-4 w-4" />
                     </motion.button>
-                  </PopoverTrigger>
-                  <AnimatePresence>
-                    {isPopoverOpen && (
-                      <PopoverContent className="w-auto p-0 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-xl shadow-xl">
-                        <motion.div
-                          variants={popoverVariants}
-                          initial="hidden"
-                          animate="visible"
-                          exit="exit"
-                          className="p-4"
-                        >
-                          <Calendar
-                            mode="single"
-                            selected={date}
-                            onSelect={handleDateSelect}
-                            month={displayedMonth}
-                            onMonthChange={setDisplayedMonth}
-                            initialFocus
-                            className="rounded-xl border-none"
-                            modifiers={modifiers}
-                            modifiersClassNames={modifiersClassNames}
-                          />
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleClearDate}
-                            className="mt-2 w-full border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                          >
-                            {language === "en" ? "Clear Date" : "Datum löschen"}
-                          </Button>
-                        </motion.div>
-                      </PopoverContent>
-                    )}
-                  </AnimatePresence>
-                </Popover>
-              </div>
-            ) : (
-              // NORMAL DISPLAY MODE
-              <>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  {/* Left side: Drag + Checkbox + Title */}
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {/* Drag handle if not done */}
-                    {!task.done && (
-                      <div
-                        className="flex items-center justify-center w-6 h-6 cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                        {...dragListeners}
-                        {...dragAttributes}
-                      >
-                        <GripVertical className="h-4 w-4" />
-                      </div>
-                    )}
-                    <Checkbox
-                      id={`task-${task.id}`}
-                      checked={task.done}
-                      onCheckedChange={() => onToggle(task.id, task.done)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
-                    />
-                    <Label
-                      className={`text-sm font-medium truncate ${
-                        task.done
-                          ? "line-through text-gray-500 dark:text-gray-400"
-                          : "text-gray-900 dark:text-gray-100"
-                      }`}
+                    <motion.button
+                      variants={buttonVariants}
+                      initial="initial"
+                      whileHover="hover"
+                      whileTap="tap"
+                      onClick={handleCancel}
+                      className="p-2 text-red-500 hover:text-red-600 dark:hover:text-red-400"
                     >
-                      {task.title}
-                    </Label>
+                      <X className="h-4 w-4" />
+                    </motion.button>
                   </div>
+                  <Input
+                    value={editedTask.description || ""}
+                    onChange={(e) =>
+                      setEditedTask({
+                        ...editedTask,
+                        description: e.target.value,
+                      })
+                    }
+                    placeholder={
+                      language === "en" ? "Description" : "Beschreibung"
+                    }
+                    className="border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-500 w-full"
+                  />
 
-                  {/* Right side: Buttons */}
-                  <div className="flex items-center gap-1 sm:gap-2">
-                    {!task.done && (
-                      <>
-                        <motion.button
-                          variants={buttonVariants}
-                          initial="initial"
-                          whileHover="hover"
-                          whileTap="tap"
-                          disabled={!canMoveUp}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onMoveUp(task);
-                          }}
-                          className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30"
+                  {/* Date picker popover */}
+                  <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <motion.button
+                        variants={buttonVariants}
+                        initial="initial"
+                        whileHover="hover"
+                        whileTap="tap"
+                        className="w-full flex items-center justify-start text-left font-normal border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4 text-gray-500 dark:text-gray-400" />
+                        {date ? (
+                          format(date, "PPP")
+                        ) : (
+                          <span>
+                            {language === "en"
+                              ? "Pick a date"
+                              : "Datum auswählen"}
+                          </span>
+                        )}
+                      </motion.button>
+                    </PopoverTrigger>
+                    <AnimatePresence>
+                      {isPopoverOpen && (
+                        <PopoverContent className="w-auto p-0 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-xl shadow-xl">
+                          <motion.div
+                            variants={popoverVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            className="p-4"
+                          >
+                            <Calendar
+                              mode="single"
+                              selected={date}
+                              onSelect={handleDateSelect}
+                              month={displayedMonth}
+                              onMonthChange={setDisplayedMonth}
+                              initialFocus
+                              className="rounded-xl border-none"
+                              modifiers={modifiers}
+                              modifiersClassNames={modifiersClassNames}
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleClearDate}
+                              className="mt-2 w-full border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            >
+                              {language === "en"
+                                ? "Clear Date"
+                                : "Datum löschen"}
+                            </Button>
+                          </motion.div>
+                        </PopoverContent>
+                      )}
+                    </AnimatePresence>
+                  </Popover>
+                </div>
+              ) : (
+                // NORMAL MODE
+                <>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    {/* Left side: drag handle + checkbox + title */}
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      {!task.done && (
+                        <div
+                          className="flex items-center justify-center w-6 h-6 cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                          {...dragListeners}
+                          {...dragAttributes}
                         >
-                          <ArrowUp className="h-4 w-4" />
-                        </motion.button>
-                        <motion.button
-                          variants={buttonVariants}
-                          initial="initial"
-                          whileHover="hover"
-                          whileTap="tap"
-                          disabled={!canMoveDown}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onMoveDown(task);
-                          }}
-                          className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30"
-                        >
-                          <ArrowDown className="h-4 w-4" />
-                        </motion.button>
-                      </>
-                    )}
-                    {(task.description || task.due_date) &&
-                      !displayAllInfos && (
-                        <CollapsibleTrigger asChild>
+                          <GripVertical className="h-4 w-4" />
+                        </div>
+                      )}
+                      <Checkbox
+                        id={`task-${task.id}`}
+                        checked={task.done}
+                        onCheckedChange={() => onToggle(task.id, task.done)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                      />
+                      <Label
+                        className={`text-sm font-medium truncate ${
+                          task.done
+                            ? "line-through text-gray-500 dark:text-gray-400"
+                            : "text-gray-900 dark:text-gray-100"
+                        }`}
+                      >
+                        {task.title}
+                      </Label>
+                    </div>
+
+                    {/* Right side: move up/down + collapsible trigger + edit + delete */}
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      {!task.done && (
+                        <>
                           <motion.button
                             variants={buttonVariants}
                             initial="initial"
                             whileHover="hover"
                             whileTap="tap"
-                            className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                            disabled={!canMoveUp}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onMoveUp(task);
+                            }}
+                            className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30"
                           >
-                            {shouldShowDetails ? (
-                              <ChevronUp className="h-4 w-4" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4" />
-                            )}
+                            <ArrowUp className="h-4 w-4" />
                           </motion.button>
-                        </CollapsibleTrigger>
+                          <motion.button
+                            variants={buttonVariants}
+                            initial="initial"
+                            whileHover="hover"
+                            whileTap="tap"
+                            disabled={!canMoveDown}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onMoveDown(task);
+                            }}
+                            className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30"
+                          >
+                            <ArrowDown className="h-4 w-4" />
+                          </motion.button>
+                        </>
                       )}
-                    <motion.button
-                      variants={buttonVariants}
-                      initial="initial"
-                      whileHover="hover"
-                      whileTap="tap"
-                      onClick={() => setIsEditing(true)}
-                      className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </motion.button>
-                    <motion.button
-                      variants={buttonVariants}
-                      initial="initial"
-                      whileHover="hover"
-                      whileTap="tap"
-                      onClick={() => onDelete(task.id)}
-                      className="p-1 text-red-500 hover:text-red-600 dark:hover:text-red-400"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </motion.button>
+                      {(task.description || task.due_date) &&
+                        !displayAllInfos && (
+                          <CollapsibleTrigger asChild>
+                            <motion.button
+                              variants={buttonVariants}
+                              initial="initial"
+                              whileHover="hover"
+                              whileTap="tap"
+                              className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                            >
+                              {shouldShowDetails ? (
+                                <ChevronUp className="h-4 w-4" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4" />
+                              )}
+                            </motion.button>
+                          </CollapsibleTrigger>
+                        )}
+                      <motion.button
+                        variants={buttonVariants}
+                        initial="initial"
+                        whileHover="hover"
+                        whileTap="tap"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsEditing(true);
+                        }}
+                        className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </motion.button>
+                      <motion.button
+                        variants={buttonVariants}
+                        initial="initial"
+                        whileHover="hover"
+                        whileTap="tap"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(task.id);
+                        }}
+                        className="p-1 text-red-500 hover:text-red-600 dark:hover:text-red-400"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </motion.button>
+                    </div>
                   </div>
-                </div>
 
-                {/* Expanded details */}
-                {(task.description || task.due_date) && (
-                  <CollapsibleContent className="mt-2 text-xs text-gray-600 dark:text-gray-400">
-                    {task.description && (
-                      <p className="mb-1 break-words">{task.description}</p>
-                    )}
-                    {task.due_date && (
-                      <p className="flex items-center gap-1">
-                        <CalendarIcon className="h-3 w-3" />{" "}
-                        {language === "en" ? "Due:" : "Fällig:"}{" "}
-                        {formatDueDate(task.due_date)}
-                      </p>
-                    )}
-                  </CollapsibleContent>
-                )}
-              </>
+                  {/* The Collapsible content (existing logic) */}
+                  {(task.description || task.due_date) && (
+                    <CollapsibleContent className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                      {task.description && (
+                        <p className="mb-1 break-words">{task.description}</p>
+                      )}
+                      {task.due_date && (
+                        <p className="flex items-center gap-1">
+                          <CalendarIcon className="h-3 w-3" />{" "}
+                          {language === "en" ? "Due:" : "Fällig:"}{" "}
+                          {formatDueDate(task.due_date)}
+                        </p>
+                      )}
+                    </CollapsibleContent>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Collapsible>
+        </Card>
+
+        {/* HOVER/TAP TOOLTIP (displays title, desc, due date) */}
+        {(task.description || task.due_date) && (
+          <div
+            className={`absolute left-0 top-full mt-1 z-50 w-56 
+                        px-3 py-2 bg-black text-white text-xs rounded-md shadow-lg
+                        opacity-0 invisible transition-all duration-200
+                        group-hover:opacity-100 group-hover:visible
+                        ${tooltipOpen ? "opacity-100 visible" : ""}`}
+          >
+            <p className="font-semibold mb-1 break-words">{task.title}</p>
+            {task.description && (
+              <p className="mb-1 leading-snug break-words">
+                {task.description}
+              </p>
             )}
-          </CardContent>
-        </Collapsible>
-      </Card>
+            {task.due_date && (
+              <p className="leading-snug">
+                {language === "en" ? "Due:" : "Fällig:"}{" "}
+                {formatDueDate(task.due_date)}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 }
@@ -1116,7 +1168,6 @@ export default function EisenhowerMatrix() {
                         onMonthChange={setDisplayedMonth}
                         initialFocus
                         className="rounded-xl border-none"
-
                       />
                       <Button
                         variant="outline"
@@ -1188,7 +1239,7 @@ export default function EisenhowerMatrix() {
           </div>
         </motion.form>
 
-        {/* Help Dialog - placed directly under the form with no extra top margin */}
+        {/* Help Dialog */}
         <div className="mb-8">
           <Dialog open={isHelpModalOpen} onOpenChange={setIsHelpModalOpen}>
             <DialogTrigger asChild>
@@ -1203,7 +1254,6 @@ export default function EisenhowerMatrix() {
                   : "Die Eisenhower-Matrix verstehen"}
               </motion.button>
             </DialogTrigger>
-            {/* Info Modal */}
             <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl">
               <motion.div
                 variants={modalVariants}
@@ -1657,8 +1707,8 @@ export default function EisenhowerMatrix() {
 
         {/* Completed Tasks */}
         <motion.div variants={itemVariants} className="mt-12">
-          <Collapsible open={isDoneOpen} onOpenChange={setIsDoneOpen}>
-            <CollapsibleTrigger asChild>
+          <Dialog open={isDoneOpen} onOpenChange={setIsDoneOpen}>
+            <DialogTrigger asChild>
               <motion.button
                 variants={buttonVariants}
                 initial="initial"
@@ -1678,8 +1728,8 @@ export default function EisenhowerMatrix() {
                   <ChevronDown className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 )}
               </motion.button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-4 space-y-3">
+            </DialogTrigger>
+            <DialogContent className="mt-4 space-y-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl">
               <AnimatePresence>
                 {tasks
                   .filter((t) => t.done)
@@ -1739,8 +1789,8 @@ export default function EisenhowerMatrix() {
                     </motion.div>
                   ))}
               </AnimatePresence>
-            </CollapsibleContent>
-          </Collapsible>
+            </DialogContent>
+          </Dialog>
         </motion.div>
       </motion.div>
     </div>
