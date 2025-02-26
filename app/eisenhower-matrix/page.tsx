@@ -1131,7 +1131,7 @@ export default function EisenhowerMatrix() {
 
     // Current day styling - using a distinct color (e.g., blue)
     today:
-      "bg-blue-200 text-blue-900 dark:bg-yellow-600 dark:text-blue-100 font-semibold",
+      "text-blue-900 border-2 bg-transparent dark:text-blue-100 font-semibold",
   };
 
   // (C) Track which date is selected in the calendar
