@@ -5,11 +5,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
   type DragStartEvent,
+  type DragOverEvent,
   type DragEndEvent,
   DragOverlay,
-  useDraggable,
   useDroppable,
+  MeasuringStrategy,
+  closestCenter,
 } from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
 import { supabase } from "@/lib/supabaseClient";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -80,7 +90,10 @@ const quadrantsDe = [
   { id: "urgent-important", title: "Dringend & Wichtig" },
   { id: "urgent-not-important", title: "Dringend, Nicht Wichtig" },
   { id: "not-urgent-important", title: "Nicht Dringend, Wichtig" },
-  { id: "not-urgent-not-important", title: "Nicht Dringend, Nicht Wichtig" },
+  {
+    id: "not-urgent-not-important",
+    title: "Nicht Dringend, Nicht Wichtig",
+  },
 ];
 
 const quadrantStyles: Record<string, string> = {
@@ -203,42 +216,119 @@ const modalVariants = {
   },
 };
 
-/**
- * A quadrant container that is "droppable".
- * We only handle dropping tasks that come from other quadrants.
- */
+// A wrapper droppable + sortable container for each quadrant
 function DroppableZone({
   id,
   title,
+  tasks,
   children,
 }: {
   id: string;
   title: string;
+  tasks: Task[];
   children: React.ReactNode;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id });
 
   return (
-    <motion.div
-      ref={setNodeRef}
-      variants={itemVariants}
-      className={`p-6 rounded-3xl ${quadrantStyles[id]} min-h-[300px] border border-gray-200/70 dark:border-gray-800/70 shadow-xl`}
-      whileHover={{ scale: 1.015 }}
-      animate={{ scale: isOver ? 1.015 : 1 }}
-      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+    // We wrap the quadrant in a SortableContext so we can reorder within this container
+    <SortableContext
+      id={id}
+      items={tasks.map((t) => t.id.toString())}
+      strategy={verticalListSortingStrategy}
     >
-      <h2 className="text-xl font-semibold mb-6 text-center text-gray-900 dark:text-gray-100 tracking-tight">
-        {title}
-      </h2>
-      <div className="space-y-4">{children}</div>
-    </motion.div>
+      <motion.div
+        ref={setNodeRef}
+        variants={itemVariants}
+        className={`p-6 rounded-3xl ${quadrantStyles[id]} min-h-[300px] border border-gray-200/70 dark:border-gray-800/70 shadow-xl`}
+        whileHover={{ scale: 1.015 }}
+        animate={{ scale: isOver ? 1.015 : 1 }}
+        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      >
+        <h2 className="text-xl font-semibold mb-6 text-center text-gray-900 dark:text-gray-100 tracking-tight">
+          {title}
+        </h2>
+        <div className="space-y-4">{children}</div>
+      </motion.div>
+    </SortableContext>
+  );
+}
+
+// Wraps the "task card" with `useSortable` to allow reordering in the same quadrant
+function SortableTask({
+  task,
+  onToggle,
+  onDelete,
+  onUpdate,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown,
+  displayAllInfos,
+  language,
+  isActive,
+}: {
+  task: Task;
+  onToggle: (id: number, done: boolean) => void;
+  onDelete: (id: number) => void;
+  onUpdate: (task: Task) => void;
+  onMoveUp: (task: Task) => void;
+  onMoveDown: (task: Task) => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  displayAllInfos?: boolean;
+  language: "en" | "de";
+  // isActive is used to fade out the "original" item if it's being dragged
+  isActive?: boolean;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+    isOver,
+    over,
+  } = useSortable({ id: task.id.toString() });
+
+  // Convert transform to string for inline style
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    // Increase z-index while dragging to avoid overshadow by siblings
+    zIndex: isDragging ? 999 : undefined,
+    // Slightly fade the non-dragging copy if it is "active"
+    opacity: isActive ? 0.3 : 1,
+  };
+
+
+
+  return (
+    <div ref={setNodeRef} style={style}>
+
+      <DraggableTask
+        task={task}
+        onToggle={onToggle}
+        onDelete={onDelete}
+        onUpdate={onUpdate}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        canMoveUp={canMoveUp}
+        canMoveDown={canMoveDown}
+        displayAllInfos={displayAllInfos}
+        language={language}
+        dragListeners={listeners}
+        dragAttributes={attributes}
+      />
+    </div>
   );
 }
 
 /**
- * A single "draggable" task item that includes:
- * - A handle (GripVertical) for quadrant-drag
- * - Up/down arrows for reordering within a quadrant
+ * The "display" portion of each task card.
+ * We separated the actual DnD logic into `SortableTask`.
+ * If you want to keep the manual up/down arrows, you can do so here.
  */
 function DraggableTask({
   task,
@@ -249,10 +339,11 @@ function DraggableTask({
   onMoveDown,
   canMoveUp,
   canMoveDown,
-  isDraggingOverlay = false,
-  isActive = false,
   displayAllInfos = false,
   language,
+  // These come from useSortable in `SortableTask`.
+  dragListeners,
+  dragAttributes,
 }: {
   task: Task;
   onToggle: (id: number, done: boolean) => void;
@@ -262,18 +353,11 @@ function DraggableTask({
   onMoveDown: (task: Task) => void;
   canMoveUp: boolean;
   canMoveDown: boolean;
-  isDraggingOverlay?: boolean; // Overlay item while dragging
-  isActive?: boolean; // Slight fade if we're currently dragging overlay
   displayAllInfos?: boolean;
   language: "en" | "de";
+  dragListeners?: any;
+  dragAttributes?: any;
 }) {
-  // Draggable for quadrant changes
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id: task.id.toString(),
-    // We do want to let them drag if not done
-    disabled: task.done,
-  });
-
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState(task);
@@ -284,16 +368,6 @@ function DraggableTask({
     date || new Date()
   );
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-
-  const motionStyle =
-    transform && !isDraggingOverlay
-      ? {
-          x: transform.x,
-          y: transform.y,
-          zIndex: 10,
-          transition: { duration: 0 },
-        }
-      : { x: 0, y: 0, zIndex: 1 };
 
   const formatDueDate = (dueDate: string | null) => {
     if (!dueDate)
@@ -342,12 +416,10 @@ function DraggableTask({
 
   return (
     <motion.div
-      ref={setNodeRef}
       variants={itemVariants}
       initial="hidden"
-      animate={{ opacity: isActive ? 0.3 : 1, ...motionStyle }}
+      animate="visible"
       exit="exit"
-      className={`relative ${isDraggingOverlay ? "shadow-2xl" : ""}`}
       layout
       transition={{ type: "spring", stiffness: 260, damping: 20 }}
     >
@@ -459,12 +531,12 @@ function DraggableTask({
               // Normal Display Mode
               <>
                 <div className="flex items-center justify-between">
-                  {/* Drag Handle */}
+                  {/* Drag Handle (only if not done) */}
                   {!task.done && (
                     <div
                       className="mr-3 flex items-center justify-center w-6 h-6 cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                      {...listeners}
-                      {...attributes}
+                      {...dragListeners}
+                      {...dragAttributes}
                     >
                       <GripVertical className="h-5 w-5" />
                     </div>
@@ -604,7 +676,7 @@ export default function EisenhowerMatrix() {
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [language, setLanguage] = useState<"en" | "de">("en");
 
-  // For DnD overlay
+  // For DnD overlay (the "ghost" item)
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
   // Load user preferences & fetch tasks
@@ -735,7 +807,7 @@ export default function EisenhowerMatrix() {
     if (error) console.error("Error updating task:", error);
   };
 
-  // Move a task "up" within its quadrant
+  // Move a task "up" within its quadrant (manual arrow)
   const moveTaskUp = async (task: Task) => {
     const quadrantTasks = tasks
       .filter((t) => t.quadrant === task.quadrant && !t.done)
@@ -759,7 +831,7 @@ export default function EisenhowerMatrix() {
       })
     );
 
-    // Persist to supabase
+    // Persist
     const updates = [
       { ...task, position: newPosTask },
       { ...prevTask, position: newPosPrev },
@@ -777,7 +849,7 @@ export default function EisenhowerMatrix() {
     if (error) console.error("Error updating tasks:", error);
   };
 
-  // Move a task "down" within its quadrant
+  // Move a task "down" within its quadrant (manual arrow)
   const moveTaskDown = async (task: Task) => {
     const quadrantTasks = tasks
       .filter((t) => t.quadrant === task.quadrant && !t.done)
@@ -801,7 +873,7 @@ export default function EisenhowerMatrix() {
       })
     );
 
-    // Persist to supabase
+    // Persist
     const updates = [
       { ...task, position: newPosTask },
       { ...nextTask, position: newPosNext },
@@ -844,7 +916,11 @@ export default function EisenhowerMatrix() {
       : `${diffDays} Tag${diffDays === 1 ? "" : "e"} verbleibend`;
   };
 
-  // *** DnD events: only change quadrant, do not reorder within quadrant ***
+  /**
+   * DnDKit events:
+   * 1) If we drag a task from one quadrant to the same quadrant => reorder
+   * 2) If we drag it to a new quadrant => move it to bottom of new quadrant
+   */
   const handleDragStart = (event: DragStartEvent) => {
     const taskId = Number.parseInt(event.active.id as string, 10);
     const task = tasks.find((t) => t.id === taskId);
@@ -853,75 +929,123 @@ export default function EisenhowerMatrix() {
     }
   };
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const handleDragOver = (event: DragOverEvent) => {
+    // You can handle custom logic here if needed
+    // e.g. highlight droppable areas
+  };
+
+  async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
+    // Clear any "ghost" item you may have
     setActiveTask(null);
+
+    // If no valid drop target, do nothing
     if (!over) return;
 
-    const taskId = Number.parseInt(active.id as string, 10);
-    const task = tasks.find((t) => t.id === taskId);
-    if (!task || task.done) return;
+    const taskId = Number(active.id);
+    const oldTask = tasks.find((t) => t.id === taskId);
+    if (!oldTask || oldTask.done) return;
 
-    const oldQuadrant = task.quadrant;
-    const newQuadrant = over.id as string;
+    // 1) Extract the container ID from the drop event data
+    //    If we're dropping onto another *task*, `over.id` is that task's ID,
+    //    but `over.data.current.sortable.containerId` is the actual quadrant name.
+    const containerId = over?.data?.current?.sortable?.containerId as
+      | string
+      | undefined;
+
+    // 2) If containerId is missing, fall back to over.id (which might be the quadrant)
+    const newQuadrant = containerId || (over.id as string);
+    const oldQuadrant = oldTask.quadrant;
+
+    // 3) If the quadrant didn't change, we're just reordering tasks in the same quadrant
     if (oldQuadrant === newQuadrant) {
-      // Same quadrant => do nothing with reordering
-      return;
-    }
-
-    // Quadrant changed => we move the task there, at the bottom
-    // of that quadrant's position list
-    const newPosition = tasks.filter(
-      (t) => t.quadrant === newQuadrant && !t.done
-    ).length;
-
-    // Update local state
-    setTasks((prev) => {
-      // 1) change quadrant & position for current item
-      const updated = prev.map((p) =>
-        p.id === task.id
-          ? { ...p, quadrant: newQuadrant, position: newPosition }
-          : p
-      );
-      // 2) reassign positions in old quadrant
-      const oldQuadrantTasks = updated
+      // Find the old quadrant tasks sorted by position
+      const quadrantTasks = tasks
         .filter((t) => t.quadrant === oldQuadrant && !t.done)
-        .sort((a, b) => a.position - b.position)
-        .map((t, index) => ({ ...t, position: index }));
-      // 3) reassign positions in new quadrant
-      const newQuadrantTasks = updated
-        .filter((t) => t.quadrant === newQuadrant && !t.done)
-        .sort((a, b) => a.position - b.position)
-        .map((t, index) => ({ ...t, position: index }));
+        .sort((a, b) => a.position - b.position);
 
-      // Combine
-      return updated.map(
-        (x) =>
-          oldQuadrantTasks.find((o) => o.id === x.id) ??
-          newQuadrantTasks.find((o) => o.id === x.id) ??
-          x
+      const activeIndex = quadrantTasks.findIndex((t) => t.id === taskId);
+      const overId = Number(over.id);
+      const overIndex = quadrantTasks.findIndex((t) => t.id === overId);
+
+      // If we dragged over a valid item and the order changed, reorder with arrayMove
+      if (overIndex !== -1 && activeIndex !== overIndex) {
+        const updated = arrayMove(quadrantTasks, activeIndex, overIndex);
+
+        // Reassign position indexes in the updated list
+        updated.forEach((item, idx) => {
+          item.position = idx;
+        });
+
+        // Merge back into our main tasks array
+        setTasks((prev) => {
+          const nonQuadrant = prev.filter((p) => p.quadrant !== oldQuadrant);
+          return [...nonQuadrant, ...updated];
+        });
+
+        // Persist to DB
+        const { error } = await supabase.from("tasks").upsert(
+          updated.map((t) => ({
+            ...t,
+            description: t.description || null,
+            completed_at: t.completed_at || null,
+            due_date: t.due_date || null,
+          }))
+        );
+        if (error) console.error("Error reordering tasks:", error);
+      }
+    } else {
+      // 4) Quadrant changed => place the task at bottom of new quadrant
+      const newPosition = tasks.filter(
+        (t) => t.quadrant === newQuadrant && !t.done
+      ).length;
+
+      // Update quadrant & position of this one item
+      setTasks((prev) => {
+        // 1) First, update the quadrant for the dragged item
+        const changed = prev.map((p) =>
+          p.id === oldTask.id
+            ? { ...p, quadrant: newQuadrant, position: newPosition }
+            : p
+        );
+        // 2) Reassign positions in the OLD quadrant
+        const oldQuadrantTasks = changed
+          .filter((t) => t.quadrant === oldQuadrant && !t.done)
+          .sort((a, b) => a.position - b.position)
+          .map((t, index) => ({ ...t, position: index }));
+
+        // 3) Reassign positions in the NEW quadrant
+        const newQuadrantTasks = changed
+          .filter((t) => t.quadrant === newQuadrant && !t.done)
+          .sort((a, b) => a.position - b.position)
+          .map((t, index) => ({ ...t, position: index }));
+
+        // 4) Merge them all back
+        return changed.map(
+          (x) =>
+            oldQuadrantTasks.find((o) => o.id === x.id) ??
+            newQuadrantTasks.find((o) => o.id === x.id) ??
+            x
+        );
+      });
+
+      // Persist to DB for all affected tasks
+      const relevantTasks = tasks.filter(
+        (t) => t.quadrant === oldQuadrant || t.quadrant === newQuadrant
       );
-    });
-
-    // Persist changes to DB
-    // We'll update all tasks in either oldQuadrant or newQuadrant
-    const relevantTasks = tasks.filter(
-      (t) => t.quadrant === oldQuadrant || t.quadrant === newQuadrant
-    );
-    const { error } = await supabase.from("tasks").upsert(
-      relevantTasks.map((t) => ({
-        id: t.id,
-        quadrant: t.id === taskId ? newQuadrant : t.quadrant,
-        position: t.id === taskId ? newPosition : t.position,
-        title: t.title,
-        done: t.done,
-        description: t.description || null,
-        completed_at: t.completed_at || null,
-        due_date: t.due_date || null,
-      }))
-    );
-    if (error) console.error("Error updating quadrant:", error);
-  };
+      const { error } = await supabase.from("tasks").upsert(
+        relevantTasks.map((t) => ({
+          ...t,
+          quadrant: t.id === oldTask.id ? newQuadrant : t.quadrant,
+          position: t.id === oldTask.id ? newPosition : t.position,
+          description: t.description || null,
+          completed_at: t.completed_at || null,
+          due_date: t.due_date || null,
+        }))
+      );
+      if (error) console.error("Error updating quadrant:", error);
+    }
+  }
 
   // New todo date selection
   const handleNewTodoDateSelect = (selectedDate: Date | undefined) => {
@@ -1474,8 +1598,14 @@ export default function EisenhowerMatrix() {
           </Label>
         </motion.div>
 
-        {/* DnD Context for cross-quadrant moves */}
-        <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        {/* DnD Context for cross-quadrant moves & in-quadrant reorder */}
+        <DndContext
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+          collisionDetection={closestCenter}
+          measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+        >
           <motion.div
             variants={containerVariants}
             className="grid grid-cols-1 md:grid-cols-2 gap-8"
@@ -1487,10 +1617,15 @@ export default function EisenhowerMatrix() {
                 .sort((a, b) => a.position - b.position);
 
               return (
-                <DroppableZone key={q.id} id={q.id} title={q.title}>
+                <DroppableZone
+                  key={q.id}
+                  id={q.id}
+                  title={q.title}
+                  tasks={quadrantTasks}
+                >
                   <AnimatePresence>
                     {quadrantTasks.map((task, index) => (
-                      <DraggableTask
+                      <SortableTask
                         key={task.id}
                         task={task}
                         onToggle={toggleDone}
@@ -1500,9 +1635,10 @@ export default function EisenhowerMatrix() {
                         onMoveDown={moveTaskDown}
                         canMoveUp={index > 0}
                         canMoveDown={index < quadrantTasks.length - 1}
-                        isActive={activeTask?.id === task.id}
                         displayAllInfos={displayAllInfos}
                         language={language}
+                        // Fade the "original" item if it's currently dragged as an overlay
+                        isActive={activeTask?.id === task.id}
                       />
                     ))}
                   </AnimatePresence>
@@ -1510,6 +1646,8 @@ export default function EisenhowerMatrix() {
               );
             })}
           </motion.div>
+
+          {/* DragOverlay for cross-quadrant ghost */}
           <DragOverlay>
             {activeTask && (
               <DraggableTask
@@ -1519,9 +1657,8 @@ export default function EisenhowerMatrix() {
                 onUpdate={updateTask}
                 onMoveUp={moveTaskUp}
                 onMoveDown={moveTaskDown}
-                canMoveUp={false} // overlay item, no arrow reordering
+                canMoveUp={false}
                 canMoveDown={false}
-                isDraggingOverlay
                 displayAllInfos={displayAllInfos}
                 language={language}
               />
