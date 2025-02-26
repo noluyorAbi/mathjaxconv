@@ -1752,27 +1752,29 @@ export default function EisenhowerMatrix() {
           --------------
         */}
         <motion.div variants={itemVariants} className="mt-12">
-          <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start justify-center">
             {/* CALENDAR VIEW */}
-            <div className="md:w-1/2">
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
-                {language === "en" ? "Calendar View" : "Kalenderansicht"}
-              </h3>
-              <Calendar
-                mode="single"
-                selected={selectedCalendarDate}
-                onSelect={setSelectedCalendarDate}
-                month={displayedMonth}
-                onMonthChange={setDisplayedMonth}
-                // Pass both modifiers
-                modifiers={calendarModifiers}
-                modifiersClassNames={calendarModifiersClassNames}
-                className="rounded-xl border dark:border-gray-800"
-              />
+            <div className="flex justify-center">
+              <div className=" w-fit">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+                  {language === "en" ? "Calendar View" : "Kalenderansicht"}
+                </h3>
+                <Calendar
+                  mode="single"
+                  selected={selectedCalendarDate}
+                  onSelect={setSelectedCalendarDate}
+                  month={displayedMonth}
+                  onMonthChange={setDisplayedMonth}
+                  // Pass both modifiers
+                  modifiers={calendarModifiers}
+                  modifiersClassNames={calendarModifiersClassNames}
+                  className="mx-auto rounded-xl border dark:border-gray-800"
+                />
+              </div>
             </div>
 
             {/* UPCOMING TASKS */}
-            <div className="md:w-1/2">
+            <div className="md:w-8/12">
               <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
                 {language === "en" ? "Upcoming Tasks" : "Kommende Aufgaben"}
               </h3>
