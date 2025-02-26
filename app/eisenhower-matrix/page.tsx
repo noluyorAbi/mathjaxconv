@@ -1749,10 +1749,7 @@ export default function EisenhowerMatrix() {
                 )}
               </motion.button>
             </DialogTrigger>
-            <DialogContent
-              className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto mt-4 space-y-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl p-4 
-                 overflow-y-auto max-h-[calc(100vh-100px)]"
-            >
+            <DialogContent className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto mt-4 space-y-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl p-4 overflow-y-auto max-h-[calc(100vh-100px)]">
               <DialogHeader className="border-b border-gray-200 dark:border-gray-800 pb-2">
                 <div className="flex items-center gap-2">
                   <CheckCircleIcon className="h-5 w-5 text-green-500" />
@@ -1768,70 +1765,94 @@ export default function EisenhowerMatrix() {
                     : "Hier sind die Aufgaben, die Sie abgeschlossen haben."}
                 </DialogDescription>
               </DialogHeader>
-              <AnimatePresence>
-                {tasks
-                  .filter((t) => t.done)
-                  .map((task) => (
-                    <motion.div
-                      key={task.id}
-                      variants={itemVariants}
-                      className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-md border border-gray-200 dark:border-gray-800"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <Checkbox
-                            id={`done-task-${task.id}`}
-                            checked={task.done}
-                            onCheckedChange={() =>
-                              toggleDone(task.id, task.done)
-                            }
-                            className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
-                          />
-                          <Label
-                            htmlFor={`done-task-${task.id}`}
-                            className="text-sm font-medium text-gray-500 dark:text-gray-400 line-through"
+
+              {tasks.filter((t) => t.done).length === 0 ? (
+                // Display a note when there are no completed tasks
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.5 }}
+                  className="flex flex-col items-center justify-center p-4 text-center text-balance"
+                >
+                  <p className="text-lg font-semibold  text-gray-800 dark:text-gray-200">
+                    {language === "en"
+                      ? "Hmm, seems like there are no done tasks yet."
+                      : "Hmm, es sieht so aus, als wären noch keine Aufgaben erledigt."}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    {language === "en"
+                      ? "Every journey begins with a single step. Keep pushing forward – your breakthrough is just around the corner!"
+                      : "Jede Reise beginnt mit dem ersten Schritt. Bleib dran – dein Durchbruch ist zum Greifen nah!"}
+                  </p>
+                </motion.div>
+              ) : (
+                // Render the list of completed tasks if there are any
+                <AnimatePresence>
+                  {tasks
+                    .filter((t) => t.done)
+                    .map((task) => (
+                      <motion.div
+                        key={task.id}
+                        variants={itemVariants}
+                        className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-md border border-gray-200 dark:border-gray-800"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id={`done-task-${task.id}`}
+                              checked={task.done}
+                              onCheckedChange={() =>
+                                toggleDone(task.id, task.done)
+                              }
+                              className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                            />
+                            <Label
+                              htmlFor={`done-task-${task.id}`}
+                              className="text-sm font-medium text-gray-500 dark:text-gray-400 line-through"
+                            >
+                              {task.title}
+                            </Label>
+                          </div>
+                          <motion.button
+                            variants={buttonVariants}
+                            initial="initial"
+                            whileHover="hover"
+                            whileTap="tap"
+                            onClick={() => deleteTask(task.id)}
+                            className="p-1 text-red-500 hover:text-red-600 dark:hover:text-red-400"
                           >
-                            {task.title}
-                          </Label>
+                            <Trash2 className="h-4 w-4" />
+                          </motion.button>
                         </div>
-                        <motion.button
-                          variants={buttonVariants}
-                          initial="initial"
-                          whileHover="hover"
-                          whileTap="tap"
-                          onClick={() => deleteTask(task.id)}
-                          className="p-1 text-red-500 hover:text-red-600 dark:hover:text-red-400"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </motion.button>
-                      </div>
-                      {task.description && (
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 break-words">
-                          {task.description}
+                        {task.description && (
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 break-words">
+                            {task.description}
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
+                          <CheckCircleIcon className="h-4 w-4 text-green-500" />
+                          {language === "en"
+                            ? "Completed:"
+                            : "Abgeschlossen:"}{" "}
+                          {formatTimestamp(task.completed_at!)}
                         </p>
-                      )}
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
-                        <CheckCircleIcon className="h-4 w-4 text-green-500" />
-                        {language === "en"
-                          ? "Completed:"
-                          : "Abgeschlossen:"}{" "}
-                        {formatTimestamp(task.completed_at!)}
-                      </p>
-                      {task.due_date && (
+                        {task.due_date && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                            <CalendarIcon className="h-4 w-4 text-blue-500" />
+                            {language === "en" ? "Due:" : "Fällig:"}{" "}
+                            {formatTimestamp(task.due_date)}
+                          </p>
+                        )}
                         <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                          <CalendarIcon className="h-4 w-4 text-blue-500" />
-                          {language === "en" ? "Due:" : "Fällig:"}{" "}
-                          {formatTimestamp(task.due_date)}
+                          <ViewGridIcon className="h-4 w-4 text-purple-500" />
+                          {language === "en" ? "Quadrant:" : "Quadrant:"}{" "}
+                          {quadrants.find((q) => q.id === task.quadrant)?.title}
                         </p>
-                      )}
-                      <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                        <ViewGridIcon className="h-4 w-4 text-purple-500" />
-                        {language === "en" ? "Quadrant:" : "Quadrant:"}{" "}
-                        {quadrants.find((q) => q.id === task.quadrant)?.title}
-                      </p>
-                    </motion.div>
-                  ))}
-              </AnimatePresence>
+                      </motion.div>
+                    ))}
+                </AnimatePresence>
+              )}
             </DialogContent>
           </Dialog>
         </motion.div>
