@@ -83,7 +83,7 @@ type Task = {
   done: boolean;
   completed_at?: string | null;
   due_date?: string | null;
-  created_at?: string | null;
+  created_at?: string | null; // ← Add this
 };
 
 const quadrantsEn = [
@@ -711,11 +711,19 @@ function DraggableTask({
                 <span className="font-medium">
                   {language === "en" ? "Created:" : "Erstellt:"}
                 </span>
-                <span>{new Date(task.created_at).toLocaleString()}</span>
+                <span>
+                  {new Date(task.created_at).toLocaleString(undefined, {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
               </div>
             )}
             {task.due_date && (
-              <div className="flex items-center gap-2 text-gray-300">
+              <div className="flex items-center gap-2 text-gray-400">
                 <CalendarIcon className="h-4 w-4 text-gray-500" />
                 <span className="font-medium">
                   {language === "en" ? "Due:" : "Fällig:"}
@@ -1693,7 +1701,6 @@ export default function EisenhowerMatrix() {
                           className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
                         />
                         <Label
-                          htmlFor={`upcoming-task-${task.id}`}
                           className="text-sm font-medium text-gray-900 dark:text-gray-100"
                         >
                           {task.title}
@@ -1816,10 +1823,9 @@ export default function EisenhowerMatrix() {
                               onCheckedChange={() =>
                                 toggleDone(task.id, task.done)
                               }
-                              className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                              className="border-gray-400  data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
                             />
                             <Label
-                              htmlFor={`done-task-${task.id}`}
                               className="text-sm font-medium text-gray-500 dark:text-gray-400 line-through"
                             >
                               {task.title}
@@ -1831,44 +1837,75 @@ export default function EisenhowerMatrix() {
                             whileHover="hover"
                             whileTap="tap"
                             onClick={() => deleteTask(task.id)}
-                            className="p-1 text-red-500 hover:text-red-600 dark:hover:text-red-400"
+                            className="p-1 text-red-500  hover:text-red-600 dark:hover:text-red-400"
                           >
                             <Trash2 className="h-4 w-4" />
                           </motion.button>
                         </div>
                         {task.description && (
-                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 break-words">
+                          <p className="text-xs mb-4 text-gray-600 dark:text-gray-400 mt-2 break-words">
                             {task.description}
                           </p>
                         )}
-                        {task.created_at && (
+
+                        <div className="*:py-1">
+                          {task.created_at && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
+                              <ClockIcon className="h-4 w-4 text-gray-500" />
+                              <span className="font-medium">
+                                {language === "en" ? "Created:" : "Erstellt:"}
+                              </span>
+                              {new Date(task.created_at).toLocaleString(
+                                undefined,
+                                {
+                                  year: "numeric",
+                                  month: "2-digit",
+                                  day: "2-digit",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )}
+                            </p>
+                          )}
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
-                            <ClockIcon className="h-4 w-4 text-gray-500" />
-                            <span className="font-medium">
-                              {language === "en" ? "Created:" : "Erstellt:"}
-                            </span>
-                            {new Date(task.created_at).toLocaleString()}
+                            <CheckCircleIcon className="h-4 w-4 text-green-500" />
+                            {language === "en"
+                              ? "Completed:"
+                              : "Abgeschlossen:"}{" "}
+                            {new Date(task.completed_at!).toLocaleString(
+                              undefined,
+                              {
+                                year: "numeric",
+                                month: "2-digit",
+                                day: "2-digit",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
                           </p>
-                        )}
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
-                          <CheckCircleIcon className="h-4 w-4 text-green-500" />
-                          {language === "en"
-                            ? "Completed:"
-                            : "Abgeschlossen:"}{" "}
-                          {formatTimestamp(task.completed_at!)}
-                        </p>
-                        {task.due_date && (
+                          {task.due_date && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                              <CalendarIcon className="h-4 w-4 text-blue-500" />
+                              {language === "en" ? "Due:" : "Fällig:"}{" "}
+                              {new Date(task.due_date).toLocaleDateString(
+                                undefined,
+                                {
+                                  year: "numeric",
+                                  month: "2-digit",
+                                  day: "2-digit",
+                                }
+                              )}
+                            </p>
+                          )}
                           <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                            <CalendarIcon className="h-4 w-4 text-blue-500" />
-                            {language === "en" ? "Due:" : "Fällig:"}{" "}
-                            {formatTimestamp(task.due_date)}
+                            <ViewGridIcon className="h-4 w-4 text-purple-500" />
+                            {language === "en" ? "Quadrant:" : "Quadrant:"}{" "}
+                            {
+                              quadrants.find((q) => q.id === task.quadrant)
+                                ?.title
+                            }
                           </p>
-                        )}
-                        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                          <ViewGridIcon className="h-4 w-4 text-purple-500" />
-                          {language === "en" ? "Quadrant:" : "Quadrant:"}{" "}
-                          {quadrants.find((q) => q.id === task.quadrant)?.title}
-                        </p>
+                        </div>
                       </motion.div>
                     ))}
                 </AnimatePresence>
