@@ -4,13 +4,14 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
-  type DragEndEvent,
   type DragStartEvent,
+  type DragEndEvent,
   DragOverlay,
   useDraggable,
   useDroppable,
 } from "@dnd-kit/core";
 import { supabase } from "@/lib/supabaseClient";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -50,6 +51,8 @@ import {
   Pencil,
   Check,
   X,
+  ArrowUp,
+  ArrowDown,
   Globe,
 } from "lucide-react";
 import { format, isSameMonth, isSameDay } from "date-fns";
@@ -200,6 +203,10 @@ const modalVariants = {
   },
 };
 
+/**
+ * A quadrant container that is "droppable".
+ * We only handle dropping tasks that come from other quadrants.
+ */
 function DroppableZone({
   id,
   title,
@@ -228,11 +235,20 @@ function DroppableZone({
   );
 }
 
+/**
+ * A single "draggable" task item that includes:
+ * - A handle (GripVertical) for quadrant-drag
+ * - Up/down arrows for reordering within a quadrant
+ */
 function DraggableTask({
   task,
   onToggle,
   onDelete,
   onUpdate,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown,
   isDraggingOverlay = false,
   isActive = false,
   displayAllInfos = false,
@@ -242,15 +258,22 @@ function DraggableTask({
   onToggle: (id: number, done: boolean) => void;
   onDelete: (id: number) => void;
   onUpdate: (task: Task) => void;
-  isDraggingOverlay?: boolean;
-  isActive?: boolean;
+  onMoveUp: (task: Task) => void;
+  onMoveDown: (task: Task) => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  isDraggingOverlay?: boolean; // Overlay item while dragging
+  isActive?: boolean; // Slight fade if we're currently dragging overlay
   displayAllInfos?: boolean;
   language: "en" | "de";
 }) {
+  // Draggable for quadrant changes
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: task.id.toString(),
-    disabled: isDraggingOverlay,
+    // We do want to let them drag if not done
+    disabled: task.done,
   });
+
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState(task);
@@ -296,17 +319,17 @@ function DraggableTask({
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
     setDate(selectedDate);
-    setIsPopoverOpen(false); // Schließt das Popover nach Auswahl
+    setIsPopoverOpen(false);
   };
 
   const handleClearDate = () => {
     setDate(undefined);
-    setIsPopoverOpen(false); // Schließt das Popover nach Löschen
+    setIsPopoverOpen(false);
   };
 
   const modifiers = {
     currentMonth: (d: Date) => isSameMonth(d, displayedMonth),
-    selected: (d: Date) => date ? isSameDay(d, date) : false,
+    selected: (d: Date) => (date ? isSameDay(d, date) : false),
   };
 
   const modifiersClassNames = {
@@ -332,6 +355,7 @@ function DraggableTask({
         <Collapsible open={shouldShowDetails} onOpenChange={setIsOpen}>
           <CardContent className="p-4">
             {isEditing ? (
+              // Edit Mode
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Input
@@ -432,15 +456,19 @@ function DraggableTask({
                 </Popover>
               </div>
             ) : (
+              // Normal Display Mode
               <>
                 <div className="flex items-center justify-between">
-                  <div
-                    className="flex mr-4 items-center justify-center w-6 h-6 cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                    {...listeners}
-                    {...attributes}
-                  >
-                    <GripVertical className="h-5 w-5" />
-                  </div>
+                  {/* Drag Handle */}
+                  {!task.done && (
+                    <div
+                      className="mr-3 flex items-center justify-center w-6 h-6 cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                      {...listeners}
+                      {...attributes}
+                    >
+                      <GripVertical className="h-5 w-5" />
+                    </div>
+                  )}
                   <div className="flex items-center space-x-3 flex-1">
                     <Checkbox
                       id={`task-${task.id}`}
@@ -461,6 +489,39 @@ function DraggableTask({
                     </Label>
                   </div>
                   <div className="flex items-center gap-2">
+                    {/* Up/Down arrow buttons (only if not done) */}
+                    {!task.done && (
+                      <>
+                        <motion.button
+                          variants={buttonVariants}
+                          initial="initial"
+                          whileHover="hover"
+                          whileTap="tap"
+                          disabled={!canMoveUp}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onMoveUp(task);
+                          }}
+                          className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30"
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </motion.button>
+                        <motion.button
+                          variants={buttonVariants}
+                          initial="initial"
+                          whileHover="hover"
+                          whileTap="tap"
+                          disabled={!canMoveDown}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onMoveDown(task);
+                          }}
+                          className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-30"
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                        </motion.button>
+                      </>
+                    )}
                     {(task.description || task.due_date) &&
                       !displayAllInfos && (
                         <CollapsibleTrigger asChild>
@@ -527,19 +588,26 @@ function DraggableTask({
 export default function EisenhowerMatrix() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // For new task creation
   const [newTodoTitle, setNewTodoTitle] = useState("");
   const [newTodoDescription, setNewTodoDescription] = useState("");
   const [newTodoQuadrant, setNewTodoQuadrant] = useState(quadrantsEn[0].id);
   const [newTodoDueDate, setNewTodoDueDate] = useState<Date | undefined>();
   const [displayedMonth, setDisplayedMonth] = useState<Date>(new Date());
+  const [isNewTodoPopoverOpen, setIsNewTodoPopoverOpen] = useState(false);
+
+  // Display states
   const [isDoneOpen, setIsDoneOpen] = useState(false);
-  const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [displayAllInfos, setDisplayAllInfos] = useState<boolean>(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [language, setLanguage] = useState<"en" | "de">("en");
-  const [isNewTodoPopoverOpen, setIsNewTodoPopoverOpen] = useState(false);
 
+  // For DnD overlay
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
+
+  // Load user preferences & fetch tasks
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedDisplayAllInfos = localStorage.getItem("displayAllInfos");
@@ -577,10 +645,12 @@ export default function EisenhowerMatrix() {
     }
   }, [displayAllInfos, language]);
 
+  // Creating a new task
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTodoTitle.trim()) return;
 
+    // position = number of existing tasks in that quadrant (not done)
     const maxPosition =
       tasks.filter((t) => t.quadrant === newTodoQuadrant && !t.done).length ||
       0;
@@ -606,82 +676,7 @@ export default function EisenhowerMatrix() {
     }
   };
 
-  const handleDragStart = (event: DragStartEvent) => {
-    const taskId = Number.parseInt(event.active.id as string, 10);
-    const task = tasks.find((t) => t.id === taskId);
-    if (task && !task.done) {
-      setActiveTask(task);
-    }
-  };
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveTask(null);
-    if (!over) return;
-
-    const taskId = Number.parseInt(active.id as string, 10);
-    const task = tasks.find((t) => t.id === taskId);
-    if (!task || task.done) return;
-
-    const newQuadrant = over.id as string;
-    let updatedTasks = [...tasks];
-
-    if (task.quadrant !== newQuadrant) {
-      updatedTasks = updatedTasks.map((t) =>
-        t.id === taskId ? { ...t, quadrant: newQuadrant } : t
-      );
-      const oldQuadrantTasks = updatedTasks
-        .filter((t) => t.quadrant === task.quadrant && !t.done)
-        .sort((a, b) => a.position - b.position)
-        .map((t, index) => ({ ...t, position: index }));
-      const newQuadrantTasks = updatedTasks
-        .filter((t) => t.quadrant === newQuadrant && !t.done)
-        .sort((a, b) => a.position - b.position)
-        .map((t, index) => ({ ...t, position: index }));
-      updatedTasks = updatedTasks.map((t) => {
-        const oldMatch = oldQuadrantTasks.find((ot) => ot.id === t.id);
-        const newMatch = newQuadrantTasks.find((nt) => nt.id === t.id);
-        return oldMatch || newMatch || t;
-      });
-    } else {
-      const quadrantTasks = updatedTasks
-        .filter((t) => t.quadrant === newQuadrant && !t.done)
-        .sort((a, b) => a.position - b.position);
-      const draggedTaskIndex = quadrantTasks.findIndex((t) => t.id === taskId);
-      quadrantTasks.splice(draggedTaskIndex, 1);
-      const dropIndex = Math.round(event.delta.y / 80);
-      const newIndex = Math.min(
-        Math.max(draggedTaskIndex + dropIndex, 0),
-        quadrantTasks.length
-      );
-      quadrantTasks.splice(newIndex, 0, task);
-      updatedTasks = updatedTasks.map((t) => {
-        const match = quadrantTasks.find((qt) => qt.id === t.id);
-        return match ? { ...t, position: quadrantTasks.indexOf(match) } : t;
-      });
-    }
-
-    setTasks(updatedTasks);
-
-    const updates = updatedTasks
-      .filter((t) => t.quadrant === newQuadrant || t.quadrant === task.quadrant)
-      .map((t) => ({
-        id: t.id,
-        quadrant: t.quadrant,
-        position: t.position,
-        title: t.title,
-        done: t.done,
-        description: t.description || null,
-        completed_at: t.completed_at || null,
-        due_date: t.due_date || null,
-      }));
-
-    const { error } = await supabase
-      .from("tasks")
-      .upsert(updates, { onConflict: "id" });
-    if (error) console.error("Error updating tasks:", error);
-  };
-
+  // Toggling done
   const toggleDone = async (taskId: number, currentDone: boolean) => {
     const updatedDone = !currentDone;
     const completedAt = updatedDone ? new Date().toISOString() : null;
@@ -701,12 +696,15 @@ export default function EisenhowerMatrix() {
     if (error) console.error("Error updating task done status:", error);
   };
 
+  // Deleting a task
   const deleteTask = async (taskId: number) => {
     const task = tasks.find((t) => t.id === taskId);
     if (!task) return;
 
     setTasks((prev) => {
+      // remove from array
       const updated = prev.filter((t) => t.id !== taskId);
+      // reassign positions in the old quadrant
       const quadrantTasks = updated
         .filter((t) => t.quadrant === task.quadrant && !t.done)
         .sort((a, b) => a.position - b.position)
@@ -720,6 +718,7 @@ export default function EisenhowerMatrix() {
     if (error) console.error("Error deleting task:", error);
   };
 
+  // Updating a task's data (title, desc, due date)
   const updateTask = async (updatedTask: Task) => {
     setTasks((prev) =>
       prev.map((t) => (t.id === updatedTask.id ? updatedTask : t))
@@ -736,11 +735,97 @@ export default function EisenhowerMatrix() {
     if (error) console.error("Error updating task:", error);
   };
 
+  // Move a task "up" within its quadrant
+  const moveTaskUp = async (task: Task) => {
+    const quadrantTasks = tasks
+      .filter((t) => t.quadrant === task.quadrant && !t.done)
+      .sort((a, b) => a.position - b.position);
+
+    const idx = quadrantTasks.findIndex((t) => t.id === task.id);
+    if (idx <= 0) return;
+
+    const prevTask = quadrantTasks[idx - 1];
+    const newPosTask = prevTask.position;
+    const newPosPrev = task.position;
+
+    setTasks((prev) =>
+      prev.map((t) => {
+        if (t.id === task.id) {
+          return { ...t, position: newPosTask };
+        } else if (t.id === prevTask.id) {
+          return { ...t, position: newPosPrev };
+        }
+        return t;
+      })
+    );
+
+    // Persist to supabase
+    const updates = [
+      { ...task, position: newPosTask },
+      { ...prevTask, position: newPosPrev },
+    ].map((t) => ({
+      id: t.id,
+      quadrant: t.quadrant,
+      position: t.position,
+      title: t.title,
+      done: t.done,
+      description: t.description || null,
+      completed_at: t.completed_at || null,
+      due_date: t.due_date || null,
+    }));
+    const { error } = await supabase.from("tasks").upsert(updates);
+    if (error) console.error("Error updating tasks:", error);
+  };
+
+  // Move a task "down" within its quadrant
+  const moveTaskDown = async (task: Task) => {
+    const quadrantTasks = tasks
+      .filter((t) => t.quadrant === task.quadrant && !t.done)
+      .sort((a, b) => a.position - b.position);
+
+    const idx = quadrantTasks.findIndex((t) => t.id === task.id);
+    if (idx === -1 || idx >= quadrantTasks.length - 1) return;
+
+    const nextTask = quadrantTasks[idx + 1];
+    const newPosTask = nextTask.position;
+    const newPosNext = task.position;
+
+    setTasks((prev) =>
+      prev.map((t) => {
+        if (t.id === task.id) {
+          return { ...t, position: newPosTask };
+        } else if (t.id === nextTask.id) {
+          return { ...t, position: newPosNext };
+        }
+        return t;
+      })
+    );
+
+    // Persist to supabase
+    const updates = [
+      { ...task, position: newPosTask },
+      { ...nextTask, position: newPosNext },
+    ].map((t) => ({
+      id: t.id,
+      quadrant: t.quadrant,
+      position: t.position,
+      title: t.title,
+      done: t.done,
+      description: t.description || null,
+      completed_at: t.completed_at || null,
+      due_date: t.due_date || null,
+    }));
+    const { error } = await supabase.from("tasks").upsert(updates);
+    if (error) console.error("Error updating tasks:", error);
+  };
+
+  // Display completed tasks' timestamps
   const formatTimestamp = (timestamp: string | null) => {
     if (!timestamp) return "";
     return new Date(timestamp).toLocaleString();
   };
 
+  // For "Upcoming" tasks
   const getTimeRemaining = (dueDate: string | null) => {
     if (!dueDate)
       return language === "en" ? "No due date" : "Kein Fälligkeitsdatum";
@@ -759,21 +844,100 @@ export default function EisenhowerMatrix() {
       : `${diffDays} Tag${diffDays === 1 ? "" : "e"} verbleibend`;
   };
 
-  const handleNewTodoDateSelect = (selectedDate: Date | undefined) => {
-    setNewTodoDueDate(selectedDate);
-    setIsNewTodoPopoverOpen(false); // Schließt das Popover nach Auswahl
+  // *** DnD events: only change quadrant, do not reorder within quadrant ***
+  const handleDragStart = (event: DragStartEvent) => {
+    const taskId = Number.parseInt(event.active.id as string, 10);
+    const task = tasks.find((t) => t.id === taskId);
+    if (task && !task.done) {
+      setActiveTask(task);
+    }
   };
 
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveTask(null);
+    if (!over) return;
+
+    const taskId = Number.parseInt(active.id as string, 10);
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task || task.done) return;
+
+    const oldQuadrant = task.quadrant;
+    const newQuadrant = over.id as string;
+    if (oldQuadrant === newQuadrant) {
+      // Same quadrant => do nothing with reordering
+      return;
+    }
+
+    // Quadrant changed => we move the task there, at the bottom
+    // of that quadrant's position list
+    const newPosition = tasks.filter(
+      (t) => t.quadrant === newQuadrant && !t.done
+    ).length;
+
+    // Update local state
+    setTasks((prev) => {
+      // 1) change quadrant & position for current item
+      const updated = prev.map((p) =>
+        p.id === task.id
+          ? { ...p, quadrant: newQuadrant, position: newPosition }
+          : p
+      );
+      // 2) reassign positions in old quadrant
+      const oldQuadrantTasks = updated
+        .filter((t) => t.quadrant === oldQuadrant && !t.done)
+        .sort((a, b) => a.position - b.position)
+        .map((t, index) => ({ ...t, position: index }));
+      // 3) reassign positions in new quadrant
+      const newQuadrantTasks = updated
+        .filter((t) => t.quadrant === newQuadrant && !t.done)
+        .sort((a, b) => a.position - b.position)
+        .map((t, index) => ({ ...t, position: index }));
+
+      // Combine
+      return updated.map(
+        (x) =>
+          oldQuadrantTasks.find((o) => o.id === x.id) ??
+          newQuadrantTasks.find((o) => o.id === x.id) ??
+          x
+      );
+    });
+
+    // Persist changes to DB
+    // We'll update all tasks in either oldQuadrant or newQuadrant
+    const relevantTasks = tasks.filter(
+      (t) => t.quadrant === oldQuadrant || t.quadrant === newQuadrant
+    );
+    const { error } = await supabase.from("tasks").upsert(
+      relevantTasks.map((t) => ({
+        id: t.id,
+        quadrant: t.id === taskId ? newQuadrant : t.quadrant,
+        position: t.id === taskId ? newPosition : t.position,
+        title: t.title,
+        done: t.done,
+        description: t.description || null,
+        completed_at: t.completed_at || null,
+        due_date: t.due_date || null,
+      }))
+    );
+    if (error) console.error("Error updating quadrant:", error);
+  };
+
+  // New todo date selection
+  const handleNewTodoDateSelect = (selectedDate: Date | undefined) => {
+    setNewTodoDueDate(selectedDate);
+    setIsNewTodoPopoverOpen(false);
+  };
   const handleNewTodoClearDate = () => {
     setNewTodoDueDate(undefined);
-    setIsNewTodoPopoverOpen(false); // Schließt das Popover nach Löschen
+    setIsNewTodoPopoverOpen(false);
   };
 
   const modifiers = {
     currentMonth: (date: Date) => isSameMonth(date, displayedMonth),
-    selected: (date: Date) => newTodoDueDate ? isSameDay(date, newTodoDueDate) : false,
+    selected: (date: Date) =>
+      newTodoDueDate ? isSameDay(date, newTodoDueDate) : false,
   };
-
   const modifiersClassNames = {
     currentMonth:
       "border-2 border-indigo-600 hover:border-gray-300 text-indigo-600 rounded-full",
@@ -784,6 +948,7 @@ export default function EisenhowerMatrix() {
 
   return (
     <div className="container mx-auto p-8 bg-gradient-to-br from-gray-100 via-gray-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 min-h-screen">
+      {/* Language Switch */}
       <motion.div className="absolute top-4 right-4" variants={itemVariants}>
         <motion.button
           variants={buttonVariants}
@@ -806,11 +971,13 @@ export default function EisenhowerMatrix() {
         animate={isLoaded ? "visible" : "hidden"}
         className="max-w-5xl mx-auto"
       >
+        {/* New Task Form */}
         <motion.form
           variants={itemVariants}
           onSubmit={handleCreateTask}
           className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800"
         >
+          {/* Title */}
           <div className="md:col-span-1">
             <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
               {language === "en" ? "Task" : "Aufgabe"}
@@ -826,6 +993,7 @@ export default function EisenhowerMatrix() {
               onChange={(e) => setNewTodoTitle(e.target.value)}
               className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-xl bg-white dark:bg-gray-900 shadow-sm"
             />
+            {/* Info Modal Trigger */}
             <Dialog open={isHelpModalOpen} onOpenChange={setIsHelpModalOpen}>
               <DialogTrigger asChild>
                 <motion.button
@@ -839,6 +1007,7 @@ export default function EisenhowerMatrix() {
                     : "Die Eisenhower-Matrix verstehen"}
                 </motion.button>
               </DialogTrigger>
+              {/* Info Modal */}
               <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl">
                 <motion.div
                   variants={modalVariants}
@@ -1135,6 +1304,8 @@ export default function EisenhowerMatrix() {
               </DialogContent>
             </Dialog>
           </div>
+
+          {/* Description */}
           <div className="md:col-span-1">
             <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
               {language === "en" ? "Description" : "Beschreibung"}
@@ -1151,6 +1322,8 @@ export default function EisenhowerMatrix() {
               className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 rounded-xl bg-white dark:bg-gray-900 shadow-sm"
             />
           </div>
+
+          {/* Due Date */}
           <div className="md:col-span-1">
             <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
               {language === "en"
@@ -1214,6 +1387,8 @@ export default function EisenhowerMatrix() {
               </AnimatePresence>
             </Popover>
           </div>
+
+          {/* Quadrant + Submit */}
           <div className="md:col-span-1 md:col-start-1">
             <Label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">
               {language === "en" ? "Quadrant" : "Quadrant"}
@@ -1268,6 +1443,7 @@ export default function EisenhowerMatrix() {
           </div>
         </motion.form>
 
+        {/* Loading Indicator */}
         {loading && (
           <motion.p
             variants={itemVariants}
@@ -1279,6 +1455,7 @@ export default function EisenhowerMatrix() {
           </motion.p>
         )}
 
+        {/* Show/Hide Extra Info */}
         <motion.div
           variants={itemVariants}
           className="mb-6 flex items-center gap-2"
@@ -1297,32 +1474,41 @@ export default function EisenhowerMatrix() {
           </Label>
         </motion.div>
 
+        {/* DnD Context for cross-quadrant moves */}
         <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <motion.div
             variants={containerVariants}
             className="grid grid-cols-1 md:grid-cols-2 gap-8"
           >
-            {quadrants.map((q) => (
-              <DroppableZone key={q.id} id={q.id} title={q.title}>
-                <AnimatePresence>
-                  {tasks
-                    .filter((t) => t.quadrant === q.id && !t.done)
-                    .sort((a, b) => a.position - b.position)
-                    .map((task) => (
+            {quadrants.map((q) => {
+              // All tasks in quadrant q.id, not done, sorted by position
+              const quadrantTasks = tasks
+                .filter((t) => t.quadrant === q.id && !t.done)
+                .sort((a, b) => a.position - b.position);
+
+              return (
+                <DroppableZone key={q.id} id={q.id} title={q.title}>
+                  <AnimatePresence>
+                    {quadrantTasks.map((task, index) => (
                       <DraggableTask
                         key={task.id}
                         task={task}
                         onToggle={toggleDone}
                         onDelete={deleteTask}
                         onUpdate={updateTask}
+                        onMoveUp={moveTaskUp}
+                        onMoveDown={moveTaskDown}
+                        canMoveUp={index > 0}
+                        canMoveDown={index < quadrantTasks.length - 1}
                         isActive={activeTask?.id === task.id}
                         displayAllInfos={displayAllInfos}
                         language={language}
                       />
                     ))}
-                </AnimatePresence>
-              </DroppableZone>
-            ))}
+                  </AnimatePresence>
+                </DroppableZone>
+              );
+            })}
           </motion.div>
           <DragOverlay>
             {activeTask && (
@@ -1331,7 +1517,11 @@ export default function EisenhowerMatrix() {
                 onToggle={toggleDone}
                 onDelete={deleteTask}
                 onUpdate={updateTask}
-                isDraggingOverlay={true}
+                onMoveUp={moveTaskUp}
+                onMoveDown={moveTaskDown}
+                canMoveUp={false} // overlay item, no arrow reordering
+                canMoveDown={false}
+                isDraggingOverlay
                 displayAllInfos={displayAllInfos}
                 language={language}
               />
@@ -1339,6 +1529,7 @@ export default function EisenhowerMatrix() {
           </DragOverlay>
         </DndContext>
 
+        {/* Upcoming Tasks */}
         <motion.div variants={itemVariants} className="mt-12">
           <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-6">
             {language === "en" ? "Upcoming Tasks" : "Kommende Aufgaben"}
@@ -1410,6 +1601,7 @@ export default function EisenhowerMatrix() {
           </div>
         </motion.div>
 
+        {/* Completed Tasks */}
         <motion.div variants={itemVariants} className="mt-12">
           <Collapsible open={isDoneOpen} onOpenChange={setIsDoneOpen}>
             <CollapsibleTrigger asChild>
