@@ -65,6 +65,7 @@ import {
   ArrowDown,
   Globe,
   CheckCircleIcon,
+  ClockIcon,
 } from "lucide-react";
 import { format, isSameMonth, isSameDay } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -82,6 +83,7 @@ type Task = {
   done: boolean;
   completed_at?: string | null;
   due_date?: string | null;
+  created_at?: string | null;
 };
 
 const quadrantsEn = [
@@ -687,25 +689,34 @@ function DraggableTask({
         {/* HOVER/TAP TOOLTIP (displays title, desc, due date) */}
         {(task.description || task.due_date) && (
           <div
-            className={`absolute left-0 top-full mt-1.5 z-50 w-64 
-              px-4 py-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl
-              opacity-0 invisible transition-all duration-200 ease-in-out
-              group-hover:opacity-100 group-hover:visible
-              ${tooltipOpen ? "opacity-100 visible" : ""}`}
+            className={`absolute left-0 top-full mt-2 z-50 w-72 
+    px-5 py-4 bg-gray-800 text-white text-sm rounded-xl shadow-2xl
+    opacity-0 invisible transition-all duration-300 ease-in-out
+    group-hover:opacity-100 group-hover:visible
+    ${tooltipOpen ? "opacity-100 visible" : ""}`}
           >
             {task.title && (
-              <p className="font-semibold text-white mb-2 break-words leading-tight">
+              <p className="font-semibold text-white mb-3 break-words leading-tight tracking-wide">
                 {task.title}
               </p>
             )}
             {task.description && (
-              <p className="text-gray-200 mb-2 leading-snug break-words">
+              <p className="text-gray-300 mb-3 leading-relaxed break-words">
                 {task.description}
               </p>
             )}
+            {task.created_at && (
+              <div className="flex items-center gap-2 text-gray-400 mb-2">
+                <ClockIcon className="h-4 w-4 text-gray-500" />
+                <span className="font-medium">
+                  {language === "en" ? "Created:" : "Erstellt:"}
+                </span>
+                <span>{new Date(task.created_at).toLocaleString()}</span>
+              </div>
+            )}
             {task.due_date && (
-              <div className="flex items-center gap-1.5 text-gray-300">
-                <CalendarIcon className="h-3 w-3" />
+              <div className="flex items-center gap-2 text-gray-300">
+                <CalendarIcon className="h-4 w-4 text-gray-500" />
                 <span className="font-medium">
                   {language === "en" ? "Due:" : "Fällig:"}
                 </span>
@@ -1775,7 +1786,7 @@ export default function EisenhowerMatrix() {
                   transition={{ duration: 0.5 }}
                   className="flex flex-col items-center justify-center p-4 text-center text-balance"
                 >
-                  <p className="text-lg font-semibold  text-gray-800 dark:text-gray-200">
+                  <p className="text-lg font-semibold text-gray-800 dark:text-gray-200">
                     {language === "en"
                       ? "Hmm, seems like there are no done tasks yet."
                       : "Hmm, es sieht so aus, als wären noch keine Aufgaben erledigt."}
@@ -1828,6 +1839,15 @@ export default function EisenhowerMatrix() {
                         {task.description && (
                           <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 break-words">
                             {task.description}
+                          </p>
+                        )}
+                        {task.created_at && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
+                            <ClockIcon className="h-4 w-4 text-gray-500" />
+                            <span className="font-medium">
+                              {language === "en" ? "Created:" : "Erstellt:"}
+                            </span>
+                            {new Date(task.created_at).toLocaleString()}
                           </p>
                         )}
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
