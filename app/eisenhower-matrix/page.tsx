@@ -67,7 +67,13 @@ import {
   CheckCircleIcon,
   ClockIcon,
 } from "lucide-react";
-import { format, isSameMonth, isSameDay } from "date-fns";
+import {
+  format,
+  isSameDay,
+  isSameMonth,
+  // parseISO,
+} from "date-fns";
+// import { de } from "date-fns/locale"; // If you want a German format
 import { Button } from "@/components/ui/button";
 
 // IMPORTANT: your mobile detection hook
@@ -83,7 +89,7 @@ type Task = {
   done: boolean;
   completed_at?: string | null;
   due_date?: string | null;
-  created_at?: string | null; // ← Add this
+  created_at?: string | null;
 };
 
 const quadrantsEn = [
@@ -654,7 +660,7 @@ function DraggableTask({
                     </div>
                   </div>
 
-                  {/* The Collapsible content (existing logic) */}
+                  {/* The Collapsible content */}
                   {(task.description || task.due_date || task.title) && (
                     <CollapsibleContent className="mt-4 text-sm text-gray-600 dark:text-gray-400">
                       {task.title && isMobile && (
@@ -760,7 +766,9 @@ export default function EisenhowerMatrix() {
   // For DnD overlay
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
-  // Load user preferences & fetch tasks
+  // -------------------------------
+  // 1) Fetch tasks & load preferences
+  // -------------------------------
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedDisplayAllInfos = localStorage.getItem("displayAllInfos");
@@ -798,6 +806,9 @@ export default function EisenhowerMatrix() {
     }
   }, [displayAllInfos, language]);
 
+  // -------------------------------
+  // 2) CRUD: Create, Update, Delete
+  // -------------------------------
   // Creating a new task
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -853,6 +864,7 @@ export default function EisenhowerMatrix() {
     const task = tasks.find((t) => t.id === taskId);
     if (!task) return;
 
+    // Reorder positions in that quadrant
     setTasks((prev) => {
       const updated = prev.filter((t) => t.id !== taskId);
       const quadrantTasks = updated
@@ -868,7 +880,7 @@ export default function EisenhowerMatrix() {
     if (error) console.error("Error deleting task:", error);
   };
 
-  // Updating a task's data
+  // Updating a task's data (title, description, due date)
   const updateTask = async (updatedTask: Task) => {
     setTasks((prev) =>
       prev.map((t) => (t.id === updatedTask.id ? updatedTask : t))
@@ -897,6 +909,7 @@ export default function EisenhowerMatrix() {
     const newPosTask = prevTask.position;
     const newPosPrev = task.position;
 
+    // Swap in state
     setTasks((prev) =>
       prev.map((t) =>
         t.id === task.id
@@ -916,6 +929,7 @@ export default function EisenhowerMatrix() {
       completed_at: t.completed_at || null,
       due_date: t.due_date || null,
     }));
+
     const { error } = await supabase.from("tasks").upsert(updates);
     if (error) console.error("Error updating tasks:", error);
   };
@@ -932,6 +946,7 @@ export default function EisenhowerMatrix() {
     const newPosTask = nextTask.position;
     const newPosNext = task.position;
 
+    // Swap in state
     setTasks((prev) =>
       prev.map((t) =>
         t.id === task.id
@@ -955,31 +970,9 @@ export default function EisenhowerMatrix() {
     if (error) console.error("Error updating tasks:", error);
   };
 
-  // Completed tasks
-  const formatTimestamp = (timestamp: string | null) => {
-    if (!timestamp) return "";
-    return new Date(timestamp).toLocaleString();
-  };
-
-  // "Upcoming" tasks
-  const getTimeRemaining = (dueDate: string | null) => {
-    if (!dueDate)
-      return language === "en" ? "No due date" : "Kein Fälligkeitsdatum";
-    const now = new Date();
-    const due = new Date(dueDate);
-    const diffMs = due.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-    if (diffDays < 0)
-      return language === "en"
-        ? `Overdue by ${-diffDays} day${-diffDays === 1 ? "" : "s"}`
-        : `Überfällig um ${-diffDays} Tag${-diffDays === 1 ? "" : "e"}`;
-    if (diffDays === 0) return language === "en" ? "Due today" : "Heute fällig";
-    return language === "en"
-      ? `${diffDays} day${diffDays === 1 ? "" : "s"} remaining`
-      : `${diffDays} Tag${diffDays === 1 ? "" : "e"} verbleibend`;
-  };
-
-  // DnDKit events
+  // -------------------------------
+  // 3) Drag & Drop
+  // -------------------------------
   const handleDragStart = (event: DragStartEvent) => {
     const taskId = Number.parseInt(event.active.id as string, 10);
     const task = tasks.find((t) => t.id === taskId);
@@ -987,7 +980,6 @@ export default function EisenhowerMatrix() {
       setActiveTask(task);
     }
   };
-
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -1004,8 +996,9 @@ export default function EisenhowerMatrix() {
     const newQuadrant = containerId || (over.id as string);
     const oldQuadrant = oldTask.quadrant;
 
+    // Reordering or moving to a new quadrant
     if (oldQuadrant === newQuadrant) {
-      // reorder in same quadrant
+      // Reorder in the same quadrant
       const quadrantTasks = tasks
         .filter((t) => t.quadrant === oldQuadrant && !t.done)
         .sort((a, b) => a.position - b.position);
@@ -1033,7 +1026,7 @@ export default function EisenhowerMatrix() {
         if (error) console.error("Error reordering tasks:", error);
       }
     } else {
-      // move to a different quadrant
+      // Move to a different quadrant
       const newPosition = tasks.filter(
         (t) => t.quadrant === newQuadrant && !t.done
       ).length;
@@ -1044,6 +1037,7 @@ export default function EisenhowerMatrix() {
             ? { ...p, quadrant: newQuadrant, position: newPosition }
             : p
         );
+        // re-normalize the positions
         const oldQuadrantTasks = changed
           .filter((t) => t.quadrant === oldQuadrant && !t.done)
           .sort((a, b) => a.position - b.position)
@@ -1079,16 +1073,77 @@ export default function EisenhowerMatrix() {
     }
   };
 
-  // Handle new-task date
-  const handleNewTodoDateSelect = (selectedDate: Date | undefined) => {
-    setNewTodoDueDate(selectedDate);
-    setIsNewTodoPopoverOpen(false);
-  };
-  const handleNewTodoClearDate = () => {
-    setNewTodoDueDate(undefined);
-    setIsNewTodoPopoverOpen(false);
+  // -------------------------------
+  // 4) Calendar + Upcoming Tasks side by side
+  // -------------------------------
+  // (A) For the calendar, group tasks by date to show which days have tasks
+  const tasksWithDueDates = tasks.filter((t) => t.due_date);
+  const tasksByDate = tasksWithDueDates.reduce<Record<string, Task[]>>(
+    (acc, task) => {
+      const dateKey = format(new Date(task.due_date!), "yyyy-MM-dd");
+      if (!acc[dateKey]) acc[dateKey] = [];
+      acc[dateKey].push(task);
+      return acc;
+    },
+    {}
+  );
+
+  // (B) Highlight days in the calendar that have tasks
+  const calendarModifiers = {
+    // 1) Day has tasks and ALL are done
+    allDone: (date: Date) => {
+      const key = format(date, "yyyy-MM-dd");
+      const dayTasks = tasksByDate[key] || [];
+      if (!dayTasks.length) return false;
+      return dayTasks.every((t) => t.done === true);
+    },
+
+    // 2) Day has any tasks NOT done
+    hasDue: (date: Date) => {
+      const key = format(date, "yyyy-MM-dd");
+      const dayTasks = tasksByDate[key] || [];
+      // If there's at least one undone task, highlight differently
+      return dayTasks.some((t) => !t.done);
+    },
   };
 
+  const calendarModifiersClassNames = {
+    // When ALL tasks for that day are done => highlight green
+    allDone:
+      "bg-green-200 text-green-900 dark:bg-green-700 dark:text-green-100 font-semibold",
+
+    // When there is at least one undone task => highlight in your previous color
+    hasDue:
+      "bg-indigo-200 text-indigo-900 dark:bg-indigo-700 dark:text-indigo-100 font-semibold",
+  };
+
+  // (C) Track which date is selected in the calendar
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<
+    Date | undefined
+  >(undefined);
+
+  // (D) "Upcoming Tasks" are tasks with a due_date in the future (or including overdue).
+  // We highlight them if their date matches the selectedCalendarDate
+  const getTimeRemaining = (dueDate: string | null) => {
+    if (!dueDate)
+      return language === "en" ? "No due date" : "Kein Fälligkeitsdatum";
+    const now = new Date();
+    const due = new Date(dueDate);
+    const diffMs = due.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays < 0)
+      return language === "en"
+        ? `Overdue by ${-diffDays} day${-diffDays === 1 ? "" : "s"}`
+        : `Überfällig um ${-diffDays} Tag${-diffDays === 1 ? "" : "e"}`;
+    if (diffDays === 0) return language === "en" ? "Due today" : "Heute fällig";
+    return language === "en"
+      ? `${diffDays} day${diffDays === 1 ? "" : "s"} remaining`
+      : `${diffDays} Tag${diffDays === 1 ? "" : "e"} verbleibend`;
+  };
+
+  // -------------
+  // Render
+  // -------------
   const quadrants = language === "en" ? quadrantsEn : quadrantsDe;
 
   return (
@@ -1119,7 +1174,7 @@ export default function EisenhowerMatrix() {
         <motion.form
           variants={itemVariants}
           onSubmit={handleCreateTask}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4  bg-white dark:bg-gray-900 p-4 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 bg-white dark:bg-gray-900 p-4 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800"
         >
           {/* Title */}
           <div className="flex flex-col">
@@ -1199,7 +1254,10 @@ export default function EisenhowerMatrix() {
                       <Calendar
                         mode="single"
                         selected={newTodoDueDate}
-                        onSelect={handleNewTodoDateSelect}
+                        onSelect={(date) => {
+                          setNewTodoDueDate(date || undefined);
+                          setIsNewTodoPopoverOpen(false);
+                        }}
                         month={displayedMonth}
                         onMonthChange={setDisplayedMonth}
                         initialFocus
@@ -1208,7 +1266,10 @@ export default function EisenhowerMatrix() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={handleNewTodoClearDate}
+                        onClick={() => {
+                          setNewTodoDueDate(undefined);
+                          setIsNewTodoPopoverOpen(false);
+                        }}
                         className="mt-2 w-full border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                       >
                         {language === "en" ? "Clear Date" : "Datum löschen"}
@@ -1283,14 +1344,31 @@ export default function EisenhowerMatrix() {
                 variants={buttonVariants}
                 whileHover="hover"
                 whileTap="tap"
-                className="mt-2 text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                className="mt-2 text-sm  text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
               >
                 {language === "en"
                   ? "Understanding the Eisenhower Matrix"
                   : "Die Eisenhower-Matrix verstehen"}
               </motion.button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl">
+            <DialogContent
+              className="
+        w-[85%]
+        max-w-md 
+        sm:max-w-[425px] 
+        p-4 
+        sm:p-6 
+        bg-white 
+        dark:bg-gray-900 
+        border 
+        border-gray-200 
+        dark:border-gray-800 
+        rounded-xl 
+        shadow-xl 
+        max-h-[90vh] 
+        overflow-y-auto
+      "
+            >
               <motion.div
                 variants={modalVariants}
                 initial="hidden"
@@ -1604,7 +1682,7 @@ export default function EisenhowerMatrix() {
           </Label>
         </motion.div>
 
-        {/* DnD Context for quadrant reordering */}
+        {/* DnD Context for Quadrant tasks */}
         <DndContext
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
@@ -1668,72 +1746,120 @@ export default function EisenhowerMatrix() {
           </DragOverlay>
         </DndContext>
 
-        {/* Upcoming Tasks */}
+        {/* 
+          -------------- 
+          CALENDAR + UPCOMING TASKS SIDE BY SIDE
+          --------------
+        */}
         <motion.div variants={itemVariants} className="mt-12">
-          <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
-            {language === "en" ? "Upcoming Tasks" : "Kommende Aufgaben"}
-          </h3>
-          <div className="space-y-3">
-            <AnimatePresence>
-              {tasks
-                .filter((t) => !t.done && t.due_date)
-                .sort(
-                  (a, b) =>
-                    new Date(a.due_date!).getTime() -
-                    new Date(b.due_date!).getTime()
-                )
-                .map((task) => (
-                  <motion.div
-                    key={task.id}
-                    variants={itemVariants}
-                    className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-md border border-gray-200 dark:border-gray-800"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id={`upcoming-task-${task.id}`}
-                          checked={task.done}
-                          onCheckedChange={() => toggleDone(task.id, task.done)}
-                          className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
-                        />
-                        <Label className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {task.title}
-                        </Label>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-xs font-medium ${
-                            new Date(task.due_date!).getTime() < Date.now()
-                              ? "text-red-500 dark:text-red-400"
-                              : "text-gray-600 dark:text-gray-400"
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* CALENDAR VIEW */}
+            <div className="md:w-1/2">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+                {language === "en" ? "Calendar View" : "Kalenderansicht"}
+              </h3>
+              <Calendar
+                mode="single"
+                selected={selectedCalendarDate}
+                onSelect={setSelectedCalendarDate}
+                month={displayedMonth}
+                onMonthChange={setDisplayedMonth}
+                // Pass both modifiers
+                modifiers={calendarModifiers}
+                modifiersClassNames={calendarModifiersClassNames}
+                className="rounded-xl border dark:border-gray-800"
+              />
+            </div>
+
+            {/* UPCOMING TASKS */}
+            <div className="md:w-1/2">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+                {language === "en" ? "Upcoming Tasks" : "Kommende Aufgaben"}
+              </h3>
+              <div className="space-y-3">
+                <AnimatePresence>
+                  {tasks
+                    .filter((t) => !t.done && t.due_date) // must have a due date and not done
+                    .sort(
+                      (a, b) =>
+                        new Date(a.due_date!).getTime() -
+                        new Date(b.due_date!).getTime()
+                    )
+                    .map((task) => {
+                      // highlight if matches selectedCalendarDate
+                      const isHighlighted =
+                        selectedCalendarDate &&
+                        task.due_date &&
+                        isSameDay(
+                          new Date(task.due_date),
+                          selectedCalendarDate
+                        );
+
+                      return (
+                        <motion.div
+                          key={task.id}
+                          variants={itemVariants}
+                          className={`bg-white dark:bg-gray-900 p-4 rounded-xl shadow-md border border-gray-200 dark:border-gray-800 ${
+                            isHighlighted
+                              ? "bg-yellow-50 ring-2 ring-yellow-300"
+                              : ""
                           }`}
                         >
-                          {getTimeRemaining(task.due_date!)}
-                        </span>
-                        <motion.button
-                          variants={buttonVariants}
-                          initial="initial"
-                          whileHover="hover"
-                          whileTap="tap"
-                          onClick={() => deleteTask(task.id)}
-                          className="p-1 text-red-500 hover:text-red-600 dark:hover:text-red-400"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </motion.button>
-                      </div>
-                    </div>
-                    {task.description && (
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 break-words">
-                        {task.description}
-                      </p>
-                    )}
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {language === "en" ? "Quadrant:" : "Quadrant:"}{" "}
-                      {quadrants.find((q) => q.id === task.quadrant)?.title}
-                    </p>
-                  </motion.div>
-                ))}
-            </AnimatePresence>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                id={`upcoming-task-${task.id}`}
+                                checked={task.done}
+                                onCheckedChange={() =>
+                                  toggleDone(task.id, task.done)
+                                }
+                                className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                              />
+                              <Label className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {task.title}
+                              </Label>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`text-xs font-medium ${
+                                  new Date(task.due_date!).getTime() <
+                                  Date.now()
+                                    ? "text-red-500 dark:text-red-400"
+                                    : "text-gray-600 dark:text-gray-400"
+                                }`}
+                              >
+                                {getTimeRemaining(task.due_date!)}
+                              </span>
+                              <motion.button
+                                variants={buttonVariants}
+                                initial="initial"
+                                whileHover="hover"
+                                whileTap="tap"
+                                onClick={() => deleteTask(task.id)}
+                                className="p-1 text-red-500 hover:text-red-600 dark:hover:text-red-400"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </motion.button>
+                            </div>
+                          </div>
+                          {task.description && (
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 break-words">
+                              {task.description}
+                            </p>
+                          )}
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {language === "en" ? "Quadrant:" : "Quadrant:"}{" "}
+                            {
+                              quadrants.find((q) => q.id === task.quadrant)
+                                ?.title
+                            }
+                          </p>
+                        </motion.div>
+                      );
+                    })}
+                </AnimatePresence>
+              </div>
+            </div>
           </div>
         </motion.div>
 
@@ -1779,7 +1905,6 @@ export default function EisenhowerMatrix() {
               </DialogHeader>
 
               {tasks.filter((t) => t.done).length === 0 ? (
-                // Display a note when there are no completed tasks
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1794,12 +1919,11 @@ export default function EisenhowerMatrix() {
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                     {language === "en"
-                      ? "Every journey begins with a single step. Keep pushing forward – your breakthrough is just around the corner!"
-                      : "Jede Reise beginnt mit dem ersten Schritt. Bleib dran – dein Durchbruch ist zum Greifen nah!"}
+                      ? "Keep pushing forward – your breakthrough is just around the corner!"
+                      : "Bleib dran – dein Durchbruch ist zum Greifen nah!"}
                   </p>
                 </motion.div>
               ) : (
-                // Render the list of completed tasks if there are any
                 <AnimatePresence>
                   {tasks
                     .filter((t) => t.done)
