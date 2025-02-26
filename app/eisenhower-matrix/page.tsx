@@ -655,10 +655,10 @@ function DraggableTask({
                   </div>
 
                   {/* The Collapsible content (existing logic) */}
-                  {(task.description || task.due_date) && (
+                  {(task.description || task.due_date || task.title) && (
                     <CollapsibleContent className="mt-4 text-sm text-gray-600 dark:text-gray-400">
                       {task.title && isMobile && (
-                        <h3 className="mb-4 font-semibold text-base text-gray-900 dark:text-gray-100 break-words tracking-tight">
+                        <h3 className="mb-4 pl-2 font-semibold text-base text-gray-900 dark:text-gray-100 break-words tracking-tight">
                           {task.title}
                         </h3>
                       )}
