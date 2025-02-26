@@ -127,7 +127,7 @@ export default function Page() {
   const [logs, setLogs] = useState<{ [key: string]: Status }>({});
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  // State for displayed month/year
+  // State for displayed month/year (for calendar view)
   const [displayYear, setDisplayYear] = useState<number>(
     new Date().getFullYear()
   );
@@ -249,7 +249,7 @@ export default function Page() {
     ],
   };
 
-  // Calculate cumulative success data
+  // Calculate cumulative success data for the month
   let cumulative = 0;
   const cumulativeSuccessData = successData.map((val) => {
     cumulative += val;
@@ -281,6 +281,38 @@ export default function Page() {
     ],
   };
 
+  // *** Yearly Overview Chart Calculation ***
+  // For the current year, we aggregate logs per month.
+  const currentYearValue = new Date().getFullYear();
+  const yearlySuccess = new Array(12).fill(0);
+  const yearlyFail = new Array(12).fill(0);
+  Object.keys(logs).forEach((dateStr) => {
+    const date = new Date(dateStr);
+    if (date.getFullYear() === currentYearValue) {
+      const month = date.getMonth(); // 0-based index
+      if (logs[dateStr] === "success") {
+        yearlySuccess[month]++;
+      } else if (logs[dateStr] === "fail") {
+        yearlyFail[month]++;
+      }
+    }
+  });
+  const yearlyBarChartData = {
+    labels: MONTH_NAMES,
+    datasets: [
+      {
+        label: "Success",
+        data: yearlySuccess,
+        backgroundColor: "rgba(34,197,94,0.6)",
+      },
+      {
+        label: "Fail",
+        data: yearlyFail,
+        backgroundColor: "rgba(239,68,68,0.6)",
+      },
+    ],
+  };
+
   // Framer Motion variants
   const dayVariants = {
     hidden: { opacity: 0, scale: 0.8 },
@@ -291,11 +323,8 @@ export default function Page() {
     visible: { opacity: 1, y: 0 },
   };
 
-  // Use a stable array of month names
+  // Use a stable array of month names for the calendar header
   const monthName = MONTH_NAMES[displayMonth];
-
-  // Memoize the current year for the footer
-  const currentYear = useMemo(() => new Date().getFullYear(), []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-700 flex flex-col">
@@ -315,11 +344,15 @@ export default function Page() {
         <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white/10 backdrop-blur rounded-lg p-4 text-center">
             <p className="text-sm text-gray-300">Current Streak</p>
-            <p className="text-3xl font-bold text-green-400">{currentStreak}</p>
+            <p className="text-3xl font-bold text-green-400">
+              {computeStreaks(logs).currentStreak}
+            </p>
           </div>
           <div className="bg-white/10 backdrop-blur rounded-lg p-4 text-center">
             <p className="text-sm text-gray-300">Longest Streak</p>
-            <p className="text-3xl font-bold text-blue-400">{longestStreak}</p>
+            <p className="text-3xl font-bold text-blue-400">
+              {computeStreaks(logs).longestStreak}
+            </p>
           </div>
         </div>
 
@@ -390,7 +423,7 @@ export default function Page() {
 
         {/* CHARTS SECTION */}
         <div className="mt-10 space-y-8">
-          {/* Bar Chart */}
+          {/* Daily Bar Chart */}
           <div className="bg-white/10 rounded-lg p-4">
             <h3 className="text-xl text-white font-bold mb-4">
               Daily Success/Fail (Bar)
@@ -416,7 +449,7 @@ export default function Page() {
             </div>
           </div>
 
-          {/* Line Chart */}
+          {/* Cumulative Line Chart */}
           <div className="bg-white/10 rounded-lg p-4">
             <h3 className="text-xl text-white font-bold mb-4">
               Cumulative Successes (Line)
@@ -442,7 +475,7 @@ export default function Page() {
             </div>
           </div>
 
-          {/* Pie Chart */}
+          {/* Overall Pie Chart */}
           <div className="bg-white/10 rounded-lg p-4">
             <h3 className="text-xl text-white font-bold mb-4">
               Overall Success Ratio (Pie)
@@ -464,12 +497,42 @@ export default function Page() {
               />
             </div>
           </div>
+
+          {/* Yearly Overview Chart */}
+          <div className="bg-white/10 rounded-lg p-4">
+            <h3 className="text-xl text-white font-bold mb-4">
+              Yearly Overview ({currentYearValue})
+            </h3>
+            <div className="w-full md:w-11/12 lg:w-3/4 mx-auto h-64">
+              <Bar
+                data={yearlyBarChartData}
+                options={{
+                  maintainAspectRatio: false,
+                  responsive: true,
+                  plugins: {
+                    legend: { position: "top" as const },
+                    title: { display: true, text: "Monthly Totals (Stacked)" },
+                  },
+                  scales: {
+                    x: {
+                      stacked: true,
+                    },
+                    y: {
+                      stacked: true,
+                      beginAtZero: true,
+                      ticks: { stepSize: 1 },
+                    },
+                  },
+                }}
+              />
+            </div>
+          </div>
         </div>
       </main>
 
       {/* FOOTER */}
       <footer className="text-center py-4 text-gray-400 text-sm">
-        © {currentYear} Addiction Tracker. All rights reserved.
+        © {currentYearValue} Addiction Tracker. All rights reserved.
       </footer>
 
       {/* MODAL DIALOG */}
