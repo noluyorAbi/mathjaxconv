@@ -656,24 +656,24 @@ function DraggableTask({
 
                   {/* The Collapsible content (existing logic) */}
                   {(task.description || task.due_date) && (
-                    <CollapsibleContent className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                    <CollapsibleContent className="mt-4 text-sm text-gray-600 dark:text-gray-400">
                       {task.title && isMobile && (
-                        <h3 className="mb-2 font-semibold text-sm text-gray-900 dark:text-gray-100 break-words">
+                        <h3 className="mb-4 font-semibold text-base text-gray-900 dark:text-gray-100 break-words tracking-tight">
                           {task.title}
                         </h3>
                       )}
                       {task.description && (
-                        <p className="mb-2 break-words leading-relaxed text-gray-700 dark:text-gray-300">
+                        <p className="mb-4 break-words leading-relaxed text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 py-2 px-3 rounded-lg shadow-sm">
                           {task.description}
                         </p>
                       )}
                       {task.due_date && (
-                        <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 py-1 px-2 rounded-md w-fit">
-                          <CalendarIcon className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400" />
-                          <span className="font-medium">
+                        <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 py-2 px-4 rounded-lg w-fit shadow-sm border border-gray-200 dark:border-gray-700">
+                          <CalendarIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                          <span className="font-semibold text-gray-800 dark:text-gray-200">
                             {language === "en" ? "Due:" : "Fällig:"}
                           </span>
-                          <span className="text-gray-700 dark:text-gray-300">
+                          <span className="text-gray-700 dark:text-gray-300 font-medium">
                             {formatDueDate(task.due_date)}
                           </span>
                         </div>
@@ -1700,9 +1700,7 @@ export default function EisenhowerMatrix() {
                           onCheckedChange={() => toggleDone(task.id, task.done)}
                           className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
                         />
-                        <Label
-                          className="text-sm font-medium text-gray-900 dark:text-gray-100"
-                        >
+                        <Label className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {task.title}
                         </Label>
                       </div>
@@ -1825,9 +1823,7 @@ export default function EisenhowerMatrix() {
                               }
                               className="border-gray-400  data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
                             />
-                            <Label
-                              className="text-sm font-medium text-gray-500 dark:text-gray-400 line-through"
-                            >
+                            <Label className="text-sm font-medium text-gray-500 dark:text-gray-400 line-through">
                               {task.title}
                             </Label>
                           </div>
