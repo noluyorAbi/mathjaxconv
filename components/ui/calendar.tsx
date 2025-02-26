@@ -1,20 +1,32 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { DayPicker } from "react-day-picker"
+import * as React from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { DayPicker } from "react-day-picker";
+import { isSameMonth } from "date-fns";
 
-import { cn } from "@/lib/utils"
-import { buttonVariants } from "@/components/ui/button"
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
-export type CalendarProps = React.ComponentProps<typeof DayPicker>
+export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
 function Calendar({
   className,
   classNames,
-  showOutsideDays = true,
+  showOutsideDays = false, // Changed default to false
+  month,
   ...props
 }: CalendarProps) {
+  const modifiers = {
+    currentMonth: (d: Date) => (month ? isSameMonth(d, month) : true),
+    outside: (d: Date) => (month ? !isSameMonth(d, month) : false), // Added outside modifier
+  };
+
+  const modifiersClassNames = {
+    currentMonth: "border-2 border-indigo-600 rounded-full",
+    outside: "invisible", // Hide outside days
+  };
+
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -52,6 +64,7 @@ function Calendar({
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
         ...classNames,
+        ...modifiersClassNames,
       }}
       components={{
         IconLeft: ({ className, ...props }) => (
@@ -61,10 +74,12 @@ function Calendar({
           <ChevronRight className={cn("h-4 w-4", className)} {...props} />
         ),
       }}
+      modifiers={modifiers}
       {...props}
     />
-  )
+  );
 }
-Calendar.displayName = "Calendar"
 
-export { Calendar }
+Calendar.displayName = "Calendar";
+
+export { Calendar };
