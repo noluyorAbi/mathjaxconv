@@ -653,15 +653,26 @@ function DraggableTask({
                   {/* The Collapsible content (existing logic) */}
                   {(task.description || task.due_date) && (
                     <CollapsibleContent className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                      {task.title && isMobile && (
+                        <h3 className="mb-2 font-semibold text-sm text-gray-900 dark:text-gray-100 break-words">
+                          {task.title}
+                        </h3>
+                      )}
                       {task.description && (
-                        <p className="mb-1 break-words">{task.description}</p>
+                        <p className="mb-2 break-words leading-relaxed text-gray-700 dark:text-gray-300">
+                          {task.description}
+                        </p>
                       )}
                       {task.due_date && (
-                        <p className="flex items-center gap-1">
-                          <CalendarIcon className="h-3 w-3" />{" "}
-                          {language === "en" ? "Due:" : "Fällig:"}{" "}
-                          {formatDueDate(task.due_date)}
-                        </p>
+                        <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 py-1 px-2 rounded-md w-fit">
+                          <CalendarIcon className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400" />
+                          <span className="font-medium">
+                            {language === "en" ? "Due:" : "Fällig:"}
+                          </span>
+                          <span className="text-gray-700 dark:text-gray-300">
+                            {formatDueDate(task.due_date)}
+                          </span>
+                        </div>
                       )}
                     </CollapsibleContent>
                   )}
@@ -674,23 +685,30 @@ function DraggableTask({
         {/* HOVER/TAP TOOLTIP (displays title, desc, due date) */}
         {(task.description || task.due_date) && (
           <div
-            className={`absolute left-0 top-full mt-1 z-50 w-56 
-                        px-3 py-2 bg-black text-white text-xs rounded-md shadow-lg
-                        opacity-0 invisible transition-all duration-200
-                        group-hover:opacity-100 group-hover:visible
-                        ${tooltipOpen ? "opacity-100 visible" : ""}`}
+            className={`absolute left-0 top-full mt-1.5 z-50 w-64 
+              px-4 py-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl
+              opacity-0 invisible transition-all duration-200 ease-in-out
+              group-hover:opacity-100 group-hover:visible
+              ${tooltipOpen ? "opacity-100 visible" : ""}`}
           >
-            <p className="font-semibold mb-1 break-words">{task.title}</p>
+            {task.title && (
+              <p className="font-semibold text-white mb-2 break-words leading-tight">
+                {task.title}
+              </p>
+            )}
             {task.description && (
-              <p className="mb-1 leading-snug break-words">
+              <p className="text-gray-200 mb-2 leading-snug break-words">
                 {task.description}
               </p>
             )}
             {task.due_date && (
-              <p className="leading-snug">
-                {language === "en" ? "Due:" : "Fällig:"}{" "}
-                {formatDueDate(task.due_date)}
-              </p>
+              <div className="flex items-center gap-1.5 text-gray-300">
+                <CalendarIcon className="h-3 w-3" />
+                <span className="font-medium">
+                  {language === "en" ? "Due:" : "Fällig:"}
+                </span>
+                <span>{formatDueDate(task.due_date)}</span>
+              </div>
             )}
           </div>
         )}
