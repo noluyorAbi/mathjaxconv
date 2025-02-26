@@ -66,6 +66,7 @@ import {
   Globe,
   CheckCircleIcon,
   ClockIcon,
+  ClockAlert,
 } from "lucide-react";
 import {
   format,
@@ -1802,6 +1803,13 @@ export default function EisenhowerMatrix() {
                         new Date(b.due_date!).getTime()
                     )
                     .map((task) => {
+                      // Calculate due time and days remaining
+                      const dueTime = new Date(task.due_date!).getTime();
+                      const now = Date.now();
+                      const daysRemaining = Math.ceil(
+                        (dueTime - now) / (1000 * 60 * 60 * 24)
+                      );
+
                       // highlight if matches selectedCalendarDate
                       const isHighlighted =
                         selectedCalendarDate &&
@@ -1816,12 +1824,12 @@ export default function EisenhowerMatrix() {
                           key={task.id}
                           variants={itemVariants}
                           className={`bg-white dark:bg-gray-900 p-4 rounded-xl shadow-md border border-gray-200 dark:border-gray-800
-    ${
-      isHighlighted
-        ? "bg-yellow-50 ring-2 ring-yellow-300 dark:bg-yellow-900/10"
-        : ""
-    }
-    transition-all duration-200`}
+                ${
+                  isHighlighted
+                    ? "bg-yellow-50 ring-2 ring-yellow-300 dark:bg-yellow-900/10"
+                    : ""
+                }
+                transition-all duration-200`}
                         >
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             {/* Task Title and Checkbox */}
@@ -1844,12 +1852,16 @@ export default function EisenhowerMatrix() {
                               <div className="flex flex-col items-end">
                                 <span
                                   className={`text-xs font-medium ${
-                                    new Date(task.due_date!).getTime() <
-                                    Date.now()
+                                    dueTime < now
                                       ? "text-red-500 dark:text-red-400"
+                                      : daysRemaining === 1
+                                      ? "text-orange-500 dark:text-orange-400"
                                       : "text-gray-600 dark:text-gray-400"
                                   }`}
                                 >
+                                  {daysRemaining === 1 && (
+                                    <ClockAlert className="h-4 w-4 inline-block mr-1" />
+                                  )}
                                   {getTimeRemaining(task.due_date!)}
                                 </span>
                                 <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
