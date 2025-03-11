@@ -21,7 +21,8 @@ import {
   Timer,
   Monitor, // For Black-White Screen
   StopCircle, // New icon for the Stop Addiction tool
-  Grid2x2, // Icon for Eisenhower Matrix
+  Grid2x2,
+  GraduationCap, // Icon for Eisenhower Matrix
 } from "lucide-react";
 
 export default function Page() {
@@ -207,6 +208,16 @@ export default function Page() {
               gradient="from-teal-500 to-green-500"
             >
               Visualize and categorize your tasks to decide what matters most.
+            </ToolCard>
+            <ToolCard
+              href="/gradeview"
+              title="GradeView"
+              description="Track and analyze all your university grades with statistics."
+              icon={<GraduationCap className="h-6 w-6" />} // Using Grid2x2 icon, you can change this
+              gradient="from-yellow-500 to-orange-500"
+            >
+              View your grade collection, averages, and detailed performance
+              statistics in one place.
             </ToolCard>
           </div>
         </main>
