@@ -305,7 +305,7 @@ export default function PomodoroPage() {
     "/bell-dinging-jam-fx-2-2-00-05.mp3"
   );
   const [showUnsupportedModal, setShowUnsupportedModal] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Audio refs for sound cues.
   const focusSoundRef = useRef<HTMLAudioElement | null>(null);
