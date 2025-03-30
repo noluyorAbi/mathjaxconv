@@ -379,53 +379,6 @@ export default function Page() {
         ? Math.round((last30DaysSuccess / last30DaysStats.length) * 100)
         : 0;
 
-    // Best and worst days (only consider days with actual entries)
-    const weekdayStats = Array(7)
-      .fill(null)
-      .map(() => ({
-        success: 0,
-        total: 0,
-      }));
-
-    // Count successes and totals for each weekday
-    Object.entries(logs).forEach(([dateStr, status]) => {
-      const date = new Date(dateStr);
-      if (date > today) return; // Skip future dates
-      const weekdayIndex = calculateWeekdayIndex(dateStr);
-      weekdayStats[weekdayIndex].total++;
-      if (status === "success") {
-        weekdayStats[weekdayIndex].success++;
-      }
-    });
-
-    // Calculate rates for each weekday (minimum 2 entries required)
-    const weekdayRates = weekdayStats
-      .map((stats, index) => ({
-        index,
-        success: stats.success,
-        total: stats.total,
-        rate: stats.total >= 2 ? stats.success / stats.total : -1,
-      }))
-      // Important: Only include days that actually have entries (at least 2)
-      .filter((day) => day.total >= 2);
-
-    // Initialize with default values that will be shown if no valid days exist
-    let bestDay = { index: -1, rate: 0, success: 0, total: 0 };
-    let worstDay = { index: -1, rate: 0, success: 0, total: 0 };
-
-    if (weekdayRates.length > 0) {
-      // Sort by rate in descending order
-      const sortedRates = [...weekdayRates].sort((a, b) => b.rate - a.rate);
-
-      // Best day is the first one (highest rate)
-      bestDay = sortedRates[0];
-
-      // Worst day is the last one (lowest rate), but only if we have more than one day
-      if (sortedRates.length > 1) {
-        worstDay = sortedRates[sortedRates.length - 1];
-      }
-    }
-
     return {
       lastWeekRate,
       lastWeekTotal: last7DaysStats.length,
@@ -433,18 +386,6 @@ export default function Page() {
       lastMonthRate,
       lastMonthTotal: last30DaysStats.length,
       lastMonthSuccess: last30DaysSuccess,
-      bestDay: {
-        name: bestDay.index >= 0 ? getWeekdayName(bestDay.index) : "N/A",
-        rate: bestDay.index >= 0 ? Math.round(bestDay.rate * 100) : 0,
-        total: bestDay.total,
-        success: bestDay.success,
-      },
-      worstDay: {
-        name: worstDay.index >= 0 ? getWeekdayName(worstDay.index) : "N/A",
-        rate: worstDay.index >= 0 ? Math.round(worstDay.rate * 100) : 0,
-        total: worstDay.total,
-        success: worstDay.success,
-      },
     };
   };
 
@@ -642,7 +583,7 @@ export default function Page() {
         </div>
 
         {/* ADDITIONAL STATS */}
-        <div className="mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white/10 backdrop-blur rounded-lg p-6 text-center transform hover:scale-105 transition-all duration-200 border border-white/10 group relative">
             <p className="text-sm text-gray-300 mb-2">Last 7 Days</p>
             <p className="text-4xl font-bold text-cyan-400">
@@ -667,32 +608,6 @@ export default function Page() {
               <br />
               {stats.lastMonthSuccess} successful days out of{" "}
               {stats.lastMonthTotal} tracked days
-            </div>
-          </div>
-          <div className="bg-white/10 backdrop-blur rounded-lg p-6 text-center transform hover:scale-105 transition-all duration-200 border border-white/10 group relative">
-            <p className="text-sm text-gray-300 mb-2">Best Day</p>
-            <p className="text-4xl font-bold text-emerald-400">
-              {stats.bestDay.rate}%
-            </p>
-            <p className="text-xs text-gray-400 mt-2">{stats.bestDay.name}</p>
-            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-              Your most successful day of the week
-              <br />
-              {stats.bestDay.success} successful days out of{" "}
-              {stats.bestDay.total} tracked {stats.bestDay.name}s
-            </div>
-          </div>
-          <div className="bg-white/10 backdrop-blur rounded-lg p-6 text-center transform hover:scale-105 transition-all duration-200 border border-white/10 group relative">
-            <p className="text-sm text-gray-300 mb-2">Challenging Day</p>
-            <p className="text-4xl font-bold text-rose-400">
-              {stats.worstDay.rate}%
-            </p>
-            <p className="text-xs text-gray-400 mt-2">{stats.worstDay.name}</p>
-            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-              Your most challenging day of the week
-              <br />
-              {stats.worstDay.success} successful days out of{" "}
-              {stats.worstDay.total} tracked {stats.worstDay.name}s
             </div>
           </div>
         </div>
@@ -779,7 +694,12 @@ export default function Page() {
                   maintainAspectRatio: false,
                   responsive: true,
                   plugins: {
-                    legend: { position: "top" as const },
+                    legend: {
+                      position: "top" as const,
+                      labels: {
+                        color: "white",
+                      },
+                    },
                     tooltip: {
                       backgroundColor: "rgba(0,0,0,0.8)",
                       padding: 12,
@@ -792,7 +712,10 @@ export default function Page() {
                   scales: {
                     y: {
                       beginAtZero: true,
-                      ticks: { stepSize: 1 },
+                      ticks: {
+                        stepSize: 1,
+                        color: "white",
+                      },
                       grid: {
                         color: "rgba(255,255,255,0.1)",
                       },
@@ -800,6 +723,9 @@ export default function Page() {
                     x: {
                       grid: {
                         display: false,
+                      },
+                      ticks: {
+                        color: "white",
                       },
                     },
                   },
@@ -849,18 +775,22 @@ export default function Page() {
                       title: {
                         display: true,
                         text: "Success Rate (%)",
-                        color: "rgba(255,255,255,0.7)",
+                        color: "white",
                       },
                       grid: {
                         color: "rgba(255,255,255,0.1)",
                       },
                       ticks: {
                         callback: (value) => `${value}%`,
+                        color: "white",
                       },
                     },
                     x: {
                       grid: {
                         display: false,
+                      },
+                      ticks: {
+                        color: "white",
                       },
                     },
                   },
@@ -882,7 +812,12 @@ export default function Page() {
                   maintainAspectRatio: false,
                   responsive: true,
                   plugins: {
-                    legend: { position: "top" as const },
+                    legend: {
+                      position: "top" as const,
+                      labels: {
+                        color: "white",
+                      },
+                    },
                     tooltip: {
                       backgroundColor: "rgba(0,0,0,0.8)",
                       padding: 12,
@@ -894,12 +829,18 @@ export default function Page() {
                       grid: {
                         display: false,
                       },
+                      ticks: {
+                        color: "white",
+                      },
                     },
                     y: {
                       stacked: true,
                       beginAtZero: true,
                       grid: {
                         color: "rgba(255,255,255,0.1)",
+                      },
+                      ticks: {
+                        color: "white",
                       },
                     },
                   },
