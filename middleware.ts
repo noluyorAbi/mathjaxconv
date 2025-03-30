@@ -9,8 +9,18 @@ export function middleware(request: NextRequest) {
     (request.nextUrl.pathname.startsWith("/eisenhower-matrix") &&
       !request.nextUrl.pathname.startsWith("/eisenhower-matrix/login"))
   ) {
-    const authCookie = request.cookies.get("auth-cookie")?.value;
-    if (authCookie !== "true") {
+    // Check for the appropriate cookie based on the route
+    let isAuthenticated = false;
+
+    if (request.nextUrl.pathname.startsWith("/stop-addic")) {
+      const stopAddicAuthCookie = request.cookies.get("stop-addic-auth")?.value;
+      isAuthenticated = stopAddicAuthCookie === "true";
+    } else if (request.nextUrl.pathname.startsWith("/eisenhower-matrix")) {
+      const authCookie = request.cookies.get("auth-cookie")?.value;
+      isAuthenticated = authCookie === "true";
+    }
+
+    if (!isAuthenticated) {
       // Redirect to the appropriate login page based on the path
       if (request.nextUrl.pathname.startsWith("/stop-addic")) {
         return NextResponse.redirect(new URL("/stop-addic/login", request.url));

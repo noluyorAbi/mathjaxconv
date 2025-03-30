@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   const envPassword = process.env.AUTH_PASSWORD?.trim();
   if (password.trim() === envPassword) {
     const response = NextResponse.json({ success: true });
-    response.cookies.set("auth-cookie", "true", {
+    response.cookies.set("stop-addic-auth", "true", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       path: "/", // Makes cookie available across the entire app

@@ -15,6 +15,7 @@ interface LoginFormProps {
 export default function LoginForm({
   apiEndpoint = "/api/stop-addic/login",
   redirectPath = "/stop-addic",
+  cookieName = "auth-cookie",
   title = "Login",
   subtitle = "Enter your password",
 }: LoginFormProps) {
