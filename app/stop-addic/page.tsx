@@ -139,7 +139,7 @@ const computeStreaks = (logs: { [key: string]: Status }) => {
 
   // Count backward from the latest logged success.
   let current = 0;
-  let referenceDate = new Date(latestDate);
+  const referenceDate = new Date(latestDate);
   while (true) {
     const dateStr = referenceDate.toISOString().split("T")[0];
     if (logs[dateStr] === "success") {
