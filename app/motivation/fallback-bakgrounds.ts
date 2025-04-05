@@ -65,11 +65,7 @@ export const fallbackBackgrounds = [
     photographer: "Patrick Tomasso",
     photographerUrl: "https://unsplash.com/@patricktomasso",
   },
-  {
-    url: "https://images.unsplash.com/photo-1509817318167-11e94c90df26?w=1200",
-    photographer: "Hans van Dijke",
-    photographerUrl: "https://unsplash.com/@hansvandijke",
-  },
+
   {
     url: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1200",
     photographer: "Lloyd Dean",

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Head from "next/head";
+import html2canvas from "html2canvas";
 import {
   ArrowRight,
   Download,
@@ -15,6 +16,7 @@ import { quotes } from "../../lib/quotes";
 import { fallbackBackgrounds } from "./fallback-bakgrounds";
 
 export default function QuoteWallpaper() {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [showControls, setShowControls] = useState(false);
@@ -84,10 +86,45 @@ export default function QuoteWallpaper() {
     }
   };
 
-  // Download current wallpaper
-  const downloadWallpaper = () => {
-    if (background.url) {
-      window.open(background.url, "_blank");
+  // Download the entire container (image, quote, etc.) as an image with a watermark
+  const downloadWallpaper = async () => {
+    if (containerRef.current) {
+      // Create watermark element
+      const watermark = document.createElement("div");
+      watermark.innerText = "tools.adatepe.dev/motivation";
+      watermark.style.position = "absolute";
+      watermark.style.bottom = "20px";
+      watermark.style.left = "50%";
+      watermark.style.transform = "translateX(-50%)";
+      watermark.style.color = "white";
+      watermark.style.fontSize = "16px";
+      watermark.style.fontFamily = "'Inter', sans-serif";
+      watermark.style.pointerEvents = "none";
+      // Append watermark to the container
+      containerRef.current.appendChild(watermark);
+
+      // Capture the container with html2canvas
+      const canvas = await html2canvas(containerRef.current, {
+        scale: 2, // Higher resolution
+        useCORS: true,
+        allowTaint: false,
+        ignoreElements: (element) =>
+          element.classList.contains("no-screenshot"),
+      });
+
+      // Remove the watermark after capture
+      containerRef.current.removeChild(watermark);
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "quote_wallpaper.png";
+          link.click();
+          URL.revokeObjectURL(url);
+        }
+      });
     }
   };
 
@@ -153,35 +190,52 @@ export default function QuoteWallpaper() {
         />
       </Head>
       <main
+        ref={containerRef}
         className="min-h-screen relative flex flex-col items-center justify-center p-4 transition-all duration-1500 ease-out"
         style={{ fontFamily: "'Inter', sans-serif" }}
         onMouseEnter={() => setShowControls(true)}
         onMouseLeave={() => setShowControls(false)}
       >
-        {/* Background layers for crossfade */}
+        {/* Background layers for crossfade using <img> elements */}
         <div className="absolute inset-0 z-0">
           {prevBackgroundUrl && (
             <div
               className="absolute inset-0 transition-opacity duration-1500 ease-in-out"
-              style={{
-                backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(0,0,0,0.7)), url('${prevBackgroundUrl}')`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-                opacity: isLoading ? 1 : 0,
-              }}
-            ></div>
+              style={{ opacity: isLoading ? 1 : 0 }}
+            >
+              <img
+                src={prevBackgroundUrl}
+                crossOrigin="anonymous"
+                className="w-full h-full object-cover"
+                alt="Previous Background"
+              />
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    "linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(0,0,0,0.7))",
+                }}
+              ></div>
+            </div>
           )}
           <div
             className="absolute inset-0 transition-opacity duration-1500 ease-in-out"
-            style={{
-              backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(0,0,0,0.7)), url('${background.url}')`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
-              opacity: isLoading ? 0 : 1,
-            }}
-          ></div>
+            style={{ opacity: isLoading ? 0 : 1 }}
+          >
+            <img
+              src={background.url}
+              crossOrigin="anonymous"
+              className="w-full h-full object-cover"
+              alt="Current Background"
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(0,0,0,0.7))",
+              }}
+            ></div>
+          </div>
         </div>
 
         <div className="relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center justify-center px-4 py-16">
@@ -201,8 +255,9 @@ export default function QuoteWallpaper() {
             </footer>
           </blockquote>
 
+          {/* Control buttons (excluded from screenshot via no-screenshot class) */}
           <div
-            className={`flex justify-center gap-6 mt-8 transition-opacity duration-700 ${
+            className={`flex justify-center gap-6 mt-8 transition-opacity duration-700 no-screenshot ${
               showControls ? "opacity-70" : "opacity-0"
             }`}
           >
@@ -244,8 +299,9 @@ export default function QuoteWallpaper() {
           </div>
         </div>
 
+        {/* Next button */}
         <div
-          className={`fixed bottom-6 right-6 z-20 transition-opacity duration-700 ${
+          className={`fixed bottom-6 right-6 z-20 transition-opacity duration-700 no-screenshot ${
             showControls ? "opacity-70" : "opacity-0"
           }`}
         >
@@ -259,20 +315,22 @@ export default function QuoteWallpaper() {
           </button>
         </div>
 
+        {/* Quote counter */}
         <div
-          className={`fixed bottom-6 left-6 z-20 text-xs text-white/30 transition-opacity duration-700 ${
+          className={`fixed bottom-6 left-6 z-20 text-xs text-white/30 transition-opacity duration-700 no-screenshot ${
             showControls ? "opacity-50" : "opacity-0"
           }`}
         >
           {currentQuoteIndex + 1}/{quotes.length}
         </div>
 
+        {/* Photo credit */}
         {background.photographer && (
           <a
             href={background.photographerUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 z-20 text-xs text-white/30 flex items-center gap-1 transition-opacity duration-700 hover:text-white/60 ${
+            className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 z-20 text-xs text-white/30 flex items-center gap-1 transition-opacity duration-700 hover:text-white/60 no-screenshot ${
               showControls ? "opacity-50" : "opacity-0"
             }`}
           >
