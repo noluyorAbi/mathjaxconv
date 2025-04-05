@@ -13,31 +13,79 @@ import {
   Minimize,
   ImageOff,
 } from "lucide-react";
-import { quotes } from "../../lib/quotes";
+
+// Your fallback quotes
+import { quotes as fallbackQuotes } from "../../lib/quotes";
+
+// Fallback backgrounds
 import { fallbackBackgrounds } from "./fallback-bakgrounds";
 
 export default function QuoteWallpaper() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+
+  // The current quote to display (from either API or fallback)
+  const [quote, setQuote] = useState({ text: "", author: "" });
+
+  // Tracks if we should fetch next quote from API or fallback
+  const [useApiNext, setUseApiNext] = useState(true);
+
+  // Loading & UI states
   const [isLoading, setIsLoading] = useState(true);
   const [showControls, setShowControls] = useState(false);
+
+  // Background crossfade
   const [background, setBackground] = useState({
     url: "",
     photographer: "",
     photographerUrl: "",
   });
   const [prevBackgroundUrl, setPrevBackgroundUrl] = useState("");
+
+  // Fullscreen state
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // NEW: Background Toggle State
+  // Toggle "turn off" the background images
   const [isBackgroundOff, setIsBackgroundOff] = useState(false);
 
-  const currentQuote = quotes[currentQuoteIndex];
+  /************************************************
+   * Fetch Quote from ZenQuotes, fallback on error
+   ************************************************/
+  const fetchZenQuote = async () => {
+    try {
+      const response = await fetch("/api/zenquotes");
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+      const data = await response.json();
 
-  // Fetch a random image
+      // data is usually [{ q: "...", a: "..." }]
+      if (!Array.isArray(data) || !data[0] || !data[0].q) {
+        throw new Error("Invalid data from ZenQuotes");
+      }
+
+      // Use the API quote
+      setQuote({
+        text: data[0].q,
+        author: data[0].a || "Unknown",
+      });
+    } catch (error) {
+      console.error("ZenQuotes error, using local fallback:", error);
+      // If API fails, pick from fallback anyway
+      const randomIndex = Math.floor(Math.random() * fallbackQuotes.length);
+      setQuote({
+        text: fallbackQuotes[randomIndex].text,
+        author: fallbackQuotes[randomIndex].author,
+      });
+    }
+  };
+
+  /************************************************
+   * Fetch Random Background Image (Unsplash or fallback)
+   ************************************************/
   const fetchRandomImage = async () => {
     try {
       setIsLoading(true);
+
       const response = await fetch("/api/motivation");
       if (!response.ok) {
         console.error(`API response error: ${response.status}`);
@@ -47,6 +95,7 @@ export default function QuoteWallpaper() {
       if (!data.url) {
         throw new Error("Invalid image data received");
       }
+
       setBackground({
         url: data.url,
         photographer: data.photographer || "Unknown",
@@ -54,133 +103,165 @@ export default function QuoteWallpaper() {
       });
     } catch (error) {
       console.error("Error fetching image:", error);
+      // Use fallback backgrounds
       const fallback =
         fallbackBackgrounds[
           Math.floor(Math.random() * fallbackBackgrounds.length)
         ];
       setBackground(fallback);
     } finally {
-      // Delay a bit longer for the crossfade to work smoothly
+      // Delay a bit longer for crossfade
       setTimeout(() => {
         setIsLoading(false);
       }, 700);
     }
   };
 
-  // Change quote and background
+  /************************************************
+   * changeQuote(): Alternate between API & local
+   ************************************************/
   const changeQuote = () => {
+    // Prepare crossfade for background
     setPrevBackgroundUrl(background.url);
     setIsLoading(true);
-    let newQuoteIndex;
-    do {
-      newQuoteIndex = Math.floor(Math.random() * quotes.length);
-    } while (newQuoteIndex === currentQuoteIndex && quotes.length > 1);
-    setCurrentQuoteIndex(newQuoteIndex);
+
+    // Check if we should fetch from API or from local quotes
+    if (useApiNext) {
+      // Attempt API quote (and fallback on error)
+      fetchZenQuote();
+    } else {
+      // Force a local quote
+      const randomIndex = Math.floor(Math.random() * fallbackQuotes.length);
+      setQuote({
+        text: fallbackQuotes[randomIndex].text,
+        author: fallbackQuotes[randomIndex].author,
+      });
+    }
+
+    // Flip for next time
+    setUseApiNext(!useApiNext);
+
+    // Always fetch a new background
     fetchRandomImage();
   };
 
-  // Text-to-speech
+  /************************************************
+   * Text-to-speech (Epic voice version)
+   ************************************************/
   const speakQuote = () => {
     if (!("speechSynthesis" in window)) {
       console.error("Text-to-speech not supported in this browser");
       return;
     }
-
-    // Cancel any ongoing speech
     window.speechSynthesis.cancel();
 
     const speakWithEpicVoice = () => {
       const voices = window.speechSynthesis.getVoices();
-      
-      // Try to find a deep, epic-sounding voice (typically male voices)
-      const epicVoice = voices.find(voice => 
-        voice.lang === 'en-US' && voice.name.includes('Male')
-      ) || voices.find(voice => 
-        voice.lang.startsWith('en') && (voice.name.includes('Deep') || voice.name.includes('Male'))
-      ) || voices.find(voice => 
-        voice.lang.startsWith('en')
-      ) || voices[0]; // Fallback
-      
-      // Create utterances with more epic speech parameters
-      const quoteUtterance = new SpeechSynthesisUtterance(currentQuote.text);
+
+      // Attempt to find a deep, epic-sounding male voice
+      const epicVoice =
+        voices.find(
+          (voice) => voice.lang === "en-US" && voice.name.includes("Male")
+        ) ||
+        voices.find(
+          (voice) =>
+            voice.lang.startsWith("en") &&
+            (voice.name.includes("Deep") || voice.name.includes("Male"))
+        ) ||
+        voices.find((voice) => voice.lang.startsWith("en")) ||
+        voices[0]; // Fallback
+
+      // Create the quote utterance
+      const quoteUtterance = new SpeechSynthesisUtterance(quote.text);
       if (epicVoice) quoteUtterance.voice = epicVoice;
-      quoteUtterance.rate = 0.8;     // Slower for dramatic effect
-      quoteUtterance.pitch = 0.85;   // Deeper pitch for movie narrator effect
-      quoteUtterance.volume = 1.0;   // Full volume
-      
+      quoteUtterance.rate = 0.8; // slower for dramatic effect
+      quoteUtterance.pitch = 0.85; // deeper
+      quoteUtterance.volume = 1.0; // full volume
+
       quoteUtterance.onend = () => {
-        // Dramatic pause before announcing the author
+        // Dramatic pause, then read the author
         setTimeout(() => {
-          const authorUtterance = new SpeechSynthesisUtterance("Quote from. " + currentQuote.author);
+          const authorUtterance = new SpeechSynthesisUtterance(
+            "Quote from. " + quote.author
+          );
           if (epicVoice) authorUtterance.voice = epicVoice;
-          authorUtterance.rate = 0.75;   // Even slower for the author reveal
-          authorUtterance.pitch = 0.85;  // Keep the deep voice
+          authorUtterance.rate = 0.75;
+          authorUtterance.pitch = 0.85;
           authorUtterance.volume = 1.0;
           window.speechSynthesis.speak(authorUtterance);
-        }, 800); // Longer dramatic pause
+        }, 800);
       };
-      
+
       window.speechSynthesis.speak(quoteUtterance);
     };
 
-    // Handle different browser implementations of voice loading
+    // Some browsers need "voiceschanged" event first
     if (window.speechSynthesis.getVoices().length) {
       speakWithEpicVoice();
     } else {
-      // If voices aren't loaded yet, wait for them
-      window.speechSynthesis.addEventListener('voiceschanged', function voicesChangedHandler() {
-        speakWithEpicVoice();
-        window.speechSynthesis.removeEventListener('voiceschanged', voicesChangedHandler);
-      });
-    }
-  };
-
-  // Download the wallpaper
-  const downloadWallpaper = async () => {
-    if (containerRef.current) {
-      // Create watermark element
-      const watermark = document.createElement("div");
-      watermark.innerText = "tools.adatepe.dev/motivation";
-      watermark.style.position = "absolute";
-      watermark.style.bottom = "20px";
-      watermark.style.left = "50%";
-      watermark.style.transform = "translateX(-50%)";
-      watermark.style.color = "white";
-      watermark.style.fontSize = "16px";
-      watermark.style.fontFamily = "'Inter', sans-serif";
-      watermark.style.pointerEvents = "none";
-      containerRef.current.appendChild(watermark);
-
-      // Capture container with html2canvas
-      const canvas = await html2canvas(containerRef.current, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: false,
-        ignoreElements: (element) =>
-          element.classList.contains("no-screenshot"),
-      });
-
-      // Remove watermark
-      containerRef.current.removeChild(watermark);
-
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = "quote_wallpaper.png";
-          link.click();
-          URL.revokeObjectURL(url);
+      window.speechSynthesis.addEventListener(
+        "voiceschanged",
+        function voicesChangedHandler() {
+          speakWithEpicVoice();
+          window.speechSynthesis.removeEventListener(
+            "voiceschanged",
+            voicesChangedHandler
+          );
         }
-      });
+      );
     }
   };
 
-  // Toggle Fullscreen
+  /************************************************
+   * Download the wallpaper (with watermark)
+   ************************************************/
+  const downloadWallpaper = async () => {
+    if (!containerRef.current) return;
+
+    // Watermark element
+    const watermark = document.createElement("div");
+    watermark.innerText = "tools.adatepe.dev/motivation";
+    watermark.style.position = "absolute";
+    watermark.style.bottom = "20px";
+    watermark.style.left = "50%";
+    watermark.style.transform = "translateX(-50%)";
+    watermark.style.color = "white";
+    watermark.style.fontSize = "16px";
+    watermark.style.fontFamily = "'Inter', sans-serif";
+    watermark.style.pointerEvents = "none";
+    containerRef.current.appendChild(watermark);
+
+    // Capture container
+    const canvas = await html2canvas(containerRef.current, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: false,
+      ignoreElements: (el) => el.classList.contains("no-screenshot"),
+    });
+
+    // Remove watermark
+    containerRef.current.removeChild(watermark);
+
+    // Download
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "quote_wallpaper.png";
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+    });
+  };
+
+  /************************************************
+   * Fullscreen toggling
+   ************************************************/
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch((err) => {
-        console.error("Error attempting to enable full-screen mode:", err);
+        console.error("Error enabling full-screen mode:", err);
       });
     } else {
       document.exitFullscreen();
@@ -193,38 +274,44 @@ export default function QuoteWallpaper() {
       setIsFullscreen(!!document.fullscreenElement);
     };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () =>
+    return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
   }, []);
 
-  // Automatically change quote every 90 seconds
+  /************************************************
+   * Automatically update the quote & background
+   * every 90 seconds (1.5 minutes)
+   ************************************************/
   useEffect(() => {
     const interval = setInterval(() => {
       changeQuote();
     }, 90000);
     return () => clearInterval(interval);
-  }, [currentQuoteIndex]);
-
-  // Initial load
-  useEffect(() => {
-    setCurrentQuoteIndex(Math.floor(Math.random() * quotes.length));
-    fetchRandomImage();
   }, []);
 
-  // Handle background image loading errors
+  /************************************************
+   * Initial Load: fetch first quote & background
+   ************************************************/
   useEffect(() => {
-    if (background.url) {
-      const img = new Image();
-      img.src = background.url;
-      img.onerror = () => {
-        console.error("Failed to load background image, using fallback");
-        setBackground({
-          url: `/placeholder.svg?height=1080&width=1920&text=Inspirational+Quote&bg=111111`,
-          photographer: "",
-          photographerUrl: "",
-        });
-      };
-    }
+    changeQuote();
+  }, []);
+
+  /************************************************
+   * Handle background image loading errors
+   ************************************************/
+  useEffect(() => {
+    if (!background.url) return;
+    const img = new Image();
+    img.src = background.url;
+    img.onerror = () => {
+      console.error("Failed to load background image, using fallback");
+      setBackground({
+        url: `/placeholder.svg?height=1080&width=1920&text=Inspirational+Quote&bg=111111`,
+        photographer: "",
+        photographerUrl: "",
+      });
+    };
   }, [background.url]);
 
   return (
@@ -246,10 +333,10 @@ export default function QuoteWallpaper() {
         onMouseEnter={() => setShowControls(true)}
         onMouseLeave={() => setShowControls(false)}
       >
-        {/* Conditional rendering of background images */}
+        {/* Background crossfade layers */}
         {!isBackgroundOff && (
           <div className="absolute inset-0 z-0">
-            {/* Previous BG crossfade */}
+            {/* Previous background crossfade */}
             {prevBackgroundUrl && (
               <div
                 className="absolute inset-0 transition-opacity duration-1500 ease-in-out"
@@ -270,7 +357,8 @@ export default function QuoteWallpaper() {
                 ></div>
               </div>
             )}
-            {/* Current BG crossfade */}
+
+            {/* Current background crossfade */}
             <div
               className="absolute inset-0 transition-opacity duration-1500 ease-in-out"
               style={{ opacity: isLoading ? 0 : 1 }}
@@ -284,6 +372,7 @@ export default function QuoteWallpaper() {
                 />
               ) : null}
 
+              {/* Dark gradient overlay */}
               <div
                 className="absolute inset-0"
                 style={{
@@ -306,10 +395,10 @@ export default function QuoteWallpaper() {
             }}
           >
             <p className="text-3xl md:text-4xl lg:text-5xl font-light text-white/90 leading-relaxed tracking-wide mb-8 text-center">
-              "{currentQuote.text}"
+              "{quote.text}"
             </p>
             <footer className="text-lg md:text-xl text-white/60 text-center font-light tracking-wider">
-              {currentQuote.author}
+              {quote.author}
             </footer>
           </blockquote>
 
@@ -386,16 +475,7 @@ export default function QuoteWallpaper() {
           </button>
         </div>
 
-        {/* Quote counter */}
-        <div
-          className={`fixed bottom-6 left-6 z-20 text-xs text-white/30 transition-opacity duration-700 no-screenshot ${
-            showControls ? "opacity-50" : "opacity-0"
-          }`}
-        >
-          {currentQuoteIndex + 1}/{quotes.length}
-        </div>
-
-        {/* Photo credit */}
+        {/* Photo credit (only if background is ON and there's a photographer) */}
         {background.photographer && !isBackgroundOff && (
           <a
             href={background.photographerUrl}
