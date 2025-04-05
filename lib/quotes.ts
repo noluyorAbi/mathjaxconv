@@ -399,4 +399,122 @@ export const quotes = [
     text: "Do not go where the path may lead, go instead where there is no path and leave a trail.",
     author: "Ralph Waldo Emerson",
   },
+  {
+    text: "We are what we repeatedly do. Excellence, then, is not an act, but a habit.",
+    author: "Will Durant (commonly attributed to Aristotle)",
+  },
+  {
+    text: "Discipline is choosing between what you want now and what you want most.",
+    author: "Unknown",
+  },
+  {
+    text: "Through discipline comes freedom.",
+    author: "Aristotle",
+  },
+  {
+    text: "The pain of discipline is nothing like the pain of disappointment.",
+    author: "Justin Langer",
+  },
+  {
+    text: "Without self-discipline, success is impossible, period.",
+    author: "Lou Holtz",
+  },
+  {
+    text: "If you do not conquer self, you will be conquered by self.",
+    author: "Napoleon Hill",
+  },
+  {
+    text: "Small disciplines repeated with consistency every day lead to great achievements gained slowly over time.",
+    author: "John C. Maxwell",
+  },
+  {
+    text: "Discipline is the soul of an army. It makes small numbers formidable; procures success to the weak, and esteem to all.",
+    author: "George Washington",
+  },
+  {
+    text: "The only discipline that lasts is self-discipline.",
+    author: "Bum Phillips",
+  },
+  {
+    text: "Suffer the pain of discipline or suffer the pain of regret.",
+    author: "Jim Rohn (sometimes Anonymous)",
+  },
+  {
+    text: "Discipline equals freedom.",
+    author: "Jocko Willink",
+  },
+  {
+    text: "Confidence comes from discipline and training.",
+    author: "Robert Kiyosaki",
+  },
+  {
+    text: "You will never always be motivated, so you must learn to be disciplined.",
+    author: "Unknown",
+  },
+  {
+    text: "First we form habits, then they form us. Conquer your bad habits or they will conquer you.",
+    author: "Rob Gilbert",
+  },
+  {
+    text: "Motivation gets you going, but discipline keeps you growing.",
+    author: "John C. Maxwell",
+  },
+  {
+    text: "Self-discipline is the magic power that makes you virtually unstoppable.",
+    author: "Dan Kennedy",
+  },
+  {
+    text: "At the center of bringing any dream into fruition is self-discipline.",
+    author: "Will Smith",
+  },
+  {
+    text: "Your level of success is determined by your level of discipline and perseverance.",
+    author: "Unknown",
+  },
+  {
+    text: "The future depends on what we do in the present, with discipline and focus.",
+    author: "Adapted from Mahatma Gandhi",
+  },
+  {
+    text: "It's not about having time; it's about making time with disciplined priorities.",
+    author: "Unknown",
+  },
+  {
+    text: "Champions aren’t made in the gyms. Champions are made from something they have deep inside them — a desire, a dream, a vision.",
+    author: "Muhammad Ali",
+  },
+  {
+    text: "Discipline is the foundation upon which all success is built. Lack of discipline inevitably leads to failure.",
+    author: "Jim Rohn",
+  },
+  {
+    text: "It’s not enough to be talented; you also have to be disciplined and hungry.",
+    author: "Conor McGregor",
+  },
+  {
+    text: "You cannot swim for new horizons until you have courage to lose sight of the shore. Discipline fuels that courage.",
+    author: "Adapted from William Faulkner",
+  },
+
+  // --- TURKISH PROVERBS FOCUSED ON DISCIPLINE & DETERMINATION ---
+  {
+    text: "Azimle sıçan duvarı deler. (With determination, even a mouse can gnaw through a wall.)",
+    author: "Turkish Proverb",
+  },
+  {
+    text: "Bükemediğin bileği öpeceksin. (Kiss the hand you cannot bend.)",
+    author: "Turkish Proverb",
+  },
+  {
+    text: "Sabır acıdır, meyvesi tatlıdır. (Patience is bitter, but its fruit is sweet.)",
+    author: "Turkish Proverb",
+  },
+  {
+    text: "İki karpuz bir koltuğa sığmaz. (You cannot fit two watermelons under one arm.)",
+    author: "Turkish Proverb",
+  },
+  {
+    text: "Çalışan kazanır, çalışmayanın elinden zaman kayar gider. (He who works wins; time slips away from those who don’t.)",
+    author: "Turkish Proverb",
+  },
 ];

@@ -1,5 +1,7 @@
 "use client";
 
+import type React from "react";
+
 import { useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -12,17 +14,18 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-} from "../components/ui/card";
+} from "@/components/ui/card";
 import {
   ArrowRight,
   Quote,
   RemoveFormatting,
   Clock,
   Timer,
-  Monitor, // For Black-White Screen
-  StopCircle, // New icon for the Stop Addiction tool
+  Monitor,
+  StopCircle,
   Grid2x2,
-  GraduationCap, // Icon for Eisenhower Matrix
+  GraduationCap,
+  MessageSquareQuote,
 } from "lucide-react";
 
 export default function Page() {
@@ -136,7 +139,7 @@ export default function Page() {
             <ToolCard
               href="/mathjaxconv"
               title="MathJax Converter"
-              description="Convert \( &nbsp; \) markdown inline LaTeX to $$ format"
+              description="Convert $$ &nbsp; $$ markdown inline LaTeX to $$ format"
               icon={<RemoveFormatting className="h-6 w-6" />}
               gradient="from-blue-500 to-cyan-500"
             >
@@ -180,7 +183,7 @@ export default function Page() {
             <ToolCard
               href="/black-whitescreen"
               title="Black-White Screen"
-              description="Toggle between a  black and  white screen for a distraction-free, minimalist workspace."
+              description="Toggle between a black and white screen for a distraction-free, minimalist workspace."
               icon={<Monitor className="h-6 w-6" />}
               gradient="from-gray-700 to-gray-900"
             >
@@ -199,7 +202,6 @@ export default function Page() {
               streak counters.
             </ToolCard>
 
-            {/* New Eisenhower Matrix Tool Card */}
             <ToolCard
               href="/eisenhower-matrix"
               title="Eisenhower Matrix"
@@ -209,15 +211,28 @@ export default function Page() {
             >
               Visualize and categorize your tasks to decide what matters most.
             </ToolCard>
+
             <ToolCard
               href="/gradeview"
               title="GradeView"
               description="Track and analyze all your university grades with statistics."
-              icon={<GraduationCap className="h-6 w-6" />} // Using Grid2x2 icon, you can change this
+              icon={<GraduationCap className="h-6 w-6" />}
               gradient="from-yellow-500 to-orange-500"
             >
               View your grade collection, averages, and detailed performance
               statistics in one place.
+            </ToolCard>
+
+            {/* New Motivation Quotes Card */}
+            <ToolCard
+              href="/motivation"
+              title="Motivation Quotes"
+              description="Inspiring wallpapers with motivational quotes on beautiful backgrounds."
+              icon={<MessageSquareQuote className="h-6 w-6" />}
+              gradient="from-violet-500 to-purple-500"
+            >
+              Discover a new quote each time with dark, aesthetic backgrounds to
+              inspire your day.
             </ToolCard>
           </div>
         </main>
