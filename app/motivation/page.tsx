@@ -81,11 +81,57 @@ export default function QuoteWallpaper() {
 
   // Text-to-speech
   const speakQuote = () => {
-    if ("speechSynthesis" in window) {
-      const utterance = new SpeechSynthesisUtterance(
-        `${currentQuote.text}. ${currentQuote.author}`
-      );
-      window.speechSynthesis.speak(utterance);
+    if (!("speechSynthesis" in window)) {
+      console.error("Text-to-speech not supported in this browser");
+      return;
+    }
+
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+
+    const speakWithEpicVoice = () => {
+      const voices = window.speechSynthesis.getVoices();
+      
+      // Try to find a deep, epic-sounding voice (typically male voices)
+      const epicVoice = voices.find(voice => 
+        voice.lang === 'en-US' && voice.name.includes('Male')
+      ) || voices.find(voice => 
+        voice.lang.startsWith('en') && (voice.name.includes('Deep') || voice.name.includes('Male'))
+      ) || voices.find(voice => 
+        voice.lang.startsWith('en')
+      ) || voices[0]; // Fallback
+      
+      // Create utterances with more epic speech parameters
+      const quoteUtterance = new SpeechSynthesisUtterance(currentQuote.text);
+      if (epicVoice) quoteUtterance.voice = epicVoice;
+      quoteUtterance.rate = 0.8;     // Slower for dramatic effect
+      quoteUtterance.pitch = 0.85;   // Deeper pitch for movie narrator effect
+      quoteUtterance.volume = 1.0;   // Full volume
+      
+      quoteUtterance.onend = () => {
+        // Dramatic pause before announcing the author
+        setTimeout(() => {
+          const authorUtterance = new SpeechSynthesisUtterance("Quote from. " + currentQuote.author);
+          if (epicVoice) authorUtterance.voice = epicVoice;
+          authorUtterance.rate = 0.75;   // Even slower for the author reveal
+          authorUtterance.pitch = 0.85;  // Keep the deep voice
+          authorUtterance.volume = 1.0;
+          window.speechSynthesis.speak(authorUtterance);
+        }, 800); // Longer dramatic pause
+      };
+      
+      window.speechSynthesis.speak(quoteUtterance);
+    };
+
+    // Handle different browser implementations of voice loading
+    if (window.speechSynthesis.getVoices().length) {
+      speakWithEpicVoice();
+    } else {
+      // If voices aren't loaded yet, wait for them
+      window.speechSynthesis.addEventListener('voiceschanged', function voicesChangedHandler() {
+        speakWithEpicVoice();
+        window.speechSynthesis.removeEventListener('voiceschanged', voicesChangedHandler);
+      });
     }
   };
 
