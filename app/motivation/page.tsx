@@ -11,6 +11,7 @@ import {
   Camera,
   Maximize,
   Minimize,
+  ImageOff,
 } from "lucide-react";
 import { quotes } from "../../lib/quotes";
 import { fallbackBackgrounds } from "./fallback-bakgrounds";
@@ -28,9 +29,12 @@ export default function QuoteWallpaper() {
   const [prevBackgroundUrl, setPrevBackgroundUrl] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // NEW: Background Toggle State
+  const [isBackgroundOff, setIsBackgroundOff] = useState(false);
+
   const currentQuote = quotes[currentQuoteIndex];
 
-  // Fetch a random image from the API or use a fallback
+  // Fetch a random image
   const fetchRandomImage = async () => {
     try {
       setIsLoading(true);
@@ -63,9 +67,8 @@ export default function QuoteWallpaper() {
     }
   };
 
-  // Change quote and background with crossfade effect
+  // Change quote and background
   const changeQuote = () => {
-    // Save current background URL for crossfade
     setPrevBackgroundUrl(background.url);
     setIsLoading(true);
     let newQuoteIndex;
@@ -76,7 +79,7 @@ export default function QuoteWallpaper() {
     fetchRandomImage();
   };
 
-  // Text-to-speech functionality
+  // Text-to-speech
   const speakQuote = () => {
     if ("speechSynthesis" in window) {
       const utterance = new SpeechSynthesisUtterance(
@@ -86,7 +89,7 @@ export default function QuoteWallpaper() {
     }
   };
 
-  // Download the entire container (image, quote, etc.) as an image with a watermark
+  // Download the wallpaper
   const downloadWallpaper = async () => {
     if (containerRef.current) {
       // Create watermark element
@@ -100,19 +103,18 @@ export default function QuoteWallpaper() {
       watermark.style.fontSize = "16px";
       watermark.style.fontFamily = "'Inter', sans-serif";
       watermark.style.pointerEvents = "none";
-      // Append watermark to the container
       containerRef.current.appendChild(watermark);
 
-      // Capture the container with html2canvas
+      // Capture container with html2canvas
       const canvas = await html2canvas(containerRef.current, {
-        scale: 2, // Higher resolution
+        scale: 2,
         useCORS: true,
         allowTaint: false,
         ignoreElements: (element) =>
           element.classList.contains("no-screenshot"),
       });
 
-      // Remove the watermark after capture
+      // Remove watermark
       containerRef.current.removeChild(watermark);
 
       canvas.toBlob((blob) => {
@@ -128,7 +130,7 @@ export default function QuoteWallpaper() {
     }
   };
 
-  // Toggle Fullscreen mode
+  // Toggle Fullscreen
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch((err) => {
@@ -139,24 +141,23 @@ export default function QuoteWallpaper() {
     }
   };
 
-  // Listen for fullscreen changes to update state
+  // Listen for fullscreen changes
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
-
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () =>
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
-  // Automatically change quote every 90 seconds (40 times per hour)
+  // Automatically change quote every 90 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       changeQuote();
     }, 90000);
     return () => clearInterval(interval);
-  }, []);
+  }, [currentQuoteIndex]);
 
   // Initial load
   useEffect(() => {
@@ -183,32 +184,60 @@ export default function QuoteWallpaper() {
   return (
     <>
       <Head>
-        {/* Import the Inter font for UI and Playfair Display for quotes */}
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:wght@400;700&display=swap"
           rel="stylesheet"
         />
       </Head>
+
       <main
         ref={containerRef}
         className="min-h-screen relative flex flex-col items-center justify-center p-4 transition-all duration-1500 ease-out"
-        style={{ fontFamily: "'Inter', sans-serif" }}
+        style={{
+          fontFamily: "'Inter', sans-serif",
+          backgroundColor: isBackgroundOff ? "#000" : "transparent",
+        }}
         onMouseEnter={() => setShowControls(true)}
         onMouseLeave={() => setShowControls(false)}
       >
-        {/* Background layers for crossfade using <img> elements */}
-        <div className="absolute inset-0 z-0">
-          {prevBackgroundUrl && (
+        {/* Conditional rendering of background images */}
+        {!isBackgroundOff && (
+          <div className="absolute inset-0 z-0">
+            {/* Previous BG crossfade */}
+            {prevBackgroundUrl && (
+              <div
+                className="absolute inset-0 transition-opacity duration-1500 ease-in-out"
+                style={{ opacity: isLoading ? 1 : 0 }}
+              >
+                <img
+                  src={prevBackgroundUrl}
+                  crossOrigin="anonymous"
+                  className="w-full h-full object-cover"
+                  alt="Previous Background"
+                />
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(0,0,0,0.7))",
+                  }}
+                ></div>
+              </div>
+            )}
+            {/* Current BG crossfade */}
             <div
               className="absolute inset-0 transition-opacity duration-1500 ease-in-out"
-              style={{ opacity: isLoading ? 1 : 0 }}
+              style={{ opacity: isLoading ? 0 : 1 }}
             >
-              <img
-                src={prevBackgroundUrl}
-                crossOrigin="anonymous"
-                className="w-full h-full object-cover"
-                alt="Previous Background"
-              />
+              {background.url ? (
+                <img
+                  src={background.url}
+                  crossOrigin="anonymous"
+                  className="w-full h-full object-cover"
+                  alt="Current Background"
+                />
+              ) : null}
+
               <div
                 className="absolute inset-0"
                 style={{
@@ -217,27 +246,10 @@ export default function QuoteWallpaper() {
                 }}
               ></div>
             </div>
-          )}
-          <div
-            className="absolute inset-0 transition-opacity duration-1500 ease-in-out"
-            style={{ opacity: isLoading ? 0 : 1 }}
-          >
-            <img
-              src={background.url}
-              crossOrigin="anonymous"
-              className="w-full h-full object-cover"
-              alt="Current Background"
-            />
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(0,0,0,0.7))",
-              }}
-            ></div>
           </div>
-        </div>
+        )}
 
+        {/* Quote Container */}
         <div className="relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center justify-center px-4 py-16">
           <blockquote
             className="mb-12 transition-all duration-1000 ease-out"
@@ -255,12 +267,13 @@ export default function QuoteWallpaper() {
             </footer>
           </blockquote>
 
-          {/* Control buttons (excluded from screenshot via no-screenshot class) */}
+          {/* Control buttons */}
           <div
             className={`flex justify-center gap-6 mt-8 transition-opacity duration-700 no-screenshot ${
               showControls ? "opacity-70" : "opacity-0"
             }`}
           >
+            {/* New Quote */}
             <button
               onClick={changeQuote}
               className="text-white/50 hover:text-white/90 transition-colors duration-300 bg-transparent p-2 rounded-full hover:bg-black/20"
@@ -269,6 +282,7 @@ export default function QuoteWallpaper() {
               <RefreshCw className="h-5 w-5" />
             </button>
 
+            {/* Speak Quote */}
             <button
               onClick={speakQuote}
               className="text-white/50 hover:text-white/90 transition-colors duration-300 bg-transparent p-2 rounded-full hover:bg-black/20"
@@ -277,6 +291,7 @@ export default function QuoteWallpaper() {
               <Volume2 className="h-5 w-5" />
             </button>
 
+            {/* Download Wallpaper */}
             <button
               onClick={downloadWallpaper}
               className="text-white/50 hover:text-white/90 transition-colors duration-300 bg-transparent p-2 rounded-full hover:bg-black/20"
@@ -285,6 +300,7 @@ export default function QuoteWallpaper() {
               <Download className="h-5 w-5" />
             </button>
 
+            {/* Toggle Fullscreen */}
             <button
               onClick={toggleFullscreen}
               className="text-white/50 hover:text-white/90 transition-colors duration-300 bg-transparent p-2 rounded-full hover:bg-black/20"
@@ -296,10 +312,19 @@ export default function QuoteWallpaper() {
                 <Maximize className="h-5 w-5" />
               )}
             </button>
+
+            {/* Background Toggle */}
+            <button
+              onClick={() => setIsBackgroundOff(!isBackgroundOff)}
+              className="text-white/50 hover:text-white/90 transition-colors duration-300 bg-transparent p-2 rounded-full hover:bg-black/20"
+              aria-label="Toggle Background"
+            >
+              <ImageOff className="h-5 w-5" />
+            </button>
           </div>
         </div>
 
-        {/* Next button */}
+        {/* Next Quote Button */}
         <div
           className={`fixed bottom-6 right-6 z-20 transition-opacity duration-700 no-screenshot ${
             showControls ? "opacity-70" : "opacity-0"
@@ -325,7 +350,7 @@ export default function QuoteWallpaper() {
         </div>
 
         {/* Photo credit */}
-        {background.photographer && (
+        {background.photographer && !isBackgroundOff && (
           <a
             href={background.photographerUrl}
             target="_blank"
