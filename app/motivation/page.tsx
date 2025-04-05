@@ -23,6 +23,7 @@ export default function QuoteWallpaper() {
     photographer: "",
     photographerUrl: "",
   });
+  const [prevBackgroundUrl, setPrevBackgroundUrl] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const currentQuote = quotes[currentQuoteIndex];
@@ -53,14 +54,17 @@ export default function QuoteWallpaper() {
         ];
       setBackground(fallback);
     } finally {
+      // Delay a bit longer for the crossfade to work smoothly
       setTimeout(() => {
         setIsLoading(false);
-      }, 500);
+      }, 700);
     }
   };
 
-  // Change quote and background
+  // Change quote and background with crossfade effect
   const changeQuote = () => {
+    // Save current background URL for crossfade
+    setPrevBackgroundUrl(background.url);
     setIsLoading(true);
     let newQuoteIndex;
     do {
@@ -142,43 +146,63 @@ export default function QuoteWallpaper() {
   return (
     <>
       <Head>
-        {/* Import the Inter font from Google Fonts */}
+        {/* Import the Inter font for UI and Playfair Display for quotes */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:wght@400;700&display=swap"
           rel="stylesheet"
         />
       </Head>
       <main
-        className="min-h-screen flex flex-col items-center justify-center p-4 transition-all duration-1000 ease-in-out"
-        style={{
-          backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.7)), url('${background.url}')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          opacity: isLoading ? 0 : 1,
-          fontFamily: "'Inter', sans-serif",
-        }}
+        className="min-h-screen relative flex flex-col items-center justify-center p-4 transition-all duration-1500 ease-out"
+        style={{ fontFamily: "'Inter', sans-serif" }}
         onMouseEnter={() => setShowControls(true)}
         onMouseLeave={() => setShowControls(false)}
       >
-        <div className="w-full max-w-3xl mx-auto flex flex-col items-center justify-center px-4 py-16">
+        {/* Background layers for crossfade */}
+        <div className="absolute inset-0 z-0">
+          {prevBackgroundUrl && (
+            <div
+              className="absolute inset-0 transition-opacity duration-1500 ease-in-out"
+              style={{
+                backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(0,0,0,0.7)), url('${prevBackgroundUrl}')`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+                opacity: isLoading ? 1 : 0,
+              }}
+            ></div>
+          )}
+          <div
+            className="absolute inset-0 transition-opacity duration-1500 ease-in-out"
+            style={{
+              backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(0,0,0,0.7)), url('${background.url}')`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+              opacity: isLoading ? 0 : 1,
+            }}
+          ></div>
+        </div>
+
+        <div className="relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center justify-center px-4 py-16">
           <blockquote
-            className="mb-12 transition-all duration-700 ease-in-out"
+            className="mb-12 transition-all duration-1000 ease-out"
             style={{
               opacity: isLoading ? 0 : 1,
               transform: isLoading ? "translateY(10px)" : "translateY(0)",
+              fontFamily: "'Playfair Display', serif",
             }}
           >
-            <p className="text-2xl md:text-3xl lg:text-4xl font-light text-white/90 leading-relaxed tracking-wide mb-8 text-center">
+            <p className="text-3xl md:text-4xl lg:text-5xl font-light text-white/90 leading-relaxed tracking-wide mb-8 text-center">
               "{currentQuote.text}"
             </p>
-            <footer className="text-base md:text-lg text-white/60 text-center font-light tracking-wider">
+            <footer className="text-lg md:text-xl text-white/60 text-center font-light tracking-wider">
               {currentQuote.author}
             </footer>
           </blockquote>
 
           <div
-            className={`flex justify-center gap-6 mt-8 transition-opacity duration-500 ${
+            className={`flex justify-center gap-6 mt-8 transition-opacity duration-700 ${
               showControls ? "opacity-70" : "opacity-0"
             }`}
           >
@@ -221,13 +245,14 @@ export default function QuoteWallpaper() {
         </div>
 
         <div
-          className={`fixed bottom-6 right-6 z-20 transition-opacity duration-500 ${
+          className={`fixed bottom-6 right-6 z-20 transition-opacity duration-700 ${
             showControls ? "opacity-70" : "opacity-0"
           }`}
         >
           <button
             onClick={changeQuote}
             className="text-white/50 hover:text-white/90 transition-colors duration-300 bg-transparent px-3 py-2 rounded-full hover:bg-black/20 flex items-center"
+            aria-label="Next Quote"
           >
             <span className="mr-2 text-sm font-light">Next</span>
             <ArrowRight className="h-4 w-4" />
@@ -235,7 +260,7 @@ export default function QuoteWallpaper() {
         </div>
 
         <div
-          className={`fixed bottom-6 left-6 z-20 text-xs text-white/30 transition-opacity duration-500 ${
+          className={`fixed bottom-6 left-6 z-20 text-xs text-white/30 transition-opacity duration-700 ${
             showControls ? "opacity-50" : "opacity-0"
           }`}
         >
@@ -247,7 +272,7 @@ export default function QuoteWallpaper() {
             href={background.photographerUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 z-20 text-xs text-white/30 flex items-center gap-1 transition-opacity duration-500 hover:text-white/60 ${
+            className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 z-20 text-xs text-white/30 flex items-center gap-1 transition-opacity duration-700 hover:text-white/60 ${
               showControls ? "opacity-50" : "opacity-0"
             }`}
           >
