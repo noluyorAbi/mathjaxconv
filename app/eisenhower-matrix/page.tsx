@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
   DragStartEvent,
-  DragOverEvent,
   DragEndEvent,
   DragOverlay,
   useDroppable,
@@ -356,8 +355,8 @@ function DraggableTask({
   canMoveDown: boolean;
   displayAllInfos?: boolean;
   language: "en" | "de";
-  dragListeners?: any;
-  dragAttributes?: any;
+  dragListeners?: never;
+  dragAttributes?: never;
 }) {
   const [isOpen, setIsOpen] = useState(false); // Collapsible open state
   const [isEditing, setIsEditing] = useState(false);
@@ -1777,19 +1776,18 @@ export default function EisenhowerMatrix() {
                   {language === "en" ? "Calendar View" : "Kalenderansicht"}
                 </h3>
                 <div className="md:pl-0 pl-6">
-                <Calendar
-                  mode="single"
-                  selected={selectedCalendarDate}
-                  onSelect={setSelectedCalendarDate}
-                  month={displayedMonth}
-                  onMonthChange={setDisplayedMonth}
-                  // Pass both modifiers
-                  modifiers={calendarModifiers}
-                  modifiersClassNames={calendarModifiersClassNames}
-                  className="mx-auto rounded-xl border dark:border-gray-800 "
-                />
+                  <Calendar
+                    mode="single"
+                    selected={selectedCalendarDate}
+                    onSelect={setSelectedCalendarDate}
+                    month={displayedMonth}
+                    onMonthChange={setDisplayedMonth}
+                    // Pass both modifiers
+                    modifiers={calendarModifiers}
+                    modifiersClassNames={calendarModifiersClassNames}
+                    className="mx-auto rounded-xl border dark:border-gray-800 "
+                  />
                 </div>
-
               </div>
             </div>
 
