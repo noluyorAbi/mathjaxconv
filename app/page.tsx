@@ -26,6 +26,7 @@ import {
   Grid2x2,
   GraduationCap,
   MessageSquareQuote,
+  Palette,
 } from "lucide-react";
 
 export default function Page() {
@@ -233,6 +234,18 @@ export default function Page() {
             >
               Discover a new quote each time with dark, aesthetic backgrounds to
               inspire your day.
+            </ToolCard>
+
+            {/* Pixel Color Remover Card */}
+            <ToolCard
+              href="/pixel-color-remover"
+              title="Pixel Color Remover"
+              description="Remove specific pixel colors like #CCC and similar shades to make them transparent."
+              icon={<Palette className="h-6 w-6" />}
+              gradient="from-emerald-500 to-teal-500"
+            >
+              Clean up images by removing unwanted background colors and making
+              them transparent for better integration.
             </ToolCard>
           </div>
         </main>
