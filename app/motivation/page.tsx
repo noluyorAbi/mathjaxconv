@@ -106,7 +106,7 @@ export default function QuoteWallpaper() {
       // Use fallback backgrounds
       const fallback =
         fallbackBackgrounds[
-          Math.floor(Math.random() * fallbackBackgrounds.length)
+        Math.floor(Math.random() * fallbackBackgrounds.length)
         ];
       setBackground(fallback);
     } finally {
@@ -219,16 +219,22 @@ export default function QuoteWallpaper() {
     if (!containerRef.current) return;
 
     // Watermark element
+    // Watermark element
     const watermark = document.createElement("div");
-    watermark.innerText = "tools.adatepe.dev/motivation";
+    watermark.innerHTML =
+      "<span style='opacity: 0.8'>Daily Motivation</span> • <span style='opacity: 0.5'>tools.adatepe.dev</span>";
     watermark.style.position = "absolute";
-    watermark.style.bottom = "20px";
+    watermark.style.bottom = "30px";
     watermark.style.left = "50%";
     watermark.style.transform = "translateX(-50%)";
-    watermark.style.color = "white";
-    watermark.style.fontSize = "16px";
+    watermark.style.color = "rgba(255, 255, 255, 0.9)";
+    watermark.style.fontSize = "14px";
+    watermark.style.fontWeight = "300";
+    watermark.style.letterSpacing = "1px";
     watermark.style.fontFamily = "'Inter', sans-serif";
+    watermark.style.textShadow = "0 2px 4px rgba(0,0,0,0.5)";
     watermark.style.pointerEvents = "none";
+    watermark.style.zIndex = "50";
     containerRef.current.appendChild(watermark);
 
     // Capture container
@@ -404,9 +410,8 @@ export default function QuoteWallpaper() {
 
           {/* Control buttons */}
           <div
-            className={`flex justify-center gap-6 mt-8 transition-opacity duration-700 no-screenshot ${
-              showControls ? "opacity-70" : "opacity-0"
-            }`}
+            className={`flex justify-center gap-6 mt-8 transition-opacity duration-700 no-screenshot ${showControls ? "opacity-70" : "opacity-0"
+              }`}
           >
             {/* New Quote */}
             <button
@@ -461,9 +466,8 @@ export default function QuoteWallpaper() {
 
         {/* Next Quote Button */}
         <div
-          className={`fixed bottom-6 right-6 z-20 transition-opacity duration-700 no-screenshot ${
-            showControls ? "opacity-70" : "opacity-0"
-          }`}
+          className={`fixed bottom-6 right-6 z-20 transition-opacity duration-700 no-screenshot ${showControls ? "opacity-70" : "opacity-0"
+            }`}
         >
           <button
             onClick={changeQuote}
@@ -481,9 +485,8 @@ export default function QuoteWallpaper() {
             href={background.photographerUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 z-20 text-xs text-white/30 flex items-center gap-1 transition-opacity duration-700 hover:text-white/60 no-screenshot ${
-              showControls ? "opacity-50" : "opacity-0"
-            }`}
+            className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 z-20 text-xs text-white/30 flex items-center gap-1 transition-opacity duration-700 hover:text-white/60 no-screenshot ${showControls ? "opacity-50" : "opacity-0"
+              }`}
           >
             <Camera className="h-3 w-3" />
             <span>Photo by {background.photographer} on Unsplash</span>

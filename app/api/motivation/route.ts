@@ -60,11 +60,7 @@ export async function GET() {
   } catch (error) {
     console.error("Error fetching Unsplash image:", error);
 
-    // Return a fallback image instead of an error
-    return NextResponse.json({
-      url: `https://source.unsplash.com/random/1920x1080/?dark,minimal`,
-      photographer: "Unsplash",
-      photographerUrl: "https://unsplash.com",
-    });
+    // Return 500 so client falls back to local images
+    return new NextResponse("Failed to fetch image", { status: 500 });
   }
 }

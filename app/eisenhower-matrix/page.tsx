@@ -10,6 +10,7 @@ import {
   useDroppable,
   MeasuringStrategy,
   closestCenter,
+  type DraggableAttributes,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -355,8 +356,8 @@ function DraggableTask({
   canMoveDown: boolean;
   displayAllInfos?: boolean;
   language: "en" | "de";
-  dragListeners?: never;
-  dragAttributes?: never;
+  dragListeners?: any;
+  dragAttributes?: DraggableAttributes;
 }) {
   const [isOpen, setIsOpen] = useState(false); // Collapsible open state
   const [isEditing, setIsEditing] = useState(false);
@@ -569,11 +570,10 @@ function DraggableTask({
                         className="border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
                       />
                       <Label
-                        className={`text-sm font-medium truncate ${
-                          task.done
-                            ? "line-through text-gray-500 dark:text-gray-400"
-                            : "text-gray-900 dark:text-gray-100"
-                        }`}
+                        className={`text-sm font-medium truncate ${task.done
+                          ? "line-through text-gray-500 dark:text-gray-400"
+                          : "text-gray-900 dark:text-gray-100"
+                          }`}
                       >
                         {task.title}
                       </Label>
@@ -917,8 +917,8 @@ export default function EisenhowerMatrix() {
         t.id === task.id
           ? { ...t, position: newPosTask }
           : t.id === prevTask.id
-          ? { ...t, position: newPosPrev }
-          : t
+            ? { ...t, position: newPosPrev }
+            : t
       )
     );
 
@@ -954,8 +954,8 @@ export default function EisenhowerMatrix() {
         t.id === task.id
           ? { ...t, position: newPosTask }
           : t.id === nextTask.id
-          ? { ...t, position: newPosNext }
-          : t
+            ? { ...t, position: newPosNext }
+            : t
       )
     );
 
@@ -1325,9 +1325,8 @@ export default function EisenhowerMatrix() {
                       >
                         <SelectItem
                           value={q.id}
-                          className={`cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg ${
-                            quadrantTextColors[q.id]
-                          }`}
+                          className={`cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg ${quadrantTextColors[q.id]
+                            }`}
                         >
                           <span className="font-medium">{q.title}</span>
                         </SelectItem>
@@ -1827,11 +1826,10 @@ export default function EisenhowerMatrix() {
                           key={task.id}
                           variants={itemVariants}
                           className={`bg-white dark:bg-gray-900 p-4 rounded-xl shadow-md border border-gray-200 dark:border-gray-800
-                ${
-                  isHighlighted
-                    ? "bg-yellow-50 ring-2 ring-yellow-300 dark:bg-yellow-900/10"
-                    : ""
-                }
+                ${isHighlighted
+                              ? "bg-yellow-50 ring-2 ring-yellow-300 dark:bg-yellow-900/10"
+                              : ""
+                            }
                 transition-all duration-200`}
                         >
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1854,13 +1852,12 @@ export default function EisenhowerMatrix() {
                             <div className="flex items-center gap-3 flex-shrink-0">
                               <div className="flex flex-col items-end">
                                 <span
-                                  className={`text-xs font-medium ${
-                                    dueTime < now
-                                      ? "text-red-500 dark:text-red-400"
-                                      : daysRemaining === 1
+                                  className={`text-xs font-medium ${dueTime < now
+                                    ? "text-red-500 dark:text-red-400"
+                                    : daysRemaining === 1
                                       ? "text-orange-500 dark:text-orange-400"
                                       : "text-gray-600 dark:text-gray-400"
-                                  }`}
+                                    }`}
                                 >
                                   {daysRemaining === 1 && (
                                     <ClockAlert className="h-4 w-4 inline-block mr-1" />
