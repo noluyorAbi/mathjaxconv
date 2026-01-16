@@ -27,6 +27,7 @@ import {
   GraduationCap,
   MessageSquareQuote,
   Palette,
+  FileText,
 } from "lucide-react";
 
 export default function Page() {
@@ -246,6 +247,17 @@ export default function Page() {
             >
               Clean up images by removing unwanted background colors and making
               them transparent for better integration.
+            </ToolCard>
+
+            {/* Markdown to Jira Card */}
+            <ToolCard
+              href="/markdown-to-jira"
+              title="Markdown to Jira"
+              description="Convert standard Markdown formatting to Jira Wiki Markup."
+              icon={<FileText className="h-6 w-6" />}
+              gradient="from-blue-600 to-indigo-600"
+            >
+              Streamline your documentation workflow by converting Markdown to Jira format.
             </ToolCard>
           </div>
         </main>
