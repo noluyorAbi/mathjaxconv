@@ -41,6 +41,36 @@ This project started as a simple MathJax converter but has evolved into a versat
 | **Motivation Quotes** | Get inspired with curated quotes on beautiful, dynamic backgrounds. |
 | **Monochrome Mode** | Toggle a distraction-free black-and-white screen mode. |
 
+### System Architecture
+
+```mermaid
+graph TD
+    A[App Shell] --> B(Layout & Navigation)
+    A --> C{Tools Suite}
+    
+    subgraph DevTools ["Developer Tools"]
+        C --> D1[MathJax Converter]
+        C --> D2[Markdown to Jira]
+        C --> D3[Callout Maker]
+        C --> D4[Pixel Remover]
+    end
+    
+    subgraph Productivity ["Productivity & Lifestyle"]
+        C --> E1[Pomodoro Timer]
+        C --> E2[Eisenhower Matrix]
+        C --> E3[Stopwatch]
+        C --> E4[Stop Addiction]
+        C --> E5[GradeView]
+        C --> E6[Motivation]
+    end
+    
+    B --> F[Theme Switcher]
+    B --> G[Global Particles]
+    
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style C fill:#bbf,stroke:#333,stroke-width:2px
+```
+
 ## Tech Stack
 
 - **Framework**: [Next.js 15 (App Router)](https://nextjs.org/)
