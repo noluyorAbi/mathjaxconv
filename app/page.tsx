@@ -215,7 +215,7 @@ export default function Page() {
             </ToolCard>
 
             <ToolCard
-              href="/gradeview"
+              href="https://gradetracker.myuninotes.com/"
               title="GradeView"
               description="Track and analyze all your university grades with statistics."
               icon={<GraduationCap className="h-6 w-6" />}
