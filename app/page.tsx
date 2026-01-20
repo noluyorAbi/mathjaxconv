@@ -1,3 +1,4 @@
+// Implemented at 2026-01-20T00:46:00+01:00 - Added YouTube Audio Downloader to Tool Grid
 "use client";
 
 import type React from "react";
@@ -28,6 +29,7 @@ import {
   MessageSquareQuote,
   Palette,
   FileText,
+  Download,
 } from "lucide-react";
 
 export default function Page() {
@@ -258,6 +260,18 @@ export default function Page() {
               gradient="from-blue-600 to-indigo-600"
             >
               Streamline your documentation workflow by converting Markdown to Jira format.
+            </ToolCard>
+
+            {/* YouTube Downloader Card */}
+            <ToolCard
+              href="/yt-downloader"
+              title="YouTube to MP3"
+              description="Extract and download audio from YouTube videos as MP3."
+              icon={<Download className="h-6 w-6" />}
+              gradient="from-red-500 to-pink-600"
+            >
+              Simple and fast tool to convert your favorite videos into audio
+              files.
             </ToolCard>
           </div>
         </main>
