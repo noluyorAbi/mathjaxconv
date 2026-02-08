@@ -10,7 +10,7 @@
 import type { Metadata } from "next";
 import KatexPlaygroundClient from "./KatexPlaygroundClient";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.adatepe.dev";
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tools.adatepe.dev";
 
 export async function generateMetadata({
   searchParams,

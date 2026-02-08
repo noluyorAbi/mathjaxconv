@@ -5,7 +5,7 @@
  *
  * CHANGE LOG & FEATURES:
  * 1. Initial implementation
- * - What: ImageResponse with LaTeX source, www.adatepe.dev at bottom right
+ * - What: ImageResponse with LaTeX source, domain at bottom right (from NEXT_PUBLIC_SITE_URL)
  * - Why: Social preview when sharing KaTeX links
  * 2. Font fix
  * - What: Use Satori default fonts (no custom font)
@@ -15,7 +15,9 @@ import { ImageResponse } from "next/og";
 
 const OG_WIDTH = 1200;
 const OG_HEIGHT = 630;
-const DOMAIN = "www.adatepe.dev";
+const DOMAIN = process.env.NEXT_PUBLIC_SITE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SITE_URL).hostname
+  : "tools.adatepe.dev";
 const MAX_LATEX_LENGTH = 100;
 
 export async function GET(request: Request) {
