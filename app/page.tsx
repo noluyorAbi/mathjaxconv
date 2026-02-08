@@ -30,6 +30,7 @@ import {
   Palette,
   FileText,
   Download,
+  Sigma,
 } from "lucide-react";
 
 export default function Page() {
@@ -149,6 +150,17 @@ export default function Page() {
             >
               Transform your LaTeX equations seamlessly for better compatibility
               across platforms.
+            </ToolCard>
+
+            <ToolCard
+              href="/katex-playground"
+              title="KaTeX Playground"
+              description="Live KaTeX preview with AI assist, copy options, and shareable links"
+              icon={<Sigma className="h-6 w-6" />}
+              gradient="from-indigo-500 to-violet-500"
+            >
+              Edit and preview KaTeX in real time. Generate math from natural language,
+              copy as Markdown or RichText, and share via URL.
             </ToolCard>
 
             <ToolCard
