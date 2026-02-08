@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 export default {
+  darkMode: "class",
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -11,6 +12,13 @@ export default {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        primary: "#137fec",
+        "background-light": "#f6f7f8",
+        "background-dark": "#101922",
+        paper: "#fdfbf7",
+      },
+      fontFamily: {
+        display: ["var(--font-inter)", "Inter", "sans-serif"],
       },
     },
   },
