@@ -60,7 +60,7 @@ export default function LoginForm({
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.8, ease: [0.4, 0, 0.2, 1] },
+      transition: { duration: 0.8, ease: [0.4, 0, 0.2, 1] as const },
     },
   };
 
@@ -77,7 +77,7 @@ export default function LoginForm({
         "radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(31,41,55,1) 70%)",
         "radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(31,41,55,1) 70%)",
       ],
-      transition: { duration: 1.5, repeat: Infinity, ease: "easeInOut" },
+      transition: { duration: 1.5, repeat: Infinity, ease: "easeInOut" as const },
     },
   };
 
@@ -86,7 +86,7 @@ export default function LoginForm({
     animate: {
       opacity: 1,
       x: [-5, 5, -5, 0], // Shake effect
-      transition: { duration: 0.5, ease: "easeInOut" },
+      transition: { duration: 0.5, ease: "easeInOut" as const },
     },
     exit: { opacity: 0, transition: { duration: 0.2 } },
   };
