@@ -3,7 +3,7 @@
 
 import type React from "react";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Particles from "react-tsparticles";
@@ -31,9 +31,12 @@ import {
   FileText,
   Download,
   Sigma,
+  FileQuestion,
 } from "lucide-react";
 
+
 export default function Page() {
+
   // Initialize particles engine using the slim build
   const particlesInit = useCallback(async (engine: Engine) => {
     await loadSlim(engine);
@@ -161,6 +164,17 @@ export default function Page() {
             >
               Edit and preview KaTeX in real time. Generate math from natural language,
               copy as Markdown or RichText, and share via URL.
+            </ToolCard>
+
+            <ToolCard
+              href="/klausur-chat"
+              title="Klausur PDF Chat"
+              description="PDF viewer with AI expert. Full view, chat on demand."
+              icon={<FileQuestion className="h-6 w-6" />}
+              gradient="from-amber-500 to-orange-500"
+            >
+              Klausurvorbereitung mit KI-Assistent. PDF fullscreen, Chat-Bubble
+              rechts unten oeffnet auf Klick.
             </ToolCard>
 
             <ToolCard
