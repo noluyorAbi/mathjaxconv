@@ -547,7 +547,7 @@ export default function KlausurChatClient() {
                 )}
               </button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="h-[85dvh] p-0 rounded-t-2xl">
+            <SheetContent side="bottom" className="h-[90dvh] w-full p-0 rounded-t-2xl flex flex-col overflow-hidden">
               <SheetTitle className="sr-only">Lern-Assistent</SheetTitle>
               <ChatUI {...chatProps} />
             </SheetContent>
