@@ -33,9 +33,18 @@ import {
   Sigma,
   FileQuestion,
 } from "lucide-react";
-
+import { isFebruary9Berlin } from "@/lib/klausur-date";
 
 export default function Page() {
+  const [showKlausurCard, setShowKlausurCard] = useState(false);
+
+  useEffect(() => {
+    const isFeb9 = isFebruary9Berlin();
+    setShowKlausurCard(isFeb9);
+    if (!isFeb9) {
+      localStorage.removeItem("klausur-chat-history");
+    }
+  }, []);
 
   // Initialize particles engine using the slim build
   const particlesInit = useCallback(async (engine: Engine) => {
@@ -166,16 +175,18 @@ export default function Page() {
               copy as Markdown or RichText, and share via URL.
             </ToolCard>
 
-            <ToolCard
-              href="/klausur-chat"
-              title="Klausur PDF Chat"
-              description="PDF viewer with AI expert. Full view, chat on demand."
-              icon={<FileQuestion className="h-6 w-6" />}
-              gradient="from-amber-500 to-orange-500"
-            >
-              Klausurvorbereitung mit KI-Assistent. PDF fullscreen, Chat-Bubble
-              rechts unten oeffnet auf Klick.
-            </ToolCard>
+            {showKlausurCard && (
+              <ToolCard
+                href="/klausur-chat"
+                title="Klausur PDF Chat"
+                description="PDF viewer with AI expert. Full view, chat on demand."
+                icon={<FileQuestion className="h-6 w-6" />}
+                gradient="from-amber-500 to-orange-500"
+              >
+                Klausurvorbereitung mit KI-Assistent. PDF fullscreen, Chat-Bubble
+                rechts unten oeffnet auf Klick.
+              </ToolCard>
+            )}
 
             <ToolCard
               href="/callout-maker"

@@ -32,6 +32,7 @@ import {
 } from "@google/genai";
 import fs from "node:fs";
 import path from "node:path";
+import { isFebruary9Berlin } from "@/lib/klausur-date";
 
 const PDF_FILENAME = "klausur-vorbereitung-aufgabe-loesung-pro-quelle.pdf";
 const MAX_MESSAGES = 50;
@@ -74,6 +75,10 @@ function validateMessages(messages: unknown): ChatMessage[] | null {
 
 export async function POST(request: Request) {
   try {
+    if (!isFebruary9Berlin()) {
+      return NextResponse.json({ error: "Not available" }, { status: 404 });
+    }
+
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(

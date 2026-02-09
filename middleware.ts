@@ -7,10 +7,15 @@ function isFebruary9(): boolean {
 }
 
 export function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname.startsWith("/klausur-chat")) {
-    if (!isFebruary9()) {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
+  const path = request.nextUrl.pathname;
+  const isKlausurRoute =
+    path.startsWith("/klausur-chat") ||
+    path === "/klausur-vorbereitung-aufgabe-loesung-pro-quelle.pdf";
+
+  if (isKlausurRoute && !isFebruary9()) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+  if (isKlausurRoute) {
     return NextResponse.next();
   }
 
@@ -48,5 +53,6 @@ export const config = {
     "/stop-addic/:path*",
     "/eisenhower-matrix/:path*",
     "/klausur-chat/:path*",
+    "/klausur-vorbereitung-aufgabe-loesung-pro-quelle.pdf",
   ],
 };
