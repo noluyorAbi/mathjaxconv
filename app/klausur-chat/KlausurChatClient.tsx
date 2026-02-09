@@ -305,9 +305,7 @@ export default function KlausurChatClient() {
   const [isMobile, setIsMobile] = useState(false);
 
   // State for layout
-  // 'desktop-open': Sidebar is open on desktop (pushing content)
-  // 'mobile-open': Sheet is open on mobile (overlay)
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Controls both desktop sidebar and mobile sheet
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const pdfContainerRef = useRef<HTMLDivElement>(null);
@@ -322,7 +320,6 @@ export default function KlausurChatClient() {
 
   // --- Persistence ---
   useEffect(() => {
-    // Load history
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
@@ -337,7 +334,6 @@ export default function KlausurChatClient() {
   }, []);
 
   useEffect(() => {
-    // Save history
     if (messages.length > 0) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     }
@@ -417,7 +413,7 @@ export default function KlausurChatClient() {
   // --- Fullscreen ---
   const toggleFullscreen = useCallback(async () => {
     const container = pdfContainerRef.current;
-    if (!container) return; // Should be the wrapper div
+    if (!container) return;
 
     if (!fullscreen) {
       try {
@@ -504,15 +500,26 @@ export default function KlausurChatClient() {
       <div className="flex-1 flex flex-row h-full pt-14 relative overflow-hidden">
 
         {/* PDF Area - Pushed by sidebar */}
+        {/* MOBILE SCROLL FIX: absolute inset-0 wrapper for object tag */}
         <div
           ref={pdfContainerRef}
-          className="flex-1 relative h-full bg-slate-100 dark:bg-slate-900 transition-all duration-300 ease-in-out"
+          className="flex-1 relative h-full bg-slate-100 dark:bg-slate-900 transition-all duration-300 ease-in-out overflow-hidden"
         >
-          <iframe
-            src={PDF_URL}
-            className="w-full h-full border-none shadow-inner"
-            title="Klausur PDF"
-          />
+          {/* Wrapper to force scroll on iOS */}
+          <div className="absolute inset-0 w-full h-full overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <object
+              data={PDF_URL}
+              type="application/pdf"
+              className="w-full h-full min-h-full"
+            >
+              {/* Fallback for browsers that don't support object/pdf */}
+              <iframe
+                src={PDF_URL}
+                className="w-full h-full border-none"
+                title="Klausur PDF"
+              />
+            </object>
+          </div>
         </div>
 
         {/* Desktop Sidebar (Push) */}
