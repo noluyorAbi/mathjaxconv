@@ -23,7 +23,9 @@ export function middleware(request: NextRequest) {
     (request.nextUrl.pathname.startsWith("/stop-addic") &&
       !request.nextUrl.pathname.startsWith("/stop-addic/login")) ||
     (request.nextUrl.pathname.startsWith("/eisenhower-matrix") &&
-      !request.nextUrl.pathname.startsWith("/eisenhower-matrix/login"))
+      !request.nextUrl.pathname.startsWith("/eisenhower-matrix/login")) ||
+    (request.nextUrl.pathname.startsWith("/quick-links") &&
+      !request.nextUrl.pathname.startsWith("/quick-links/login"))
   ) {
     let isAuthenticated = false;
 
@@ -33,6 +35,9 @@ export function middleware(request: NextRequest) {
     } else if (request.nextUrl.pathname.startsWith("/eisenhower-matrix")) {
       const authCookie = request.cookies.get("auth-cookie")?.value;
       isAuthenticated = authCookie === "true";
+    } else if (request.nextUrl.pathname.startsWith("/quick-links")) {
+      const quickLinksAuthCookie = request.cookies.get("quicklinks-auth")?.value;
+      isAuthenticated = quickLinksAuthCookie === "true";
     }
 
     if (!isAuthenticated) {
@@ -42,6 +47,8 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(
           new URL("/eisenhower-matrix/login", request.url)
         );
+      } else if (request.nextUrl.pathname.startsWith("/quick-links")) {
+        return NextResponse.redirect(new URL("/quick-links/login", request.url));
       }
     }
   }
@@ -52,6 +59,7 @@ export const config = {
   matcher: [
     "/stop-addic/:path*",
     "/eisenhower-matrix/:path*",
+    "/quick-links/:path*",
     "/klausur-chat/:path*",
     "/klausur-vorbereitung-aufgabe-loesung-pro-quelle.pdf",
   ],

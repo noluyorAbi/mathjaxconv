@@ -32,6 +32,7 @@ import {
   Download,
   Sigma,
   FileQuestion,
+  Bookmark,
 } from "lucide-react";
 import { isFebruary9Berlin } from "@/lib/klausur-date";
 
@@ -297,6 +298,18 @@ export default function Page() {
               gradient="from-blue-600 to-indigo-600"
             >
               Streamline your documentation workflow by converting Markdown to Jira format.
+            </ToolCard>
+
+            {/* Quick Links Card */}
+            <ToolCard
+              href="/quick-links"
+              title="Quick Links"
+              description="PIN-protected quick access to your saved sites."
+              icon={<Bookmark className="h-6 w-6" />}
+              gradient="from-cyan-500 to-blue-600"
+            >
+              Fast, organized access to books, movies, and other saved links
+              behind a PIN.
             </ToolCard>
 
             {/* YouTube Downloader Card */}
