@@ -15,7 +15,6 @@ interface LoginFormProps {
 export default function LoginForm({
   apiEndpoint = "/api/stop-addic/login",
   redirectPath = "/stop-addic",
-  cookieName = "auth-cookie",
   title = "Login",
   subtitle = "Enter your password",
 }: LoginFormProps) {
@@ -40,9 +39,7 @@ export default function LoginForm({
       const data = await res.json();
 
       if (res.ok && data.success) {
-        setTimeout(() => {
-          router.push(redirectPath);
-        }, 1200); // Matches loading bar duration
+        router.push(redirectPath);
       } else {
         setIsValidating(false);
         setError(data.message || "Invalid password");
@@ -105,14 +102,14 @@ export default function LoginForm({
         animate="visible"
         className="relative w-full max-w-md bg-gray-900/90 rounded-xl p-8 border border-gray-800 shadow-2xl shadow-black/20"
       >
-        {/* Top accent with loading bar */}
+        {/* Top accent with indeterminate loading bar */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gray-800 rounded-t-xl overflow-hidden">
           {isValidating && !error && (
             <motion.div
-              initial={{ width: "0%" }}
-              animate={{ width: "100%" }}
-              transition={{ duration: 1.2, ease: "easeInOut" }}
-              className="h-full bg-gradient-to-r from-blue-400 via-purple-500 to-blue-400"
+              initial={{ x: "-100%" }}
+              animate={{ x: "100%" }}
+              transition={{ duration: 0.8, ease: "easeInOut", repeat: Infinity }}
+              className="h-full w-full bg-gradient-to-r from-blue-400 via-purple-500 to-blue-400"
             />
           )}
         </div>
@@ -154,12 +151,18 @@ export default function LoginForm({
               id="password"
               name="password"
               type="password"
+              inputMode="numeric"
+              autoComplete="current-password"
+              autoFocus
               placeholder="Enter your password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (error) setError("");
+              }}
               variants={glowVariants}
               animate={isValidating ? "visible" : "hidden"}
-              className="w-full px-4 py-3 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-gray-500 transition-all duration-500 placeholder-gray-500"
+              className="w-full px-4 py-3 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-gray-500 transition-colors duration-200 ease-out placeholder-gray-500"
             />
           </motion.div>
 
@@ -200,15 +203,15 @@ export default function LoginForm({
             }}
             whileTap={{ scale: 0.98 }}
             type="submit"
-            className="w-full py-3 px-4 bg-gray-200 text-black text-base font-medium rounded-lg transition-all duration-500 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed relative overflow-hidden"
-            disabled={!password.trim()}
+            className="w-full py-3 px-4 bg-gray-200 text-black text-base font-medium rounded-lg transition-colors duration-200 ease-out disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed relative overflow-hidden"
+            disabled={!password.trim() || isValidating}
           >
-            <span className="relative z-10">Go</span>
+            <span className="relative z-10">{isValidating ? "Checking…" : "Go"}</span>
             <motion.span
               className="absolute inset-0 bg-white/30"
               initial={{ x: "-100%" }}
               whileHover={{ x: "100%" }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
             />
           </motion.button>
         </form>
